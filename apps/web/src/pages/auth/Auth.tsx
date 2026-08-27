@@ -319,15 +319,15 @@ export default function Auth() {
             </div>
             <h1 className="text-4xl font-serif font-bold text-white tracking-tight">QuillHive</h1>
           </div>
-          <p className="text-2xl font-serif text-white/90 leading-tight mb-4">
-            Where creators grow, get discovered, and earn opportunities.
+          <p className="text-sm text-muted-foreground text-center italic">
+            "Your quill is your voice. Your hive is where it grows."
           </p>
-          <p className="text-white/60 text-lg leading-relaxed">
-            Build your creator identity, grow your audience, and unlock real opportunities — all in one place built for serious creators.
+          <p className="text-xs text-muted-foreground text-center mt-1">
+            Grow, get discovered, and find real opportunities — for everyone.
           </p>
           <div className="flex items-center gap-6 mt-8">
             {[
-              { label: "Creators", value: "10K+" },
+              { label: "Members", value: "10K+" },
               { label: "Works Published", value: "50K+" },
               { label: "Countries", value: "80+" },
             ].map(stat => (

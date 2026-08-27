@@ -1,7 +1,7 @@
 {
   "name": "QuillHive",
   "short_name": "QuillHive",
-  "description": "Grow, get discovered, find opportunities",
+  "description": "Your quill is your voice. Your hive is where it grows. For everyone.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

@@ -133,7 +133,7 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
     <div style="text-align:center;margin-bottom:28px;font-size:52px;">🎉</div>
     <h1 style="margin:0 0 8px;font-size:28px;font-weight:800;color:#fafafa;text-align:center;">Welcome to ${brand}, ${opts.displayName}!</h1>
     <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.7;text-align:center;">
-      You're now part of a community where creators grow, get discovered, and earn opportunities.
+      Your quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities — for everyone.
       Here's how to make the most of your first 48 hours.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -172,7 +172,7 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
 
 export function welcomeEmailText(opts: { displayName: string; username: string; appUrl?: string }): string {
   const url = opts.appUrl || appUrl;
-  return `Welcome to ${brand}, ${opts.displayName}!\n\nYou're now part of a community where creators grow, get discovered, and earn opportunities.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore creators: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n— The ${brand} team`;
+  return `Welcome to ${brand}, ${opts.displayName}!\n\nYour quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities — for everyone.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore people: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n— The ${brand} team`;
 }
 
 export function day3NurtureHtml(opts: { displayName: string; username: string; appUrl?: string }): string {

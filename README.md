@@ -1,6 +1,8 @@
 # QuillHive
 
-**Where everyone grows, gets discovered, and earns opportunities.**
+> "Your quill is your voice. Your hive is where it grows."
+
+**Grow, get discovered, and find real opportunities — for everyone.**
 
 QuillHive is a professional growth and discovery platform
 for anyone with something to share — writers, developers,

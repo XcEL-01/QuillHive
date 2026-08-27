@@ -92,7 +92,7 @@ app.get("/p/:id", async (req, res) => {
   if (!post) {
     return res.status(404).send(htmlPage({
       title: "Post — QuillHive",
-      description: "QuillHive is where anyone with something to share builds their presence, gets discovered, and finds real opportunities.",
+      description: "Your quill is your voice. Your hive is where it grows. QuillHive — for everyone with something to share.",
       ogUrl: `${APP_URL}/post/${req.params.id}`,
     }));
   }
@@ -115,13 +115,13 @@ app.get("/u/:username", async (req, res) => {
   if (!profile) {
     return res.status(404).send(htmlPage({
       title: "Profile — QuillHive",
-      description: "QuillHive is where anyone with something to share builds their presence, gets discovered, and finds real opportunities.",
+      description: "Your quill is your voice. Your hive is where it grows. QuillHive — for everyone with something to share.",
       ogUrl: `${APP_URL}/profile/${req.params.username}`,
     }));
   }
   res.send(htmlPage({
     title: `${profile.displayName || req.params.username} — QuillHive`,
-    description: profile.bio || `Read ${profile.displayName || req.params.username}'s creative work on QuillHive.`,
+    description: profile.bio || `Discover ${profile.displayName || req.params.username}'s work on QuillHive — where everyone grows, gets discovered, and finds real opportunities.`,
     ogImage: profile.avatarUrl || undefined,
     ogUrl: `${APP_URL}/profile/${req.params.username}`,
   }));
@@ -138,10 +138,10 @@ function landingPageHtml() {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>QuillHive — Where everyone grows, gets discovered, and earns opportunities</title>
-<meta name="description" content="QuillHive is where anyone with something to share builds their presence, gets discovered, and finds real opportunities. Writers, designers, developers, photographers, educators, entrepreneurs — your work deserves an audience." />
-<meta property="og:title" content="QuillHive" />
-<meta property="og:description" content="Where everyone with something to share grows, gets discovered, and earns opportunities." />
+<title>QuillHive — Your Voice. Your Hive.</title>
+<meta name="description" content="Your quill is your voice. Your hive is where it grows. QuillHive — grow, get discovered, and find real opportunities. For everyone." />
+<meta property="og:title" content="QuillHive — Your Voice. Your Hive." />
+<meta property="og:description" content="Your quill is your voice. Your hive is where it grows. For everyone with something to share." />
 <meta property="og:image" content="${APP_URL}/opengraph.jpg" />
 <meta property="og:url" content="${APP_URL}" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -192,8 +192,9 @@ footer{border-top:1px solid var(--border);padding:2rem;text-align:center}
 </nav>
 <section class="hero">
   <div class="badge">Now in early access</div>
-  <h1>Where everyone grows,<br />gets <span>discovered</span>, and earns</h1>
-  <p class="subtitle">QuillHive is where anyone with something to share builds their presence, gets discovered, and finds real opportunities. Writers, designers, developers, photographers, educators, entrepreneurs — your work deserves an audience.</p>
+  <p style="font-size:1.125rem;font-style:italic;color:#a78bfa;margin-bottom:1.5rem;letter-spacing:-0.01em;">"Your quill is your voice. Your hive is where it grows."</p>
+  <h1>Grow, get <span>discovered</span>, and find real opportunities</h1>
+  <p class="subtitle">QuillHive is where everyone with something to share builds a presence, gets discovered, and finds real opportunities. Your work deserves an audience.</p>
   <div class="hero-actions">
     <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Join QuillHive — it's free</a>
     <a href="${APP_URL}/explore" class="btn btn-ghost btn-lg">Explore →</a>

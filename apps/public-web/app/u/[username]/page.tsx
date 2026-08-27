@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const appUrl = process.env.APP_URL || 'http://localhost:3001';
   return {
     title: `${profile.displayName || params.username} — QuillHive`,
-    description: profile.bio || `Read ${profile.displayName}'s creative work on QuillHive.`,
+    description: profile.bio || `Discover ${profile.displayName}'s work on QuillHive — where everyone grows, gets discovered, and finds real opportunities.`,
     openGraph: {
       title: `${profile.displayName} on QuillHive`,
       description: profile.bio || '',

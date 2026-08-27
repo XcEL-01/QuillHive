@@ -34,8 +34,14 @@ export function Footer() {
                 QuillHive
               </span>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Where creators grow, get discovered, and earn opportunities. The professional growth platform for serious creators.
+            <p className="leading-relaxed">
+              <span className="italic font-medium">
+                "Your quill is your voice. Your hive is where it grows."
+              </span>
+              <br />
+              <span className="text-muted-foreground text-sm">
+                Grow, get discovered, and find real opportunities — for everyone.
+              </span>
             </p>
             <div className="flex gap-3 mt-4">
               <a href="#" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">

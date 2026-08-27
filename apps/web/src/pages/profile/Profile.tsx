@@ -491,7 +491,7 @@ export default function Profile() {
             {creatorProfile.isAvailableForHire && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-300 dark:border-amber-700">
                 <Zap className="w-3.5 h-3.5" />
-                {t('profile.availableForCommissions', '⚡ Available for Commissions')}
+                {t('profile.openToOpportunities', '⚡ Open to opportunities')}
               </span>
             )}
             {(creatorProfile.availableFor || []).map(af => {
@@ -596,7 +596,7 @@ export default function Profile() {
 
           {isMe && creatorProfile.skills.length === 0 && creatorProfile.links.length === 0 && (
             <button onClick={openEditCreator} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1.5 mb-4 transition-colors">
-              <Plus className="w-3.5 h-3.5" /> {t('profile.addSkillsLinks', 'Add skills and links to your creator profile')}
+              <Plus className="w-3.5 h-3.5" /> {t('profile.addSkillsLinks', 'Add skills and links to your profile')}
             </button>
           )}
 
@@ -1298,7 +1298,7 @@ export default function Profile() {
         <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" /> {t('profile.creatorProfile', 'Creator Profile')}
+              <Sparkles className="w-5 h-5 text-primary" /> {t('profile.profile', 'Profile')}
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-5">
@@ -1330,13 +1330,13 @@ export default function Profile() {
               />
               <div>
                 <label htmlFor="hire-toggle" className="font-medium text-sm cursor-pointer text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                  <Zap className="w-4 h-4" /> {t('profile.openForProjects', 'Open for Projects')}
+                  <Zap className="w-4 h-4" /> {t('profile.openToOpportunities', 'Open to opportunities')}
                 </label>
-                <p className="text-xs text-muted-foreground mt-0.5">{t('profile.opportunityReadyDesc', 'Show your availability on your creator profile')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('profile.opportunityReadyDesc', 'Show that you are open to opportunities on your profile')}</p>
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium">{t('profile.creatorAvailability', 'Creator Availability')}</p>
+              <p className="text-sm font-medium">{t('profile.creatorAvailability', 'Availability')}</p>
               <p className="text-xs text-muted-foreground">{t('profile.availabilityDesc', 'Select what types of creative work you\'re available for. These appear as badges on your profile.')}</p>
               <div className="flex flex-wrap gap-2 pt-1">
                 {AVAILABLE_FOR_OPTIONS.map(opt => {

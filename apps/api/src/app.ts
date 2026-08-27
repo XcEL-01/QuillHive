@@ -246,7 +246,7 @@ app.get("/profile/:username", async (req, res, next) => {
     const origin = process.env.APP_URL || `https://${req.hostname}`;
     res.send(injectOgMeta(html, {
       title: `${user.displayName || req.params.username} on QuillHive`,
-      description: (user.bio || `Read ${user.displayName || req.params.username}'s creative work on QuillHive.`).slice(0, 160),
+      description: (user.bio || `Discover ${user.displayName || req.params.username}'s work on QuillHive — where everyone grows, gets discovered, and finds real opportunities.`).slice(0, 160),
       image: user.avatarUrl || "",
       url: `${origin}/profile/${req.params.username}`,
     }));

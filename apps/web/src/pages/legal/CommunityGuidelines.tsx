@@ -15,7 +15,7 @@ export function CommunityGuidelines() {
           <h1 className="text-4xl font-bold text-foreground mb-2">{t("legal.guidelines.title", "Community Guidelines")}</h1>
           <p className="text-muted-foreground text-sm">Effective May 2026 · Platform: {brand}</p>
           <p className="mt-4 text-lg text-foreground/80 leading-relaxed">
-            {brand} is built for serious creators who want to grow, get discovered, and earn real opportunities. These guidelines protect that mission and the community that makes it possible.
+            {brand} is built for everyone who wants to grow, get discovered, and find real opportunities. These guidelines protect that mission and the community that makes it possible.
           </p>
         </div>
 

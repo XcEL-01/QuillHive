@@ -434,9 +434,18 @@ export default function Home() {
             className="bg-gradient-to-r from-primary/10 via-violet-500/5 to-transparent border border-primary/20 rounded-2xl px-4 py-3 flex items-center gap-3"
           >
             <TrendingUp className="w-4 h-4 text-primary flex-shrink-0" />
-            <p className="text-sm font-medium text-foreground">
-              Where creators <span className="text-primary font-semibold">grow</span>, get <span className="text-violet-500 font-semibold">discovered</span>, and earn <span className="text-amber-500 font-semibold">opportunities</span>.
-            </p>
+            <div className="text-foreground">
+              <span className="block text-lg font-semibold italic text-foreground">
+                "Your quill is your voice. Your hive is where it grows."
+              </span>
+              <span className="block text-sm text-muted-foreground mt-1">
+                Grow, get{" "}
+                <span className="text-violet-500 font-semibold">discovered</span>
+                , and find{" "}
+                <span className="text-amber-500 font-semibold">real opportunities</span>
+                {" "}— for everyone.
+              </span>
+            </div>
           </motion.div>
 
           {/* Streak Banner */}
@@ -584,7 +593,7 @@ export default function Home() {
               </h3>
               <p className="text-muted-foreground max-w-xs mx-auto text-sm mb-5">
                 {feedSource === 'following'
-                  ? "Follow more creators to grow together. Every creator you follow increases your own discoverability."
+                  ? "Follow people you find interesting to grow together. Everyone you follow helps personalise your feed and increases your own discoverability."
                   : feedSource === 'sparks'
                   ? "No sparks yet — share a quick thought and get discovered by the community."
                   : 'The first posts here get the most visibility. Start your growth journey now.'}

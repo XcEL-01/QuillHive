@@ -30,7 +30,7 @@ function boostReceiptHtml(opts: {
 <span style="color:#888">Expires</span><strong style="font-size:12px">${endsStr}</strong></div>
 </div>
 <a href="${process.env.PUBLIC_APP_URL ?? "https://quillhive.app"}/promotions" style="display:inline-block;background:#f59e0b;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">View My Promotions</a>
-<p style="color:#555;font-size:12px;margin-top:24px">QuillHive — Where creators grow, get discovered, and earn opportunities.</p>
+<p style="color:#555;font-size:12px;margin-top:24px">QuillHive — Your quill is your voice. Your hive is where it grows. For everyone.</p>
 </div></body></html>`;
 }
 

@@ -5,7 +5,7 @@
 
 ## 1. Executive Summary
 
-QuillHive is a creator-focused social publishing platform positioning itself as a "Creator Career Operating System" — combining Substack-style writing with LinkedIn-style career signaling and a creator economy marketplace. The platform has strong technical bones: a mature Express API, real-time sockets, a rich admin system, and a well-structured React frontend. However, it is in early-seed state with no real user base, no revenue, and several email/communication flows broken. The official @quillhive account can now post content (fully built admin UI + API), email sending now works via SMTP fallback, and real-time unread DM badges have been wired throughout the nav. The strategic priority must shift to **user acquisition and retention** — the platform is far more feature-complete than its zero-user-count suggests.
+QuillHive is a social publishing platform for everyone, positioning itself as a growth and discovery platform — combining Substack-style writing with LinkedIn-style career signaling and an opportunity marketplace. The platform has strong technical bones: a mature Express API, real-time sockets, a rich admin system, and a well-structured React frontend. However, it is in early-seed state with no real user base, no revenue, and several email/communication flows broken. The official @quillhive account can now post content (fully built admin UI + API), email sending now works via SMTP fallback, and real-time unread DM badges have been wired throughout the nav. The strategic priority must shift to **user acquisition and retention** — the platform is far more feature-complete than its zero-user-count suggests.
 
 **Overall Score: 6.8 / 10** — Strong foundation, gaps in email delivery, missing social proof, and no clear go-to-market execution yet.
 
@@ -13,8 +13,8 @@ QuillHive is a creator-focused social publishing platform positioning itself as 
 
 ## 2. Product Vision & Mission Alignment
 
-**Vision:** "Where creators grow, get discovered, and earn opportunities."
-**Mission:** Give serious creators the infrastructure of a career — not just a publishing tool.
+**Vision:** "Your quill is your voice. Your hive is where it grows."
+**Mission:** Give everyone the infrastructure of a career — not just a publishing tool.
 
 **Assessment:**
 - The vision is clearly differentiated from Substack (pure publishing) and LinkedIn (professional networking with poor creator tools). The "career OS" framing is compelling and defensible.

@@ -21,13 +21,13 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { CreatorModeToggle } from '@/components/settings/CreatorModeToggle';
 import { SessionsCard } from '@/components/settings/SessionsCard';
 import {
-  User, Lock, Bell, Palette, Shield, Trash2, Moon, Sun, ChevronRight, Save, Loader2, Eye, Globe,
+  User, Lock, Bell, Palette, Shield, Trash2, Moon, Sun, ChevronRight, Save, Loader2, Eye, Globe, Link2,
   MessageCircle, GraduationCap, Briefcase, Plus, Pencil, X, Upload, Camera, Facebook, Linkedin,
   Twitter, Instagram, KeyRound, Smartphone, Download, AlertTriangle, Gift, CreditCard, Rocket,
   CheckCircle2, Clock, XCircle,
 } from 'lucide-react';
 
-type Section = 'profile' | 'account' | 'security' | 'privacy' | 'experience' | 'education' | 'notifications' | 'appearance' | 'language' | 'invites' | 'warnings' | 'blocked' | 'billing' | 'apiKeys' | 'danger';
+type Section = 'profile' | 'account' | 'security' | 'privacy' | 'experience' | 'education' | 'notifications' | 'appearance' | 'connectedApps' | 'language' | 'invites' | 'warnings' | 'blocked' | 'billing' | 'apiKeys' | 'danger';
 
 interface WorkEntry { id: number; title: string; organization: string; startYear: number; endYear?: number | null; description?: string | null; }
 interface EduEntry { id: number; school: string; degree: string; field?: string | null; startYear: number; endYear?: number | null; description?: string | null; }
@@ -501,12 +501,13 @@ export default function Settings() {
   const sections = [
     { id: 'profile' as Section, icon: User, label: t('settings.profile') },
     { id: 'account' as Section, icon: Lock, label: t('settings.account') },
-    { id: 'security' as Section, icon: KeyRound, label: t('settings.securityTwoFALabel') },
+    { id: 'security' as Section, icon: KeyRound, label: t('settings.security', 'Security') },
     { id: 'privacy' as Section, icon: Shield, label: t('settings.privacy') },
     { id: 'experience' as Section, icon: Briefcase, label: t('settings.workExperience') },
     { id: 'education' as Section, icon: GraduationCap, label: t('settings.educationSection') },
     { id: 'notifications' as Section, icon: Bell, label: t('settings.notifications') },
     { id: 'appearance' as Section, icon: Palette, label: t('settings.appearance') },
+    { id: 'connectedApps' as Section, icon: Link2, label: t('settings.connectedApps', 'Connected Apps') },
     { id: 'language' as Section, icon: Globe, label: t('settings.language') },
     { id: 'invites' as Section, icon: User, label: t('settings.inviteFriends') },
     { id: 'warnings' as Section, icon: AlertTriangle, label: t('settings.warnings') },
@@ -1166,6 +1167,30 @@ export default function Settings() {
                         </div>
                         <span className="font-medium text-sm">{t('settings.dark')}</span>
                       </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONNECTED APPS SECTION */}
+              {activeSection === 'connectedApps' && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-1">{t('settings.connectedApps', 'Connected Apps')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('settings.connectedAppsDesc', 'OAuth connections for signing in to QuillHive.')}</p>
+                  </div>
+                  <Separator />
+                  <div className="rounded-2xl border border-border/60 bg-card p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Link2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">OAuth sign-in</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Google and GitHub sign-in are available from the QuillHive login page.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

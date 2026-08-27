@@ -1,0 +1,1362 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Quillhive API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User profile operations
+  - name: posts
+    description: Post/story/poem operations
+  - name: comments
+    description: Comment operations
+  - name: likes
+    description: Like operations
+  - name: follows
+    description: Follow operations
+  - name: messages
+    description: Messaging operations
+  - name: groups
+    description: Groups and communities
+  - name: jobs
+    description: Jobs and collaboration board
+  - name: notifications
+    description: Notifications
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      operationId: getUsers
+      tags: [users]
+      summary: List users / search
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: page
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: limit
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersListResponse"
+
+  /users/{username}:
+    get:
+      operationId: getUserByUsername
+      tags: [users]
+      summary: Get user profile by username
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{username}/posts:
+    get:
+      operationId: getUserPosts
+      tags: [users]
+      summary: Get posts by a user
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: limit
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: User's posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsListResponse"
+
+  /users/me/profile:
+    patch:
+      operationId: updateMyProfile
+      tags: [users]
+      summary: Update my profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /posts:
+    get:
+      operationId: getPosts
+      tags: [posts]
+      summary: Get feed posts
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: [story, poem, novel, artwork, post, null]
+        - name: page
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: limit
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: feed
+          in: query
+          description: "following or explore"
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsListResponse"
+    post:
+      operationId: createPost
+      tags: [posts]
+      summary: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePostRequest"
+      responses:
+        "201":
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  /posts/{id}:
+    get:
+      operationId: getPost
+      tags: [posts]
+      summary: Get a post by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePost
+      tags: [posts]
+      summary: Update a post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePostRequest"
+      responses:
+        "200":
+          description: Updated post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+    delete:
+      operationId: deletePost
+      tags: [posts]
+      summary: Delete a post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /posts/{id}/comments:
+    get:
+      operationId: getPostComments
+      tags: [comments]
+      summary: Get comments for a post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: createComment
+      tags: [comments]
+      summary: Add a comment to a post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /posts/{id}/like:
+    post:
+      operationId: likePost
+      tags: [likes]
+      summary: Like or unlike a post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Like toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResponse"
+
+  /users/{username}/follow:
+    post:
+      operationId: followUser
+      tags: [follows]
+      summary: Follow or unfollow a user
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Follow toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowResponse"
+
+  /users/{username}/followers:
+    get:
+      operationId: getUserFollowers
+      tags: [follows]
+      summary: Get a user's followers
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Followers list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/{username}/following:
+    get:
+      operationId: getUserFollowing
+      tags: [follows]
+      summary: Get users that a user follows
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Following list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /messages/conversations:
+    get:
+      operationId: getConversations
+      tags: [messages]
+      summary: Get all conversations
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+
+  /messages/conversations/{conversationId}:
+    get:
+      operationId: getMessages
+      tags: [messages]
+      summary: Get messages in a conversation
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+
+  /messages/send:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /groups:
+    get:
+      operationId: getGroups
+      tags: [groups]
+      summary: List groups/communities
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: page
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: Groups
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupsListResponse"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{id}:
+    get:
+      operationId: getGroup
+      tags: [groups]
+      summary: Get a group by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{id}/join:
+    post:
+      operationId: joinGroup
+      tags: [groups]
+      summary: Join or leave a group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Membership toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinGroupResponse"
+
+  /groups/{id}/posts:
+    get:
+      operationId: getGroupPosts
+      tags: [groups]
+      summary: Get posts in a group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: Group posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsListResponse"
+
+  /jobs:
+    get:
+      operationId: getJobs
+      tags: [jobs]
+      summary: Get job / collaboration listings
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: [job, collaboration, commission, null]
+        - name: page
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: Jobs list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobsListResponse"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a job/collaboration listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job listing by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get notifications for current user
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/read:
+    post:
+      operationId: markNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /ai/assist:
+    post:
+      operationId: aiWritingAssist
+      tags: [posts]
+      summary: AI writing assist using Claude
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AIAssistRequest"
+      responses:
+        "200":
+          description: AI suggestion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIAssistResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: ["string", "null"]
+      required:
+        - success
+
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        displayName:
+          type: string
+      required:
+        - username
+        - email
+        - password
+        - displayName
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        coverUrl:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        followersCount:
+          type: integer
+        followingCount:
+          type: integer
+        postsCount:
+          type: integer
+        isFollowing:
+          type: boolean
+      required:
+        - id
+        - username
+        - email
+        - displayName
+        - createdAt
+        - followersCount
+        - followingCount
+        - postsCount
+        - isFollowing
+
+    UserProfile:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        workHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkEntry"
+        recentPosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+      required:
+        - user
+        - workHistory
+        - recentPosts
+
+    WorkEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        organization:
+          type: string
+        startYear:
+          type: integer
+        endYear:
+          type: ["integer", "null"]
+        description:
+          type: ["string", "null"]
+      required:
+        - id
+        - title
+        - organization
+        - startYear
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        coverUrl:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+
+    UsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - users
+        - total
+        - page
+        - limit
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+        authorId:
+          type: integer
+        author:
+          $ref: "#/components/schemas/User"
+        title:
+          type: ["string", "null"]
+        content:
+          type: string
+        excerpt:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [story, poem, novel, artwork, post]
+        imageUrl:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        likesCount:
+          type: integer
+        commentsCount:
+          type: integer
+        isLiked:
+          type: boolean
+        isPublished:
+          type: boolean
+        groupId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - authorId
+        - author
+        - content
+        - type
+        - tags
+        - likesCount
+        - commentsCount
+        - isLiked
+        - isPublished
+        - createdAt
+        - updatedAt
+
+    CreatePostRequest:
+      type: object
+      properties:
+        title:
+          type: ["string", "null"]
+        content:
+          type: string
+        excerpt:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [story, poem, novel, artwork, post]
+        imageUrl:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        isPublished:
+          type: boolean
+        groupId:
+          type: ["integer", "null"]
+      required:
+        - content
+        - type
+        - isPublished
+
+    UpdatePostRequest:
+      type: object
+      properties:
+        title:
+          type: ["string", "null"]
+        content:
+          type: ["string", "null"]
+        excerpt:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        isPublished:
+          type: ["boolean", "null"]
+
+    PostsListResponse:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - posts
+        - total
+        - page
+        - limit
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        postId:
+          type: integer
+        authorId:
+          type: integer
+        author:
+          $ref: "#/components/schemas/User"
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - postId
+        - authorId
+        - author
+        - content
+        - createdAt
+
+    CreateCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    LikeResponse:
+      type: object
+      properties:
+        liked:
+          type: boolean
+        likesCount:
+          type: integer
+      required:
+        - liked
+        - likesCount
+
+    FollowResponse:
+      type: object
+      properties:
+        following:
+          type: boolean
+        followersCount:
+          type: integer
+      required:
+        - following
+        - followersCount
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        senderId:
+          type: integer
+        sender:
+          $ref: "#/components/schemas/User"
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - senderId
+        - sender
+        - content
+        - createdAt
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        lastMessage:
+          $ref: "#/components/schemas/Message"
+        isGroup:
+          type: boolean
+        groupName:
+          type: ["string", "null"]
+        unreadCount:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - participants
+        - isGroup
+        - unreadCount
+        - updatedAt
+
+    SendMessageRequest:
+      type: object
+      properties:
+        recipientId:
+          type: ["integer", "null"]
+        conversationId:
+          type: ["integer", "null"]
+        content:
+          type: string
+      required:
+        - content
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        coverUrl:
+          type: ["string", "null"]
+        category:
+          type: string
+        membersCount:
+          type: integer
+        postsCount:
+          type: integer
+        isMember:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - membersCount
+        - postsCount
+        - isMember
+        - createdAt
+
+    CreateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        coverUrl:
+          type: ["string", "null"]
+      required:
+        - name
+        - category
+
+    GroupsListResponse:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+        total:
+          type: integer
+        page:
+          type: integer
+      required:
+        - groups
+        - total
+        - page
+
+    JoinGroupResponse:
+      type: object
+      properties:
+        isMember:
+          type: boolean
+        membersCount:
+          type: integer
+      required:
+        - isMember
+        - membersCount
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+        authorId:
+          type: integer
+        author:
+          $ref: "#/components/schemas/User"
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [job, collaboration, commission]
+        skills:
+          type: array
+          items:
+            type: string
+        compensation:
+          type: ["string", "null"]
+        remote:
+          type: boolean
+        location:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - authorId
+        - author
+        - title
+        - description
+        - type
+        - skills
+        - remote
+        - createdAt
+
+    CreateJobRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [job, collaboration, commission]
+        skills:
+          type: array
+          items:
+            type: string
+        compensation:
+          type: ["string", "null"]
+        remote:
+          type: boolean
+        location:
+          type: ["string", "null"]
+      required:
+        - title
+        - description
+        - type
+        - skills
+        - remote
+
+    JobsListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        total:
+          type: integer
+        page:
+          type: integer
+      required:
+        - jobs
+        - total
+        - page
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [like, comment, follow, mention, group_invite]
+        actorId:
+          type: integer
+        actor:
+          $ref: "#/components/schemas/User"
+        postId:
+          type: ["integer", "null"]
+        groupId:
+          type: ["integer", "null"]
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - actorId
+        - actor
+        - message
+        - isRead
+        - createdAt
+
+    AIAssistRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+        context:
+          type: ["string", "null"]
+        mode:
+          type: string
+          enum: [continue, improve, brainstorm, summarize]
+      required:
+        - prompt
+        - mode
+
+    AIAssistResponse:
+      type: object
+      properties:
+        suggestion:
+          type: string
+        tokens:
+          type: integer
+      required:
+        - suggestion
+        - tokens

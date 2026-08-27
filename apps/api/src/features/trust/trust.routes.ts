@@ -1,0 +1,77 @@
+import { Router } from "express";
+import { db } from "@workspace/db";
+import { userTrustScoresTable, usersTable } from "@workspace/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { getSessionUserId } from "../../lib/auth";
+import { updateUserTrustScore, getUserTrustScore } from "./trust.service";
+import { getUserReputationTimeline } from "./reputation.service";
+
+export const trustRouter = Router();
+export const adminTrustRouter = Router();
+
+function getViewerId(req: any): number | null {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith("Bearer ")) return null;
+  return getSessionUserId(auth.slice(7));
+}
+
+trustRouter.get("/me", async (req, res) => {
+  const userId = getViewerId(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+  let score = await getUserTrustScore(userId);
+  if (!score) {
+    score = await updateUserTrustScore(userId);
+  }
+  return res.json(score);
+});
+
+trustRouter.get("/timeline", async (req, res) => {
+  const userId = getViewerId(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  const timeline = await getUserReputationTimeline(userId);
+  return res.json(timeline);
+});
+
+trustRouter.get("/timeline/:userId", async (req, res) => {
+  const viewerId = getViewerId(req);
+  if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
+  const targetId = parseInt(req.params.userId);
+  if (isNaN(targetId)) return res.status(400).json({ error: "Invalid user id" });
+  const timeline = await getUserReputationTimeline(targetId);
+  return res.json(timeline);
+});
+
+trustRouter.get("/:userId", async (req, res) => {
+  const targetId = parseInt(req.params.userId);
+  if (isNaN(targetId)) return res.status(400).json({ error: "Invalid user id" });
+
+  const score = await getUserTrustScore(targetId);
+  if (!score) return res.json({ tier: "normal", userId: targetId, creatorLevel: "new_voice" });
+
+  return res.json({ tier: score.tier, userId: targetId, uti: Math.round(score.uti), creatorLevel: score.creatorLevel ?? "new_voice" });
+});
+
+trustRouter.post("/recalculate", async (req, res) => {
+  const userId = getViewerId(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+  const score = await updateUserTrustScore(userId);
+  return res.json(score);
+});
+
+adminTrustRouter.get("/users", async (req, res) => {
+  const userId = getViewerId(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+  const [user] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, userId));
+  if (!user || user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+
+  const scores = await db
+    .select()
+    .from(userTrustScoresTable)
+    .orderBy(desc(userTrustScoresTable.uti))
+    .limit(100);
+
+  return res.json(scores);
+});

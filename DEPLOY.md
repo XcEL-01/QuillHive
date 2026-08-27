@@ -1,0 +1,59 @@
+# QuillHive Deployment Sequence
+
+## First deploy ONLY (run once):
+
+1. Provision PostgreSQL database (Railway / Render / Neon)
+2. Set all environment variables (see `apps/api/.env.example`)
+3. Run database migrations:
+   ```
+   pnpm --filter @workspace/db db:push
+   ```
+4. Start API server:
+   ```
+   pnpm --filter @workspace/api-server start
+   ```
+5. After first boot, set yourself as super_admin:
+   ```sql
+   UPDATE users SET role = 'super_admin' WHERE email = 'your@email.com';
+   ```
+6. Configure email DNS (SPF, DKIM, DMARC) on your domain
+
+## Every subsequent deploy:
+
+1. Run migrations (safe to run multiple times):
+   ```
+   pnpm --filter @workspace/db db:push
+   ```
+2. Restart API server
+
+## Healthcheck
+
+The API exposes `GET /api/healthz` which returns:
+- `200 { status: "ok" }` when database is reachable
+- `503 { status: "degraded" }` when the database is down
+
+Railway and Render use this endpoint to determine instance health.
+
+## Environment variables checklist
+
+See `apps/api/.env.example` — all fields are documented there.
+
+Required for production:
+- `DATABASE_URL` — PostgreSQL connection string
+- `JWT_SECRET` — long random string (32+ chars)
+- `REFRESH_SECRET` — different long random string
+- `APP_URL` — your production frontend URL (e.g. `https://app.quillhive.com`)
+- `SESSION_SECRET` — session signing secret
+
+Recommended for production:
+- `RESEND_API_KEY` — email delivery (magic links, verification, digests)
+- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` — image CDN
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — GitHub OAuth
+
+## Services
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| API | 9000 | Express REST + Socket.io |
+| Web | 5000 | React SPA (Vite) |
+| Public Web | 3001 | SEO/OG server + landing page |

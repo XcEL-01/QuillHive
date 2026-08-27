@@ -1,0 +1,26 @@
+packages:
+  "@tiptap/react": "Rich text editor integration"
+  "@tiptap/pm": "ProseMirror dependencies for TipTap"
+  "@tiptap/starter-kit": "Standard editor features"
+  "@tiptap/extension-underline": "Underline text support"
+  "@tiptap/extension-placeholder": "Placeholder text in editor"
+  "zustand": "Global state management for auth and theme"
+  "framer-motion": "Page transitions and micro-interactions"
+  "date-fns": "Human-readable date formatting"
+  "clsx": "Utility for constructing className strings"
+  "tailwind-merge": "Utility for safely merging Tailwind classes"
+
+images:
+  - path: "artifacts/quillhive/public/images/auth-bg.png"
+    description: "Abstract creative deep violet and warm amber gradient with subtle ink splatters and a moody, inspiring aesthetic"
+    aspect_ratio: "16:9"
+  - path: "artifacts/quillhive/public/images/default-cover.png"
+    description: "Dark moody workspace with a glowing amber desk lamp, vintage typewriter, and deep violet shadows"
+    aspect_ratio: "16:9"
+  - path: "artifacts/quillhive/public/images/logo-icon.png"
+    description: "Minimalist glowing amber quill morphing into a bee shape on a dark transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - "App uses a patched window.fetch to automatically attach the JWT token from localStorage to all requests."
+  - "We rely on the pre-generated API hooks from @workspace/api-client-react."

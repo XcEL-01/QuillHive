@@ -1,0 +1,1091 @@
+import { useState, useEffect, type ComponentType } from 'react';
+import { useLocation } from 'wouter';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
+import { useCreatePost } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/store/auth';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Sparkles, Image as ImageIcon, Tags, Send, Save,
+  Bold, Italic, Underline as UnderlineIcon,
+  Heading1, Heading2, List, ListOrdered, Quote, Loader2, X,
+  Lightbulb, Wand2, MessageSquare, ChevronRight, Clock, FlaskConical, Calendar, Rocket,
+  Video, Zap, ChevronDown, ChevronUp, Newspaper, Type, Hash, Copy, Check, BookOpen
+} from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { AttachmentPicker } from '@/components/post/AttachmentPicker';
+import { useT } from '@/lib/i18n';
+
+type AiPanel = 'assist' | 'caption' | 'improve' | 'ideas' | 'titles' | 'hashtags' | null;
+
+const PRIMARY_POST_TYPES = [
+  {
+    value: 'post',
+    label: 'Post',
+    icon: Newspaper,
+    desc: 'Professional writing, deep dives & proof of work',
+    color: 'text-primary',
+    bg: 'bg-primary/10 border-primary/30',
+    activeBg: 'bg-primary/15 border-primary',
+  },
+  {
+    value: 'artwork',
+    label: 'Motion',
+    icon: Video,
+    desc: 'Video pitches & creative showcases',
+    color: 'text-rose-500',
+    bg: 'bg-rose-500/10 border-rose-500/30',
+    activeBg: 'bg-rose-500/15 border-rose-500',
+  },
+  {
+    value: 'spark',
+    label: 'Spark',
+    icon: Zap,
+    desc: 'Quick thought or work update',
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10 border-amber-500/30',
+    activeBg: 'bg-amber-500/15 border-amber-500',
+  },
+] as const;
+
+const ADVANCED_POST_TYPES: { value: string; label: string; icon: ComponentType<{ className?: string }> }[] = [];
+
+interface ChallengeContext {
+  id: number;
+  title: string;
+  prompt: string;
+  wordLimit: number | null;
+  endsAt: string;
+}
+
+export default function Write() {
+  usePageTitle('Write');
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const t = useT();
+  const { user, token } = useAuthStore();
+  const queryClient = useQueryClient();
+  const challengeId = (() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const match = /[?&]challenge=(\d+)/.exec(search);
+    return match ? Number.parseInt(match[1], 10) : null;
+  })();
+  const [challengeCtx, setChallengeCtx] = useState<ChallengeContext | null>(null);
+  const [originalityWarning, setOriginalityWarning] = useState<string | null>(null);
+  const [originalityChecking, setOriginalityChecking] = useState(false);
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState<string>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('qh_last_post_type') : null;
+    if (saved) return saved;
+    const { user } = useAuthStore.getState();
+    return (user as any)?.postsCount > 0 ? 'post' : 'spark';
+  });
+  const [tagsStr, setTagsStr] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [postAttachments, setPostAttachments] = useState<import('@/components/post/AttachmentPicker').Attachment[]>([]);
+  const [coverPreview, setCoverPreview] = useState<string>('');
+  const [enableSchedule, setEnableSchedule] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [enableAB, setEnableAB] = useState(false);
+  const [titleA, setTitleA] = useState('');
+  const [titleB, setTitleB] = useState('');
+
+  const [boostCtaPostId, setBoostCtaPostId] = useState<number | null>(null);
+  const [serverDraftId, setServerDraftId] = useState<number | null>(null);
+  const serverSaveRef = { current: serverDraftId };
+  serverSaveRef.current = serverDraftId;
+
+  const { mutate: createPost, isPending: isCreating } = useCreatePost({
+    mutation: {
+      onSuccess: (post) => {
+        try { localStorage.removeItem(`qh_draft_${user?.id || 'anon'}`); } catch { }
+        setServerDraftId(null);
+        queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+        if ((post as any).isPublished) {
+          const isFirstPost = ((user as any)?.postsCount ?? 1) === 0;
+          if (isFirstPost) {
+            toast({
+              title: '🎉 Your first post is live!',
+              description: "We're boosting your visibility to the QuillHive community for the next 30 days — your post will appear in the Fresh Voices section for new readers to discover.",
+              duration: 8000,
+            });
+          } else {
+            toast({ title: t('write.published'), description: t('write.publishedDesc') });
+          }
+          setBoostCtaPostId(post.id);
+        } else {
+          toast({ title: t('write.published'), description: t('write.publishedDesc') });
+          setLocation(`/post/${post.id}`);
+        }
+      },
+      onError: (err: unknown) => {
+        const errorObj = err as {
+          message?: string;
+          status?: number;
+          response?: { status?: number; data?: { error?: string; message?: string; similarPostIds?: number[] } };
+          data?: { error?: string; message?: string; similarPostIds?: number[] };
+        };
+        const data = errorObj?.response?.data ?? errorObj?.data;
+        const status = errorObj?.response?.status ?? errorObj?.status;
+        if (status === 409 || data?.error === 'DUPLICATE_CONTENT') {
+          toast({
+            title: t('write.duplicateContent'),
+            description: data?.message || t('write.duplicateContentDesc'),
+            variant: 'destructive',
+          });
+          return;
+        }
+        toast({
+          title: t('write.publishError'),
+          description: errorObj?.message || t('write.publishErrorDesc'),
+          variant: 'destructive',
+        });
+      }
+    }
+  });
+
+  const [seriesId, setSeriesId] = useState('');
+  const [mySeries, setMySeries] = useState<{ id: number; title: string }[]>([]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/series', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: unknown) => { if (Array.isArray(data)) setMySeries(data as { id: number; title: string }[]); })
+      .catch(() => {});
+  }, [token]);
+
+  const [aiPanel, setAiPanel] = useState<AiPanel>(null);
+  const [aiMode, setAiMode] = useState('continue');
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState('');
+
+  const [captionTopic, setCaptionTopic] = useState('');
+  const [captionTone, setCaptionTone] = useState('');
+  const [improveContent, setImproveContent] = useState('');
+  const [improveFocus, setImproveFocus] = useState('clarity');
+  const [ideasTheme, setIdeasTheme] = useState('');
+  const [ideasGenre, setIdeasGenre] = useState('');
+  const [ideasMood, setIdeasMood] = useState('');
+  const [aiTitleSuggestions, setAiTitleSuggestions] = useState<string[]>([]);
+  const [aiHashtagSuggestions, setAiHashtagSuggestions] = useState<string[]>([]);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Placeholder.configure({ placeholder: t('write.editorPlaceholder') })
+    ],
+    content: '',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-lg dark:prose-invert focus:outline-none min-h-[40vh] max-w-none px-4 py-8',
+      },
+    },
+  });
+
+  const [showAdvancedTypes, setShowAdvancedTypes] = useState(false);
+
+  // ─── Draft autosave ───────────────────────────────────────────
+  const DRAFT_KEY = `qh_draft_${user?.id || 'anon'}`;
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  // Load server draft from URL param ?draftId=X (used from /drafts page "Resume editing")
+  useEffect(() => {
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const draftIdParam = params.get('draftId');
+    if (!draftIdParam || !editor || !token) return;
+    const id = parseInt(draftIdParam, 10);
+    if (!id) return;
+    setServerDraftId(id);
+    fetch(`/api/posts/draft/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.draft) return;
+        const d = data.draft;
+        if (d.title) setTitle(d.title);
+        if (d.type) setType(d.type);
+        if (d.tags) {
+          try { setTagsStr(JSON.parse(d.tags).join(', ')); } catch { setTagsStr(d.tags); }
+        }
+        if (d.imageUrl) setImageUrl(d.imageUrl);
+        if (d.content) editor.commands.setContent(d.content);
+        setDraftRestored(true);
+        setHasDraft(false);
+        toast({ title: 'Draft loaded — resume editing' });
+      })
+      .catch(() => toast({ title: 'Could not load draft', variant: 'destructive' }));
+  }, [editor, token]);
+
+  useEffect(() => {
+    if (draftRestored) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d?.content || d?.title) setHasDraft(true);
+      }
+    } catch { }
+  }, []);
+
+  const restoreDraft = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+      if (d.title) setTitle(d.title);
+      if (d.type) setType(d.type);
+      if (d.tagsStr) setTagsStr(d.tagsStr);
+      if (d.imageUrl) setImageUrl(d.imageUrl);
+      if (d.content && editor) editor.commands.setContent(d.content);
+      setDraftRestored(true);
+      setHasDraft(false);
+      toast({ title: t('write.draftRestored') });
+    } catch {
+      toast({ title: t('write.draftRestoreFailed'), variant: 'destructive' });
+    }
+  };
+
+  const discardDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasDraft(false);
+  };
+
+  useEffect(() => {
+    if (!editor) return;
+    const interval = window.setInterval(() => {
+      const content = editor.getHTML();
+      if (!content || content === '<p></p>') return;
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          title, type, tagsStr, imageUrl, content, savedAt: Date.now(),
+        }));
+        setLastSavedAt(Date.now());
+      } catch { }
+    }, 30_000);
+    return () => window.clearInterval(interval);
+  }, [editor, title, type, tagsStr, imageUrl, DRAFT_KEY]);
+
+  useEffect(() => {
+    if (!editor || !token) return;
+    const interval = window.setInterval(async () => {
+      const content = editor.getHTML();
+      if (!content || content === '<p></p>') return;
+      try {
+        const body: Record<string, unknown> = {
+          title: title || undefined,
+          content,
+          type: type as any,
+          tags: tagsStr.split(',').map((t: string) => t.trim()).filter(Boolean),
+          imageUrl: imageUrl || undefined,
+        };
+        if (serverSaveRef.current) body.draftId = serverSaveRef.current;
+        const res = await fetch('/api/posts/draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          const data = await res.json() as { draftId?: number };
+          if (data.draftId && !serverSaveRef.current) setServerDraftId(data.draftId);
+        }
+      } catch { /* non-fatal */ }
+    }, 120_000);
+    return () => window.clearInterval(interval);
+  }, [editor, title, type, tagsStr, imageUrl, token]);
+
+  const handleRemoveCover = () => {
+    setImageUrl('');
+    setCoverPreview('');
+  };
+
+  const checkOriginality = async (content: string): Promise<{ ok: boolean; warning: string | null }> => {
+    if (!token || content.replace(/<[^>]+>/g, '').trim().length < 100) return { ok: true, warning: null };
+    try {
+      setOriginalityChecking(true);
+      const res = await fetch('/api/originality/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) return { ok: true, warning: null };
+      const data = (await res.json()) as { similar?: boolean; topMatchScore?: number; message?: string };
+      if (data.similar) {
+        return {
+          ok: false,
+          warning:
+            data.message ||
+            'Your content looks similar to existing posts. Add your own perspective or rewrite for originality.',
+        };
+      }
+      return { ok: true, warning: null };
+    } catch {
+      return { ok: true, warning: null };
+    } finally {
+      setOriginalityChecking(false);
+    }
+  };
+
+  const submitChallenge = async (postId: number) => {
+    if (!challengeCtx || !token) return;
+    try {
+      await fetch(`/api/challenges/${challengeCtx.id}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ postId }),
+      });
+    } catch {
+      /* non-fatal */
+    }
+  };
+
+  const handlePublish = async (isPublished: boolean) => {
+    if (!editor || editor.isEmpty) {
+      toast({ title: t('write.emptyContent'), description: t('write.emptyContentDesc'), variant: 'destructive' });
+      return;
+    }
+    if (!user) {
+      toast({ title: t('write.notLoggedIn'), variant: 'destructive' });
+      return;
+    }
+    const content = editor.getHTML();
+    if (isPublished) {
+      const { ok, warning } = await checkOriginality(content);
+      if (!ok) {
+        setOriginalityWarning(warning);
+        toast({
+          title: t('write.originalityFailed'),
+          description: warning || t('write.originalityFailedDesc'),
+          variant: 'destructive',
+        });
+        return;
+      }
+      setOriginalityWarning(null);
+    }
+    const payload: any = {
+      title: enableAB ? undefined : (title || undefined),
+      titleA: enableAB ? (titleA || undefined) : undefined,
+      titleB: enableAB ? (titleB || undefined) : undefined,
+      content,
+      type: type as any,
+      imageUrl: imageUrl || undefined,
+      attachments: postAttachments,
+      tags: tagsStr.split(',').map(t => t.trim()).filter(Boolean),
+      isPublished: enableSchedule ? false : isPublished,
+      scheduledAt: enableSchedule && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+      seriesId: seriesId ? Number(seriesId) : undefined,
+    };
+    createPost({
+      data: payload,
+    }, {
+      onSuccess: (post) => {
+        if (challengeCtx && isPublished) void submitChallenge(post.id);
+      },
+    } as Parameters<typeof createPost>[1]);
+    if (!isPublished) {
+      toast({ title: t('write.savedAsDraft'), description: t('write.savedAsDraftDesc') });
+    }
+  };
+
+  const callAiEndpoint = async (endpoint: string, body: Record<string, string>) => {
+    const res = await fetch(`/api/ai/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('AI request failed');
+    return res.json();
+  };
+
+  const handleAiAssist = async () => {
+    if (!aiPrompt) return;
+    setIsAiLoading(true);
+    setAiResult('');
+    try {
+      const data = await callAiEndpoint('assist', {
+        prompt: aiPrompt,
+        context: editor?.getText() || '',
+        mode: aiMode,
+      });
+      const suggestion = data.suggestion || '';
+      if (suggestion) {
+        editor?.chain().focus().insertContent(`\n\n${suggestion}`).run();
+        toast({ title: t('write.aiAssistComplete'), description: t('write.aiAssistCompleteDesc') });
+      }
+      setAiPanel(null);
+      setAiPrompt('');
+    } catch {
+      toast({ title: t('write.aiError'), description: t('write.aiAssistError'), variant: 'destructive' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const handleAiCaption = async () => {
+    if (!captionTopic) return;
+    setIsAiLoading(true);
+    setAiResult('');
+    try {
+      const data = await callAiEndpoint('caption', { topic: captionTopic, tone: captionTone });
+      setAiResult(data.suggestion || '');
+    } catch {
+      toast({ title: t('write.aiError'), description: t('write.aiCaptionError'), variant: 'destructive' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const handleAiImprove = async () => {
+    const textToImprove = improveContent || editor?.getText() || '';
+    if (!textToImprove) return;
+    setIsAiLoading(true);
+    setAiResult('');
+    try {
+      const data = await callAiEndpoint('improve', { content: textToImprove, focus: improveFocus });
+      setAiResult(data.suggestion || '');
+    } catch {
+      toast({ title: t('write.aiError'), description: t('write.aiImproveError'), variant: 'destructive' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const handleAiIdeas = async () => {
+    if (!ideasTheme) return;
+    setIsAiLoading(true);
+    setAiResult('');
+    try {
+      const data = await callAiEndpoint('ideas', { theme: ideasTheme, genre: ideasGenre, mood: ideasMood });
+      setAiResult(data.suggestion || '');
+    } catch {
+      toast({ title: t('write.aiError'), description: t('write.aiIdeasError'), variant: 'destructive' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const handleAiTitles = async () => {
+    const content = editor?.getText() || '';
+    if (!content.trim()) {
+      toast({ title: t('write.aiError'), description: 'Write some content first before generating titles.', variant: 'destructive' });
+      return;
+    }
+    setIsAiLoading(true);
+    setAiTitleSuggestions([]);
+    try {
+      const res = await fetch('/api/ai/titles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ content, type }),
+      });
+      if (!res.ok) throw new Error('AI request failed');
+      const data = await res.json();
+      setAiTitleSuggestions(Array.isArray(data.titles) ? data.titles : []);
+    } catch {
+      toast({ title: t('write.aiError'), description: 'Could not generate titles.', variant: 'destructive' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const handleAiHashtags = async () => {
+    const content = editor?.getText() || '';
+    if (!content.trim()) {
+      toast({ title: t('write.aiError'), description: 'Write some content first before generating tags.', variant: 'destructive' });
+      return;
+    }
+    setIsAiLoading(true);
+    setAiHashtagSuggestions([]);
+    try {
+      const res = await fetch('/api/ai/hashtags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ content, title }),
+      });
+      if (!res.ok) throw new Error('AI request failed');
+      const data = await res.json();
+      setAiHashtagSuggestions(Array.isArray(data.tags) ? data.tags : []);
+    } catch {
+      toast({ title: t('write.aiError'), description: 'Could not generate tags.', variant: 'destructive' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const applyResultToEditor = () => {
+    if (!aiResult) return;
+    editor?.chain().focus().insertContent(`\n\n${aiResult}`).run();
+    toast({ title: t('write.aiApplied') });
+    setAiPanel(null);
+    setAiResult('');
+  };
+
+  if (!editor) return null;
+
+  return (
+    <AppLayout>
+      <div className="max-w-4xl mx-auto px-4 md:px-0 pb-20">
+
+        {hasDraft && !draftRestored && (
+          <div className="mb-4 p-4 rounded-xl border border-amber-300/40 bg-amber-50 dark:bg-amber-950/20 flex items-center justify-between gap-3">
+            <p className="text-sm text-amber-900 dark:text-amber-200">
+              <Save className="w-4 h-4 inline mr-1" /> {t('write.unsavedDraft')}
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={discardDraft} className="rounded-xl">{t('write.discard')}</Button>
+              <Button size="sm" onClick={restoreDraft} className="rounded-xl">{t('write.restoreDraft')}</Button>
+            </div>
+          </div>
+        )}
+        {lastSavedAt && (
+          <p className="text-xs text-muted-foreground mb-2">
+            {t('write.autoSavedAt', 'Auto-saved at')} {new Date(lastSavedAt).toLocaleTimeString()}
+          </p>
+        )}
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl font-serif font-bold">{t('write.newPiece')}</h1>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => handlePublish(false)}
+              disabled={isCreating}
+              className="rounded-xl"
+            >
+              <Save className="w-4 h-4 mr-2" /> {t('write.draft')}
+            </Button>
+            <Button
+              onClick={() => handlePublish(true)}
+              disabled={isCreating || (enableSchedule && !scheduledAt)}
+              className="rounded-xl bg-gradient-to-r from-primary to-violet-500 text-white border-0 shadow-lg"
+            >
+              {isCreating
+                ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                : enableSchedule ? <Calendar className="w-4 h-4 mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+              {enableSchedule ? t('write.schedule') : t('write.publish')}
+            </Button>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border/60 rounded-3xl shadow-sm overflow-hidden mb-8">
+
+          {/* Metadata */}
+          <div className="p-6 bg-muted/30 border-b border-border/60 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* Type */}
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <Label>{t('write.typeLabel')}</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {PRIMARY_POST_TYPES.map(pt => {
+                  const Icon = pt.icon;
+                  const isActive = type === pt.value;
+                  return (
+                    <button
+                      key={pt.value}
+                      type="button"
+                      onClick={() => { setType(pt.value); localStorage.setItem('qh_last_post_type', pt.value); }}
+                      className={`rounded-xl border p-3 text-left transition-all ${isActive ? pt.activeBg : `bg-background border-border/60 hover:${pt.bg}`}`}
+                    >
+                      <Icon className={`w-5 h-5 mb-1.5 ${isActive ? pt.color : 'text-muted-foreground'}`} />
+                      <p className={`font-semibold text-sm ${isActive ? pt.color : 'text-foreground'}`}>{pt.label}</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{pt.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              {ADVANCED_POST_TYPES.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedTypes(v => !v)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                  >
+                    {showAdvancedTypes ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    More formats
+                  </button>
+                  {showAdvancedTypes && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {ADVANCED_POST_TYPES.map(at => {
+                        const Icon = at.icon;
+                        const isActive = type === at.value;
+                        return (
+                          <button
+                            key={at.value}
+                            type="button"
+                            onClick={() => { setType(at.value); localStorage.setItem('qh_last_post_type', at.value); }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-all ${isActive ? 'bg-primary/10 border-primary text-primary font-semibold' : 'bg-background border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground'}`}
+                          >
+                            <Icon className="w-3.5 h-3.5" /> {at.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Title / A-B Testing */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{t('write.titleLabel')} {enableAB ? t('write.abTestSuffix') : t('write.optionalSuffix')}</Label>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <FlaskConical className="w-3 h-3" />
+                  <span>{t('write.abTest')}</span>
+                  <Switch checked={enableAB} onCheckedChange={setEnableAB} />
+                </div>
+              </div>
+              {enableAB ? (
+                <div className="space-y-2">
+                  <Input placeholder={t('write.titleAPlaceholder')} value={titleA} onChange={e => setTitleA(e.target.value)} className="font-serif text-base rounded-xl bg-background" />
+                  <Input placeholder={t('write.titleBPlaceholder')} value={titleB} onChange={e => setTitleB(e.target.value)} className="font-serif text-base rounded-xl bg-background" />
+                  <p className="text-xs text-muted-foreground">{t('write.abTestHint')}</p>
+                </div>
+              ) : (
+                <Input
+                  placeholder={t('write.titlePlaceholder')}
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  className="font-serif text-lg rounded-xl bg-background"
+                />
+              )}
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Tags className="w-4 h-4" /> {t('write.tagsLabel')}
+              </Label>
+              <Input
+                placeholder={t('write.tagsInputPlaceholder')}
+                value={tagsStr}
+                onChange={e => setTagsStr(e.target.value)}
+                className="rounded-xl bg-background"
+              />
+            </div>
+
+            {/* Series */}
+            {mySeries.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" /> Add to Series
+                </Label>
+                <Select value={seriesId} onValueChange={setSeriesId}>
+                  <SelectTrigger className="rounded-xl bg-background">
+                    <SelectValue placeholder="None (standalone post)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None (standalone post)</SelectItem>
+                    {mySeries.map(s => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Group this post into an ongoing series for readers to follow.</p>
+              </div>
+            )}
+
+            {/* Cover Image URL */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" /> {t('write.coverImageLabel')}
+              </Label>
+              <Input
+                placeholder={t('write.coverUrlPlaceholder')}
+                value={imageUrl}
+                onChange={e => {
+                  setImageUrl(e.target.value);
+                  setCoverPreview(e.target.value);
+                }}
+                className="rounded-xl bg-background"
+              />
+              {coverPreview && (
+                <div className="relative rounded-xl overflow-hidden h-32 bg-muted">
+                  <img
+                    src={coverPreview}
+                    alt={t('write.coverPreviewAlt')}
+                    className="w-full h-full object-cover"
+                    onError={() => setCoverPreview('')}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveCover}
+                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Attachments */}
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" /> {t('write.attachFilesLabel')}
+              </Label>
+              <AttachmentPicker
+                attachments={postAttachments}
+                onChange={setPostAttachments}
+                max={10}
+                label={t('write.addFiles')}
+              />
+              <p className="text-xs text-muted-foreground">{t('write.attachFilesHint')}</p>
+            </div>
+            {/* Scheduling */}
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2"><Clock className="w-4 h-4" /> {t('write.schedulePublishing')}</Label>
+                <Switch checked={enableSchedule} onCheckedChange={setEnableSchedule} />
+              </div>
+              {enableSchedule && (
+                <div>
+                  <Input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={e => setScheduledAt(e.target.value)}
+                    min={new Date(Date.now() + 5 * 60_000).toISOString().slice(0, 16)}
+                    className="rounded-xl bg-background"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{t('write.scheduleHint')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="border-b border-border/60 bg-card p-2 flex flex-wrap items-center gap-1 sticky top-16 z-30 shadow-sm">
+            <Button size="icon" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'bg-muted' : ''}>
+              <Bold className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'bg-muted' : ''}>
+              <Italic className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? 'bg-muted' : ''}>
+              <UnderlineIcon className="w-4 h-4" />
+            </Button>
+            <div className="w-px h-6 bg-border mx-2" />
+            <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={editor.isActive('heading', { level: 1 }) ? 'bg-muted' : ''}>
+              <Heading1 className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? 'bg-muted' : ''}>
+              <Heading2 className="w-4 h-4" />
+            </Button>
+            <div className="w-px h-6 bg-border mx-2" />
+            <Button size="icon" variant="ghost" onClick={() => editor.chain().focus().toggleBulletList().run()} className={editor.isActive('bulletList') ? 'bg-muted' : ''}>
+              <List className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={editor.isActive('orderedList') ? 'bg-muted' : ''}>
+              <ListOrdered className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={editor.isActive('blockquote') ? 'bg-muted' : ''}>
+              <Quote className="w-4 h-4" />
+            </Button>
+            <div className="ml-auto flex items-center gap-1 flex-wrap">
+              <Button size="sm" variant="ghost" onClick={() => { setAiPanel('titles'); setAiResult(''); }} className="rounded-full text-xs gap-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                <Type className="w-3.5 h-3.5" /> {t('write.aiTitles', 'Titles')}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAiPanel('hashtags'); setAiResult(''); }} className="rounded-full text-xs gap-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/30">
+                <Hash className="w-3.5 h-3.5" /> {t('write.aiHashtags', 'Tags')}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAiPanel('assist'); setAiResult(''); }} className="rounded-full text-xs gap-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30">
+                <Sparkles className="w-3.5 h-3.5" /> {t('write.aiAssist')}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAiPanel('caption'); setAiResult(''); }} className="rounded-full text-xs gap-1.5 text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950/30">
+                <MessageSquare className="w-3.5 h-3.5" /> {t('write.aiCaption')}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAiPanel('improve'); setAiResult(''); setImproveContent(''); }} className="rounded-full text-xs gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+                <Wand2 className="w-3.5 h-3.5" /> {t('write.aiImprove')}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAiPanel('ideas'); setAiResult(''); }} className="rounded-full text-xs gap-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                <Lightbulb className="w-3.5 h-3.5" /> {t('write.aiIdeas')}
+              </Button>
+            </div>
+          </div>
+
+          {/* Editor */}
+          <div className="bg-card cursor-text" onClick={() => editor.commands.focus()}>
+            <EditorContent editor={editor} />
+          </div>
+        </div>
+      </div>
+
+      {/* AI Panel - Writing Assist */}
+      <Dialog open={aiPanel === 'assist'} onOpenChange={(o) => { if (!o) setAiPanel(null); }}>
+        <DialogContent className="sm:max-w-lg border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <Sparkles className="w-5 h-5 text-amber-500" /> {t('write.aiAssistTitle')}
+            </DialogTitle>
+            <DialogDescription>{t('write.aiAssistDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t('write.aiModeLabel')}</Label>
+              <Select value={aiMode} onValueChange={setAiMode}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="continue">{t('write.aiModeContinue')}</SelectItem>
+                  <SelectItem value="improve">{t('write.aiModeImprove')}</SelectItem>
+                  <SelectItem value="brainstorm">{t('write.aiModeBrainstorm')}</SelectItem>
+                  <SelectItem value="summarize">{t('write.aiModeSummarize')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('write.aiInstructions')}</Label>
+              <Input placeholder={t('write.aiInstructionsPlaceholder')} value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="rounded-xl" onKeyDown={e => e.key === 'Enter' && handleAiAssist()} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAiPanel(null)} className="rounded-xl">{t('write.cancel')}</Button>
+            <Button onClick={handleAiAssist} disabled={isAiLoading || !aiPrompt} className="rounded-xl bg-amber-500 text-white hover:bg-amber-600">
+              {isAiLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />} {t('write.generate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Panel - Caption Generator */}
+      <Dialog open={aiPanel === 'caption'} onOpenChange={(o) => { if (!o) setAiPanel(null); }}>
+        <DialogContent className="sm:max-w-lg border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <MessageSquare className="w-5 h-5 text-violet-500" /> {t('write.captionTitle')}
+            </DialogTitle>
+            <DialogDescription>{t('write.captionDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t('write.captionTopicLabel')}</Label>
+              <Input placeholder={t('write.captionTopicPlaceholder')} value={captionTopic} onChange={e => setCaptionTopic(e.target.value)} className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('write.captionToneLabel')}</Label>
+              <Input placeholder={t('write.captionTonePlaceholder')} value={captionTone} onChange={e => setCaptionTone(e.target.value)} className="rounded-xl" />
+            </div>
+            {aiResult && (
+              <div className="bg-muted/50 rounded-xl p-4 text-sm whitespace-pre-wrap border border-border/50 max-h-48 overflow-y-auto">{aiResult}</div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAiPanel(null)} className="rounded-xl">{t('write.close')}</Button>
+            <Button onClick={handleAiCaption} disabled={isAiLoading || !captionTopic} className="rounded-xl bg-violet-600 text-white hover:bg-violet-700">
+              {isAiLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageSquare className="w-4 h-4 mr-2" />} {t('write.generate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Panel - Improve Content */}
+      <Dialog open={aiPanel === 'improve'} onOpenChange={(o) => { if (!o) setAiPanel(null); }}>
+        <DialogContent className="sm:max-w-lg border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <Wand2 className="w-5 h-5 text-blue-500" /> {t('write.improveTitle')}
+            </DialogTitle>
+            <DialogDescription>{t('write.improveDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t('write.improveFocusLabel')}</Label>
+              <Select value={improveFocus} onValueChange={setImproveFocus}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clarity">{t('write.focusClarity')}</SelectItem>
+                  <SelectItem value="engagement">{t('write.focusEngagement')}</SelectItem>
+                  <SelectItem value="flow">{t('write.focusFlow')}</SelectItem>
+                  <SelectItem value="impact">{t('write.focusImpact')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('write.improveContentLabel')}</Label>
+              <Textarea placeholder={t('write.improveContentPlaceholder')} value={improveContent} onChange={e => setImproveContent(e.target.value)} className="rounded-xl min-h-[80px]" />
+            </div>
+            {aiResult && (
+              <div className="space-y-2">
+                <div className="bg-muted/50 rounded-xl p-4 text-sm whitespace-pre-wrap border border-border/50 max-h-48 overflow-y-auto">{aiResult}</div>
+                <Button size="sm" variant="outline" onClick={applyResultToEditor} className="w-full rounded-xl">
+                  <ChevronRight className="w-4 h-4 mr-2" /> {t('write.applyToEditor')}
+                </Button>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAiPanel(null)} className="rounded-xl">{t('write.close')}</Button>
+            <Button onClick={handleAiImprove} disabled={isAiLoading} className="rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+              {isAiLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wand2 className="w-4 h-4 mr-2" />} {t('write.aiImprove')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Panel - Idea Generator */}
+      <Dialog open={aiPanel === 'ideas'} onOpenChange={(o) => { if (!o) setAiPanel(null); }}>
+        <DialogContent className="sm:max-w-lg border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <Lightbulb className="w-5 h-5 text-emerald-500" /> {t('write.ideasTitle')}
+            </DialogTitle>
+            <DialogDescription>{t('write.ideasDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t('write.ideasThemeLabel')}</Label>
+              <Input placeholder={t('write.ideasThemePlaceholder')} value={ideasTheme} onChange={e => setIdeasTheme(e.target.value)} className="rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t('write.ideasGenreLabel')}</Label>
+                <Input placeholder={t('write.ideasGenrePlaceholder')} value={ideasGenre} onChange={e => setIdeasGenre(e.target.value)} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('write.ideasMoodLabel')}</Label>
+                <Input placeholder={t('write.ideasMoodPlaceholder')} value={ideasMood} onChange={e => setIdeasMood(e.target.value)} className="rounded-xl" />
+              </div>
+            </div>
+            {aiResult && (
+              <div className="bg-muted/50 rounded-xl p-4 text-sm whitespace-pre-wrap border border-border/50 max-h-56 overflow-y-auto">{aiResult}</div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAiPanel(null)} className="rounded-xl">{t('write.close')}</Button>
+            <Button onClick={handleAiIdeas} disabled={isAiLoading || !ideasTheme} className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+              {isAiLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lightbulb className="w-4 h-4 mr-2" />} {t('write.generateIdeas')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Panel - Title Suggestions */}
+      <Dialog open={aiPanel === 'titles'} onOpenChange={(o) => { if (!o) setAiPanel(null); }}>
+        <DialogContent className="sm:max-w-lg border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <Type className="w-5 h-5 text-rose-500" /> {t('write.aiTitlesTitle', 'Title Suggestions')}
+            </DialogTitle>
+            <DialogDescription>{t('write.aiTitlesDesc', 'Generate 3 compelling title options based on your content.')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {aiTitleSuggestions.length === 0 && !isAiLoading && (
+              <p className="text-sm text-muted-foreground text-center py-4">{t('write.aiTitlesHint', 'Write some content first, then generate title suggestions.')}</p>
+            )}
+            {aiTitleSuggestions.map((t2, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-border/50 bg-muted/30 group">
+                <span className="text-xs font-bold text-muted-foreground mt-0.5 w-4 shrink-0">{i + 1}</span>
+                <p className="flex-1 text-sm font-medium text-foreground leading-snug">{t2}</p>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg"
+                    onClick={() => { setTitle(t2); toast({ title: 'Title applied!' }); setAiPanel(null); }}>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg"
+                    onClick={() => { navigator.clipboard.writeText(t2); setCopiedIdx(i); setTimeout(() => setCopiedIdx(null), 1500); }}>
+                    {copiedIdx === i ? <Check className="w-3.5 h-3.5 text-blue-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAiPanel(null)} className="rounded-xl">{t('write.close')}</Button>
+            <Button onClick={handleAiTitles} disabled={isAiLoading} className="rounded-xl bg-rose-500 text-white hover:bg-rose-600">
+              {isAiLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Type className="w-4 h-4 mr-2" />} {t('write.generateTitles', 'Generate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Panel - Hashtag Suggestions */}
+      <Dialog open={aiPanel === 'hashtags'} onOpenChange={(o) => { if (!o) setAiPanel(null); }}>
+        <DialogContent className="sm:max-w-lg border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <Hash className="w-5 h-5 text-teal-500" /> {t('write.aiHashtagsTitle', 'Tag Suggestions')}
+            </DialogTitle>
+            <DialogDescription>{t('write.aiHashtagsDesc', 'Auto-generate relevant tags to reach your ideal audience.')}</DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {aiHashtagSuggestions.length === 0 && !isAiLoading && (
+              <p className="text-sm text-muted-foreground text-center py-4">{t('write.aiHashtagsHint', 'Write some content first, then generate tag suggestions.')}</p>
+            )}
+            {aiHashtagSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {aiHashtagSuggestions.map((tag, i) => (
+                  <button key={i} onClick={() => {
+                    const current = tagsStr.split(',').map(s => s.trim()).filter(Boolean);
+                    if (!current.includes(tag)) { setTagsStr([...current, tag].join(', ')); }
+                  }} className="px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 text-xs font-medium border border-teal-200 dark:border-teal-800 hover:bg-teal-200 dark:hover:bg-teal-800/50 transition-colors">
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            )}
+            {aiHashtagSuggestions.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-3">{t('write.aiHashtagsApplyHint', 'Click a tag to add it to your post.')}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAiPanel(null)} className="rounded-xl">{t('write.close')}</Button>
+            <Button onClick={handleAiHashtags} disabled={isAiLoading} className="rounded-xl bg-teal-600 text-white hover:bg-teal-700">
+              {isAiLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Hash className="w-4 h-4 mr-2" />} {t('write.generateTags', 'Generate tags')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Post-publish Boost CTA */}
+      <Dialog open={!!boostCtaPostId} onOpenChange={(open) => { if (!open && boostCtaPostId) { setLocation(`/post/${boostCtaPostId}`); setBoostCtaPostId(null); } }}>
+        <DialogContent className="sm:max-w-md border-border/50 rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-serif">
+              <Rocket className="w-5 h-5 text-violet-500" /> {t('write.boostCtaTitle', "Your post is live!")}
+            </DialogTitle>
+            <DialogDescription>
+              {t('write.boostCtaDesc', "Give your post a boost to reach more readers across QuillHive.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-violet-500/10 border border-violet-500/20">
+              <Rocket className="w-5 h-5 text-violet-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-foreground">{t('write.boostCtaFeature', "Amplify your reach")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('write.boostCtaFeatureDesc', "Boosted posts appear at the top of feeds and get a prominent badge.")}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => { setLocation(`/post/${boostCtaPostId!}`); setBoostCtaPostId(null); }} className="rounded-xl">
+              {t('write.boostCtaSkip', "View post")}
+            </Button>
+            <Button
+              onClick={() => { setLocation(`/post/${boostCtaPostId!}`); setBoostCtaPostId(null); }}
+              className="rounded-xl bg-violet-500 text-white hover:bg-violet-600"
+            >
+              <Rocket className="w-4 h-4 mr-2" /> {t('write.boostCtaAction', "Boost this post")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  );
+}

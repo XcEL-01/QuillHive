@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: quillhive-api
+    runtime: node
+    plan: free
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @workspace/db db:push && pnpm --filter @workspace/api-server build
+    startCommand: node dist/index.mjs
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000

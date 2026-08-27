@@ -1,0 +1,25 @@
+{
+  "name": "QuillHive",
+  "short_name": "QuillHive",
+  "description": "Grow, get discovered, find opportunities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#5B21B6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/images/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["social", "productivity", "entertainment"]
+}

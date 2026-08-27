@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Allow: /explore
+Allow: /about
+Allow: /terms
+Allow: /privacy
+Allow: /content-policy
+Allow: /library
+Allow: /library/
+Allow: /u/
+Allow: /profile/
+Allow: /post/
+Allow: /portfolio/
+Disallow: /admin
+Disallow: /settings
+Disallow: /messages
+Disallow: /onboarding
+Disallow: /write
+Disallow: /library/new
+Disallow: /api/
+
+Sitemap: __APP_URL__/sitemap.xml

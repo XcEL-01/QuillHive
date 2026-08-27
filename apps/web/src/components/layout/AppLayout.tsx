@@ -1,0 +1,464 @@
+import { useState, useCallback, useEffect } from "react";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { Link, useLocation } from "wouter";
+import {
+  Home, Compass, PenLine, MessageCircle, User as UserIcon,
+  Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
+  BarChart3, BookOpen, Users, MoreHorizontal, FileText, Zap,
+  Bookmark, Archive, Star, Sparkles, Layers, Link2,
+} from "lucide-react";
+import { useAuthStore } from "@/store/auth";
+import { useTheme } from "@/hooks/use-theme";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { getInitials } from "@/lib/utils";
+import { useGetNotifications } from "@workspace/api-client-react";
+import { useSocketEvent, useSocketConnection } from "@/hooks/useSocket";
+import { useT } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { StrikesBanner } from "@/components/StrikesBanner";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { CreateTypeSelector } from "@/components/compose/CreateTypeSelector";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
+import { useFeature } from "@/lib/features";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { RouteProgress } from "./RouteProgress";
+
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+const MOBILE_PRIMARY = ["/" , "/explore", "__create__", "/workspace", "/library"];
+const MOBILE_MORE = ["/notifications", "/motion", "/groups"];
+
+export function AppLayout({ children }: AppLayoutProps) {
+  const motionEnabled = useFeature("motion_enabled");
+  const chainsEnabled = useFeature("chains_enabled");
+  const [location, navigate] = useLocation();
+  const { user, logout } = useAuthStore();
+  const { theme, toggleTheme } = useTheme();
+  const [liveNotifCount, setLiveNotifCount] = useState(0);
+  const [liveMessageCount, setLiveMessageCount] = useState(0);
+  const [baseMessageCount, setBaseMessageCount] = useState(0);
+  const [trustTier, setTrustTier] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const t = useT();
+
+  useKeyboardShortcuts({
+    onOpenCreate: () => setCreateOpen(true),
+    onFocusSearch: () => {
+      document.getElementById("global-search")?.focus();
+    },
+  });
+
+  useRealtimeNotifications();
+
+  useEffect(() => {
+    if (!user) return;
+    const token = (user as any).token ?? localStorage.getItem("qh_token");
+    fetch("/api/trust/me", { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.tier) setTrustTier(d.tier); })
+      .catch(() => {});
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = (user as any).token ?? localStorage.getItem("qh_token");
+    fetch("/api/messages/unread-count", { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (typeof d?.count === "number") setBaseMessageCount(d.count); })
+      .catch(() => {});
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (location.startsWith("/messages")) { setLiveMessageCount(0); setBaseMessageCount(0); }
+    if (location.startsWith("/notifications")) setLiveNotifCount(0);
+  }, [location]);
+
+  useSocketConnection();
+  usePushNotifications();
+
+  const { data: notifications } = useGetNotifications();
+  const unreadNotifCount = (notifications?.filter(n => !n.isRead).length ?? 0) + liveNotifCount;
+  const unreadMessageCount = baseMessageCount + liveMessageCount;
+
+  usePageTitle(undefined, unreadNotifCount > 0 ? unreadNotifCount : undefined);
+
+  useSocketEvent<{ type: string }>("notification:new", useCallback((data) => {
+    if (data.type === "message") {
+      if (!location.startsWith("/messages")) setLiveMessageCount(prev => prev + 1);
+    } else {
+      setLiveNotifCount(prev => prev + 1);
+    }
+  }, [location]));
+
+  const isActive = (href: string, exact?: boolean) => {
+    if (href === "__create__") return false;
+    return exact ? location === href : location.startsWith(href);
+  };
+
+  const handleNavClick = (href: string) => {
+    if (href === "__create__") { setCreateOpen(true); return; }
+    if (href === "/messages") { setLiveMessageCount(0); setBaseMessageCount(0); }
+    if (href === "/notifications") setLiveNotifCount(0);
+  };
+
+  const NAV_ITEMS = [
+    { href: "/", icon: Home, label: "Home", exact: true },
+    { href: "/explore", icon: Compass, label: "Discover" },
+    { href: "/notifications", icon: Bell, label: "Alerts", showBadge: "notif" as const },
+    { href: "__create__", icon: PenLine, label: "Create", primary: true },
+    ...(motionEnabled ? [{ href: "/motion", icon: Film, label: "Studio" }] : []),
+    { href: "/groups", icon: Users, label: "Groups" },
+    { href: "/workspace", icon: Briefcase, label: "Workspace" },
+    { href: "/library", icon: BookOpen, label: "Library" },
+  ];
+
+  const avatarUrl = user?.avatarUrl ?? "";
+
+  const SidebarNavItem = ({ item }: { item: (typeof NAV_ITEMS)[0] }) => {
+    const Icon = item.icon;
+    const active = isActive(item.href, item.exact);
+    const badge = item.showBadge === "notif" ? unreadNotifCount : 0;
+    const isCreate = item.href === "__create__";
+
+    if (isCreate) {
+      return (
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left bg-primary text-primary-foreground hover:bg-primary/90 font-semibold transition-all"
+        >
+          <Icon className="w-5 h-5 shrink-0" />
+          <span className="text-sm">{item.label}</span>
+        </button>
+      );
+    }
+    return (
+      <Link
+        href={item.href}
+        onClick={() => handleNavClick(item.href)}
+        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl w-full transition-all ${
+          active ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+        <span className="text-sm">{item.label}</span>
+        {badge > 0 && (
+          <span className="ml-auto w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <RouteProgress />
+      {/* ── TOP HEADER ── */}
+      <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-background/90 backdrop-blur-lg border-b border-border">
+        <div className="h-full flex items-center gap-3 px-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-105 transition-transform">
+              <defs>
+                <linearGradient id="qh-logo-g" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+              <path d="M16 2.5 L27.5 9.25 L27.5 22.75 L16 29.5 L4.5 22.75 L4.5 9.25 Z" fill="url(#qh-logo-g)" />
+              <path d="M16 8 L20.5 15.5 L16 24 L11.5 15.5 Z" fill="white" opacity="0.95" />
+              <path d="M14 15.5 L18 15.5" stroke="url(#qh-logo-g)" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="16" cy="8" r="1.8" fill="white" opacity="0.9" />
+            </svg>
+            <span className="font-serif font-bold text-lg text-primary tracking-tight hidden sm:block">QuillHive</span>
+          </Link>
+
+          {/* Search — fills centre */}
+          <GlobalSearch />
+
+          {/* Right: Messages + Theme + Avatar */}
+          <div className="flex items-center gap-1 shrink-0">
+            <Link
+              href="/messages"
+              onClick={() => { setLiveMessageCount(0); setBaseMessageCount(0); }}
+              className="relative p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
+              title="Messages"
+            >
+              <MessageCircle className="w-5 h-5" />
+              {unreadMessageCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                </span>
+              )}
+            </Link>
+
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground rounded-full hidden sm:flex">
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+
+            <LanguageSwitcher saveToBackend={!!user} />
+
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full ml-1">
+                    <Avatar className="h-8 w-8 border-2 border-transparent hover:border-primary transition-colors">
+                      {avatarUrl ? <AvatarImage src={avatarUrl} alt={user.displayName} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                        {getInitials(user.displayName || user.username || "?")}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 rounded-2xl">
+                  <div className="px-3 py-3">
+                    <p className="font-semibold truncate text-sm">{user.displayName || user.username}</p>
+                    <p className="text-xs text-muted-foreground">@{user.username}</p>
+                    {trustTier && (
+                      <span className={`mt-1 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        trustTier === "trusted" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          : trustTier === "restricted" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                          : "bg-primary/10 text-primary"
+                      }`}>
+                        <ShieldCheck className="w-2.5 h-2.5" />
+                        {trustTier === "trusted" ? "Trusted Creator" : trustTier === "restricted" ? "Restricted" : "Creator Member"}
+                      </span>
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Profile & Content</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.username}`} className="cursor-pointer w-full flex items-center gap-2">
+                      <UserIcon className="w-4 h-4" /> My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.username}?tab=posts`} className="cursor-pointer w-full flex items-center gap-2">
+                      <FileText className="w-4 h-4" /> My Posts
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.username}?tab=sparks`} className="cursor-pointer w-full flex items-center gap-2">
+                      <Zap className="w-4 h-4" /> My Sparks
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.username}?tab=motion`} className="cursor-pointer w-full flex items-center gap-2">
+                      <Film className="w-4 h-4" /> My Motions
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/drafts" className="cursor-pointer w-full flex items-center gap-2">
+                      <Bookmark className="w-4 h-4" /> Drafts
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer w-full flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" /> Growth Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Creative Tools</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link href="/library" className="cursor-pointer w-full flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" /> Library
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/motion" className="cursor-pointer w-full flex items-center gap-2">
+                      <Film className="w-4 h-4" /> Studio
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/carousel" className="cursor-pointer w-full flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-violet-400" />Carousel Generator
+                    </Link>
+                  </DropdownMenuItem>
+                  {chainsEnabled && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/chains" className="cursor-pointer w-full flex items-center gap-2">
+                        <Link2 className="w-4 h-4" /> Chains
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/collections" className="cursor-pointer w-full flex items-center gap-2">
+                      <Archive className="w-4 h-4" /> Collections
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/highlights" className="cursor-pointer w-full flex items-center gap-2">
+                      <Star className="w-4 h-4" /> Highlights
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Professional</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link href="/workspace" className="cursor-pointer w-full flex items-center gap-2">
+                      <Briefcase className="w-4 h-4" /> Workspace
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/analytics" className="cursor-pointer w-full flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" /> Analytics
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/promotions" className="cursor-pointer w-full flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" /> Promotions
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Account</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link href="/invite" className="cursor-pointer w-full flex items-center gap-2">
+                      <Users className="w-4 h-4" /> Invite Creators
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="cursor-pointer w-full flex items-center gap-2">
+                      <Settings className="w-4 h-4" /> Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  {(user as any)?.role && ["moderator", "admin", "super_admin"].includes((user as any).role) && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer w-full flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                        <ShieldCheck className="w-4 h-4" /> Admin Panel
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-destructive focus:bg-destructive/10 cursor-pointer flex items-center gap-2">
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ── LAYOUT BODY ── */}
+      <div className="flex pt-16">
+        {/* Desktop Left Sidebar */}
+        <aside className="hidden md:flex flex-col fixed top-16 left-0 w-56 h-[calc(100vh-4rem)] border-r border-border bg-background z-30 overflow-y-auto">
+          <nav className="flex flex-col gap-1 p-3 flex-1">
+            {NAV_ITEMS.map(item => (
+              <SidebarNavItem key={item.href} item={item} />
+            ))}
+          </nav>
+          <div className="p-3 border-t border-border">
+            <Button variant="ghost" size="sm" onClick={toggleTheme} className="w-full justify-start gap-2 text-muted-foreground text-sm rounded-xl">
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </Button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 md:ml-56 pb-20 md:pb-6 min-h-[calc(100vh-4rem)] w-full">
+          {user && <StrikesBanner />}
+          {children}
+        </main>
+      </div>
+
+      {/* ── MOBILE BOTTOM NAV ── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border pb-safe">
+        <div className="flex items-center justify-around px-1 py-1">
+          {MOBILE_PRIMARY.map(href => {
+            const item = NAV_ITEMS.find(n => n.href === href)!;
+            const Icon = item.icon;
+            const active = isActive(item.href, item.exact);
+            const isCreate = item.href === "__create__";
+
+            return (
+              <button
+                key={href}
+                onClick={() => {
+                  if (isCreate) { setCreateOpen(true); return; }
+                  handleNavClick(item.href);
+                  navigate(item.href);
+                }}
+                className="flex flex-col items-center justify-center p-1 min-w-[3.5rem]"
+              >
+                <div className={`relative flex items-center justify-center rounded-xl transition-all duration-200 ${
+                  isCreate
+                    ? "w-12 h-12 bg-primary text-primary-foreground shadow-lg shadow-primary/30 -translate-y-2 rounded-2xl"
+                    : active ? "p-2.5 bg-primary/10 text-primary" : "p-2.5 text-muted-foreground"
+                }`}>
+                  <Icon className={isCreate ? "w-6 h-6" : "w-5 h-5"} />
+                </div>
+                {!isCreate && (
+                  <span className={`text-[9px] mt-0.5 font-medium ${active ? "text-primary" : "text-muted-foreground"}`}>
+                    {item.label}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          {/* More button */}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className="flex flex-col items-center justify-center p-1 min-w-[3.5rem]"
+          >
+            <div className="p-2.5 text-muted-foreground">
+              <MoreHorizontal className="w-5 h-5" />
+            </div>
+            <span className="text-[9px] mt-0.5 font-medium text-muted-foreground">More</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* More Sheet */}
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl pb-8">
+          <div className="py-2 space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-2">More</p>
+            {MOBILE_MORE.map(href => {
+              const item = NAV_ITEMS.find(n => n.href === href)!;
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              const badge = item.showBadge === "notif" ? unreadNotifCount : 0;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => { setMoreOpen(false); handleNavClick(href); }}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl w-full transition-colors ${
+                    active ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                  {badge > 0 && (
+                    <span className="ml-auto w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {badge > 9 ? "9+" : badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Create Type Selector */}
+      <CreateTypeSelector open={createOpen} onClose={() => setCreateOpen(false)} />
+    </div>
+  );
+}

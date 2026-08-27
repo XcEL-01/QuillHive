@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @workspace/quillhive build"
+
+[deploy]
+startCommand = "npx serve dist -s -l 5000"

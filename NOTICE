@@ -1,0 +1,46 @@
+QuillHive — Where Creators Gather
+Copyright (c) QuillHive Contributors
+
+This product includes open-source software components. Each component is
+distributed under its own license; see the linked projects for full text.
+
+Runtime dependencies (selected, non-exhaustive):
+  - express                MIT          https://expressjs.com
+  - drizzle-orm            Apache-2.0   https://orm.drizzle.team
+  - drizzle-kit            MIT          https://orm.drizzle.team
+  - pg                     MIT          https://node-postgres.com
+  - socket.io              MIT          https://socket.io
+  - bullmq                 MIT          https://bullmq.io
+  - ioredis                MIT          https://github.com/redis/ioredis
+  - pino / pino-http       MIT          https://getpino.io
+  - sanitize-html          MIT          https://github.com/apostrophecms/sanitize-html
+  - zod                    MIT          https://zod.dev
+
+Web client:
+  - react / react-dom      MIT          https://react.dev
+  - vite                   MIT          https://vite.dev
+  - @tanstack/react-query  MIT          https://tanstack.com/query
+  - tailwindcss            MIT          https://tailwindcss.com
+  - tiptap                 MIT          https://tiptap.dev
+  - radix-ui               MIT          https://www.radix-ui.com
+  - lucide-react           ISC          https://lucide.dev
+  - framer-motion          MIT          https://www.framer.com/motion
+  - dompurify              (Apache-2.0 OR MPL-2.0)  https://github.com/cure53/DOMPurify
+  - zustand                MIT          https://github.com/pmndrs/zustand
+  - wouter                 ISC          https://github.com/molefrog/wouter
+
+Tooling:
+  - typescript             Apache-2.0   https://www.typescriptlang.org
+  - pnpm                   MIT          https://pnpm.io
+  - esbuild                MIT          https://esbuild.github.io
+
+A complete, machine-generated list of every transitive dependency, with
+its specific version and license, can be produced at any time by running:
+
+    pnpm licenses list --long > NOTICE-FULL.txt
+
+The full text of each license is included in the corresponding package
+under `node_modules/<package>/LICENSE`.
+
+QuillHive itself is licensed under the terms of the project LICENSE file
+at the repository root.

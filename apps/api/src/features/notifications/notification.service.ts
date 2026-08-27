@@ -1,0 +1,168 @@
+import { db } from "@workspace/db";
+import { notificationsTable, usersTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
+import { emitToUser } from "../../lib/socket";
+import { logger } from "../../lib/logger";
+import { sendPushToUser } from "./push.service";
+
+export type NotificationType =
+  | "like"
+  | "comment"
+  | "comment_like"
+  | "reply"
+  | "follow"
+  | "mention"
+  | "poll_vote"
+  | "appreciation"
+  | "share"
+  | "highlight"
+  | "system"
+  | "admin_action"
+  | "group_invite"
+  | "milestone"
+  | "trending"
+  | "referral_reward"
+  | "achievement"
+  | "streak_milestone"
+  | "opportunity_nudge"
+  | "library_save"
+  | "library_feature"
+  | "library_entry"
+  | "commission_request"
+  | "commission_response"
+  | "skill_endorsement"
+  | "collaboration_accepted"
+  | "collaboration_declined"
+  | "post_approved"
+  | "post_rejected"
+  | "digest";
+
+interface NotifyOpts {
+  userId: number;
+  /** actorId=0 (or omitted) means a system-generated notification — self-skip guard is bypassed */
+  actorId?: number;
+  type: NotificationType;
+  message: string;
+  title?: string;
+  url?: string;
+  postId?: number | null;
+  groupId?: number | null;
+  digestGroup?: string | null;
+}
+
+const PRIORITY_MAP: Record<NotificationType, { priority: string; category: string }> = {
+  mention: { priority: "high", category: "mention" },
+  reply: { priority: "high", category: "social" },
+  comment: { priority: "normal", category: "social" },
+  comment_like: { priority: "low", category: "social" },
+  like: { priority: "low", category: "social" },
+  follow: { priority: "normal", category: "social" },
+  poll_vote: { priority: "low", category: "social" },
+  appreciation: { priority: "normal", category: "social" },
+  share: { priority: "normal", category: "social" },
+  highlight: { priority: "normal", category: "social" },
+  admin_action: { priority: "urgent", category: "admin" },
+  system: { priority: "high", category: "system" },
+  group_invite: { priority: "high", category: "social" },
+  milestone: { priority: "high", category: "growth" },
+  trending: { priority: "high", category: "growth" },
+  referral_reward: { priority: "high", category: "growth" },
+  achievement: { priority: "high", category: "growth" },
+  streak_milestone: { priority: "high", category: "growth" },
+  opportunity_nudge: { priority: "high", category: "growth" },
+  library_save: { priority: "low", category: "social" },
+  library_feature: { priority: "high", category: "achievement" },
+  library_entry: { priority: "normal", category: "social" },
+  commission_request: { priority: "high", category: "opportunity" },
+  commission_response: { priority: "high", category: "opportunity" },
+  skill_endorsement: { priority: "low", category: "social" },
+  collaboration_accepted: { priority: "high", category: "opportunity" },
+  collaboration_declined: { priority: "normal", category: "opportunity" },
+  post_approved: { priority: "normal", category: "system" },
+  post_rejected: { priority: "high", category: "system" },
+  digest: { priority: "low", category: "system" },
+};
+
+/**
+ * Create a notification and push it to the recipient over the socket.
+ * Self-notifications (userId === actorId) are silently skipped.
+ * All errors are caught — notifications must never break the parent action.
+ */
+// In-memory dedup window: collapse repeated like/follow notifications from same actor→recipient
+const recentNotifKeys = new Map<string, number>();
+const NOTIF_DEDUP_MS = 60 * 60_000; // 1 hour
+
+function shouldDedup(opts: NotifyOpts): boolean {
+  if (opts.type !== "like" && opts.type !== "follow") return false;
+  const key = `${opts.type}:${opts.actorId ?? 0}:${opts.userId}:${opts.postId ?? "_"}`;
+  const now = Date.now();
+  const last = recentNotifKeys.get(key);
+  if (last && now - last < NOTIF_DEDUP_MS) return true;
+  recentNotifKeys.set(key, now);
+  // Soft cap to keep map bounded
+  if (recentNotifKeys.size > 5000) {
+    const cutoff = now - NOTIF_DEDUP_MS;
+    for (const [k, v] of recentNotifKeys) {
+      if (v < cutoff) recentNotifKeys.delete(k);
+    }
+  }
+  return false;
+}
+
+export async function notify(opts: NotifyOpts): Promise<void> {
+  const actorId = opts.actorId ?? 0;
+  // Skip self-notifications (only when a real actor triggers it)
+  if (actorId !== 0 && opts.userId === actorId) return;
+  if (shouldDedup(opts)) return;
+  try {
+    const meta = PRIORITY_MAP[opts.type] ?? { priority: "normal", category: "social" };
+    const [actor] = actorId
+      ? await db
+          .select({ id: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl })
+          .from(usersTable)
+          .where(eq(usersTable.id, actorId))
+      : [null];
+
+    const [notif] = await db
+      .insert(notificationsTable)
+      .values({
+        userId: opts.userId,
+        actorId: actorId,
+        type: opts.type,
+        message: opts.message,
+        postId: opts.postId ?? null,
+        groupId: opts.groupId ?? null,
+        priority: meta.priority,
+        category: meta.category,
+        digestGroup: opts.digestGroup ?? null,
+        isRead: false,
+      })
+      .returning();
+
+    // Check per-type user preferences before delivering
+    const [recipient] = await db
+      .select({ notificationPrefs: usersTable.notificationPrefs })
+      .from(usersTable)
+      .where(eq(usersTable.id, opts.userId))
+      .limit(1);
+    const prefs = (recipient?.notificationPrefs ?? {}) as Record<string, { inApp: boolean; push: boolean; email: boolean }>;
+    const typePref = prefs[opts.type];
+    const inAppEnabled = typePref?.inApp ?? true;
+    const pushEnabled = typePref?.push ?? (meta.priority === "high" || meta.priority === "urgent");
+
+    if (inAppEnabled) {
+      emitToUser(opts.userId, "notification:new", { ...notif, actor });
+    }
+
+    if (pushEnabled) {
+      const actorName = actor?.displayName || actor?.username || "Someone";
+      void sendPushToUser(opts.userId, {
+        title: opts.title ?? `QuillHive — ${opts.type.replace(/_/g, " ")}`,
+        body: `${actorName}: ${opts.message}`,
+        url: opts.url ?? (opts.postId ? `/post/${opts.postId}` : "/notifications"),
+      });
+    }
+  } catch (err) {
+    logger.error({ err, opts }, "notify_failed");
+  }
+}

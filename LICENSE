@@ -1,0 +1,64 @@
+QuillHive Platform License
+Copyright (c) 2024–present QuillHive
+All rights reserved.
+
+END USER RIGHTS
+This platform is free to access and use as an end user through the official
+QuillHive hosted service. No payment is required to create an account,
+publish content, or participate on the platform.
+
+CREATOR CONTENT RIGHTS
+Creators retain full copyright over all original content they publish on
+QuillHive. By publishing, creators grant QuillHive a non-exclusive,
+royalty-free licence to display, index, and distribute their content within
+the platform for the sole purpose of operating the service.
+
+QuillHive does not claim ownership of creator content and will not licence
+or sell creator content to third parties without the creator's explicit
+written consent.
+
+PLATFORM CODE RESTRICTIONS
+The source code, design systems, database schemas, API architecture, brand
+identity, and all associated intellectual property of this platform are the
+exclusive property of the copyright holder. The following are strictly
+prohibited without express written permission from the copyright holder:
+
+1. Copying, cloning, forking, or downloading this source code for any
+   purpose other than authorised review.
+2. Reproducing, distributing, or sublicensing any portion of this codebase
+   in any form or by any means.
+3. Using this codebase or any part of it to build, operate, or contribute
+   to any other product or service.
+4. Reverse engineering, decompiling, or extracting proprietary systems,
+   algorithms, or data models.
+5. Scraping, harvesting, or collecting user data, creator content, or
+   platform metadata by automated means.
+6. Impersonating QuillHive or creating any service that could be confused
+   with QuillHive.
+
+Viewing this source code on any code hosting platform does not constitute a
+licence to use, copy, or distribute it.
+
+PROFESSIONAL NETWORK CONDUCT
+This platform operates as a professional creator network. Users must not
+misrepresent their professional credentials, engage in coordinated
+inauthentic behaviour, purchase or sell follower counts or engagement, or
+use the platform to facilitate spam, fraud, harassment, or intellectual
+property infringement. Violations may result in permanent account termination.
+
+PRIVACY AND DATA
+User data is handled in accordance with the QuillHive Privacy Policy. The
+platform applies reasonable security measures including encrypted storage of
+sensitive personal data and bcrypt-equivalent password hashing.
+
+DISCLAIMER
+This platform is provided in good faith without warranty of any kind. The
+platform operator is not liable for user-generated content, service
+interruptions, or decisions made based on content published on the platform.
+
+GOVERNING LAW
+This licence is governed by applicable law in the jurisdiction of the
+copyright holder.
+
+For licensing enquiries, security reports, or legal matters:
+support@quillhive.app

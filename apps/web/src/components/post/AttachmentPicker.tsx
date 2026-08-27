@@ -1,0 +1,172 @@
+import { useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Paperclip, X, Loader2, FileText, Image as ImageIcon, Music, Video, File } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Attachment {
+  url: string;
+  mimeType: string;
+  filename?: string;
+  sizeBytes?: number;
+}
+
+const MAX_SIZE = 50 * 1024 * 1024;
+const ACCEPTED = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'video/mp4', 'video/webm',
+  'audio/mpeg', 'audio/mp4', 'audio/webm',
+  'application/pdf', 'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const base64 = result.includes(',') ? result.split(',')[1] : result;
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function attachmentIcon(mime: string) {
+  if (mime.startsWith('image/')) return ImageIcon;
+  if (mime.startsWith('audio/')) return Music;
+  if (mime.startsWith('video/')) return Video;
+  if (mime === 'application/pdf' || mime.includes('word') || mime === 'text/plain') return FileText;
+  return File;
+}
+
+interface AttachmentPickerProps {
+  attachments: Attachment[];
+  onChange: (attachments: Attachment[]) => void;
+  max?: number;
+  label?: string;
+  compact?: boolean;
+}
+
+export function AttachmentPicker({ attachments, onChange, max = 10, label = 'Attach files', compact = false }: AttachmentPickerProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || '';
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (attachments.length + files.length > max) {
+      toast({ title: 'Too many files', description: `You can attach up to ${max} files.`, variant: 'destructive' });
+      return;
+    }
+    setUploading(true);
+    const next: Attachment[] = [...attachments];
+    try {
+      for (const file of Array.from(files)) {
+        if (!ACCEPTED.includes(file.type)) {
+          toast({ title: 'Unsupported file', description: `${file.name} (${file.type || 'unknown type'}) is not allowed.`, variant: 'destructive' });
+          continue;
+        }
+        if (file.size > MAX_SIZE) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 50MB.`, variant: 'destructive' });
+          continue;
+        }
+        const dataBase64 = await fileToBase64(file);
+        const token = localStorage.getItem('auth_token') || '';
+        const res = await fetch(`${apiBase}/api/upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            filename: file.name,
+            mimeType: file.type,
+            dataBase64,
+            category: 'post',
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Upload failed: ${res.status}`);
+        }
+        const data = await res.json();
+        next.push({
+          url: data.url || `/api/file/${data.id}`,
+          mimeType: file.type,
+          filename: file.name,
+          sizeBytes: file.size,
+        });
+      }
+      onChange(next);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      toast({ title: 'Upload failed', description: message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const remove = (idx: number) => {
+    onChange(attachments.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="space-y-2">
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={ACCEPTED.join(',')}
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size={compact ? 'sm' : 'default'}
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading || attachments.length >= max}
+        className="rounded-full gap-1.5 text-muted-foreground hover:text-primary"
+      >
+        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+        <span className={compact ? 'text-xs' : 'text-sm'}>{label}</span>
+      </Button>
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {attachments.map((a, i) => {
+            const Icon = attachmentIcon(a.mimeType);
+            const isImage = a.mimeType.startsWith('image/');
+            return (
+              <div
+                key={`${a.url}-${i}`}
+                className="relative group bg-muted rounded-lg border border-border overflow-hidden flex items-center gap-2 pr-2"
+              >
+                {isImage ? (
+                  <img src={a.url} alt={a.filename || ''} className="w-12 h-12 object-cover" />
+                ) : (
+                  <div className="w-12 h-12 flex items-center justify-center bg-primary/10 text-primary">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                )}
+                <span className="text-xs text-foreground truncate max-w-[140px]">{a.filename || 'file'}</span>
+                <button
+                  type="button"
+                  onClick={() => remove(i)}
+                  className="ml-1 p-1 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                  aria-label="Remove attachment"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,71 +1,83 @@
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Feather, Heart, ShieldCheck, Users } from "lucide-react";
+import { Link } from "wouter";
+
 export function About() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">About QuillHive</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400">
-          Where everyone gathers — to share, learn, and connect.
-        </p>
-      </div>
-
-      <div className="space-y-12">
-        <section className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-8 rounded-2xl">
-          <h2 className="text-2xl font-bold text-purple-600 mb-3">Our Story</h2>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            QuillHive began as a small community for writers and artists, but the people who showed up
-            kept widening what it could be — students, professionals, builders, parents, travelers,
-            educators, hobbyists, and the simply curious. Today, QuillHive is a public square open to
-            anyone, anywhere in the world. Whatever you have to share — a story, a question, a photo,
-            a poem, a project, a perspective — there is a place for you here.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-bold mb-4">What QuillHive is for</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="border-l-4 border-purple-500 pl-4">
-              <h3 className="font-semibold text-lg mb-2">Anyone, anywhere</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Built for everyone worldwide — not just creators. Show up as you are.
-              </p>
+    <AppLayout>
+      <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-20">
+        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 px-6 py-14 text-center sm:px-12">
+          <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+          <div className="relative mx-auto max-w-3xl">
+            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+              <Feather className="h-7 w-7" aria-hidden="true" />
             </div>
-            <div className="border-l-4 border-purple-500 pl-4">
-              <h3 className="font-semibold text-lg mb-2">Long & short form</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Post a quick update, a photo, an essay, a poem, a podcast — your choice.
-              </p>
-            </div>
-            <div className="border-l-4 border-purple-500 pl-4">
-              <h3 className="font-semibold text-lg mb-2">Real conversations</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Threaded comments, highlights, polls, groups. No noise, no algorithm rage.
-              </p>
-            </div>
-            <div className="border-l-4 border-purple-500 pl-4">
-              <h3 className="font-semibold text-lg mb-2">Privacy & safety first</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Block, report, content warnings, moderation — built in from day one.
-              </p>
-            </div>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-primary">About QuillHive</p>
+            <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground sm:text-5xl">
+              Your quill is your voice. Your hive is where it grows.
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+              Grow, get discovered, and find real opportunities — for everyone.
+            </p>
           </div>
         </section>
 
-        <section>
-          <h2 className="text-2xl font-bold mb-4">Join the community</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Whether you're here to share what you make, learn something new, find your people, or
-            simply read and listen — welcome. QuillHive is for you.
+        <section className="mx-auto mt-16 max-w-3xl">
+          <h2 className="text-2xl font-serif font-bold text-foreground">A place for what you have to say</h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            QuillHive is a community for sharing ideas, stories, questions, projects, and perspectives.
+            Whether you are here to be seen, find your people, learn something new, or simply enjoy a
+            thoughtful conversation, there is room for your voice here.
           </p>
-          <div className="flex gap-4">
-            <a href="/register" className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-              Join QuillHive
-            </a>
-            <a href="/explore" className="px-6 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20">
-              Explore
-            </a>
+        </section>
+
+        <section className="mt-12 grid gap-5 md:grid-cols-3">
+          <Card className="border-border/60 bg-card/70">
+            <CardContent className="p-6">
+              <Users className="mb-4 h-6 w-6 text-primary" aria-hidden="true" />
+              <h2 className="font-semibold text-foreground">Find your hive</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Meet people who are curious about the same questions, subjects, and possibilities.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 bg-card/70">
+            <CardContent className="p-6">
+              <Heart className="mb-4 h-6 w-6 text-primary" aria-hidden="true" />
+              <h2 className="font-semibold text-foreground">Share generously</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Make space for long-form thinking, quick sparks, honest feedback, and real connection.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 bg-card/70">
+            <CardContent className="p-6">
+              <ShieldCheck className="mb-4 h-6 w-6 text-primary" aria-hidden="true" />
+              <h2 className="font-semibold text-foreground">Stay safe together</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Built-in controls and community standards help QuillHive stay welcoming for everyone.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="mt-16 rounded-2xl border border-border/60 bg-card p-8 text-center sm:p-10">
+          <h2 className="text-2xl font-serif font-bold text-foreground">Ready to find your place?</h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+            Start with a thought, follow a few voices, and let your hive grow from there.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/register">
+              <Button className="w-full rounded-xl sm:w-auto">Join QuillHive</Button>
+            </Link>
+            <Link href="/explore">
+              <Button variant="outline" className="w-full rounded-xl sm:w-auto">Explore</Button>
+            </Link>
           </div>
         </section>
-      </div>
-    </div>
+      </main>
+    </AppLayout>
   );
 }

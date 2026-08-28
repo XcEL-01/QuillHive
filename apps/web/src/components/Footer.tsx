@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
   const t = useT();
 
   return (
@@ -63,7 +62,7 @@ export function Footer() {
               {t("footer.platform", "Platform")}
                 </h3>
             <ul className="space-y-2">
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.aboutUs", "About Us")}</Link></li>
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.aboutUs", "About")}</Link></li>
               <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.blog", "Blog")}</Link></li>
               <li><Link href="/explore" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.explore", "Explore")}</Link></li>
               <li><Link href="/groups" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communities", "Communities")}</Link></li>
@@ -111,7 +110,7 @@ export function Footer() {
               {t("footer.connect", "Connect")}
             </h3>
             <ul className="space-y-2">
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact Us")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact")}</Link></li>
               <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.support", "Support")}</Link></li>
               <li><Link href="/feedback" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.feedback", "Feedback")}</Link></li>
               <li><Link href="/press" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.pressKit", "Press Kit")}</Link></li>
@@ -123,7 +122,7 @@ export function Footer() {
         <div className="border-t border-border/40 pt-6 mt-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">
-              © {currentYear} QuillHive. All rights reserved.
+              © 2025 QuillHive. All rights reserved.
             </p>
             
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -134,7 +133,7 @@ export function Footer() {
               <div className="flex items-center gap-1">
                 <span>{t("footer.madeWith", "Made with")}</span>
                 <Heart className="w-3 h-3 text-red-500 fill-red-500" />
-                <span>{t("footer.forWriters", "for writers")}</span>
+                <span>{t("footer.forWriters", "for everyone")}</span>
               </div>
             </div>
           </div>

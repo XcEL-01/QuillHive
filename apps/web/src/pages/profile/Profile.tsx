@@ -546,7 +546,19 @@ export default function Profile() {
             })()}
           </div>
 
-          {user.bio && <p className="text-foreground/90 max-w-2xl mb-4 leading-relaxed">{user.bio}</p>}
+          {user.bio ? (
+            <p className="text-foreground/90 max-w-2xl mb-4 leading-relaxed">{user.bio}</p>
+          ) : isMe ? (
+            <div className="mb-4 flex max-w-2xl flex-col gap-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Tell people a little about yourself</p>
+                <p className="mt-1 text-sm text-muted-foreground">A short bio helps your voice stand out in the hive.</p>
+              </div>
+              <Link href="/settings">
+                <Button variant="outline" size="sm" className="w-full rounded-xl sm:w-auto">Add a bio</Button>
+              </Link>
+            </div>
+          ) : null}
 
           {/* Skills */}
           {creatorProfile.skills.length > 0 && (

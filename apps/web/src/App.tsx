@@ -386,6 +386,7 @@ export default function App() {
           </Suspense>
         </ErrorBoundary>
       </WouterRouter>
+      <Footer />
       <NotificationToast />
       <Toaster />
       <CookieConsent />

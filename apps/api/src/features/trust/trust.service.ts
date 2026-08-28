@@ -236,9 +236,9 @@ export async function updateUserTrustScore(userId: number) {
         try {
           const [user] = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, userId));
           const levelLabels: Record<string, string> = {
-            rising: "Rising Creator",
-            established: "Established Creator",
-            featured: "Featured Creator",
+            rising: "Rising Voice",
+            established: "Established Voice",
+            featured: "Featured Voice",
             luminary: "Luminary",
           };
           const label = levelLabels[newLevel];
@@ -247,7 +247,7 @@ export async function updateUserTrustScore(userId: number) {
               userId,
               actorId: userId,
               type: "level_up",
-              message: `You've reached ${label} level! Keep creating great content.`,
+              message: `You've reached ${label}! Your voice is finding its place in the hive.`,
               isRead: false,
             });
           }
@@ -346,8 +346,8 @@ async function sendLevelProximityNudge(userId: number, currentLevel: string, cur
     await notify({
       userId,
       type: "milestone",
-      title: `You're ${Math.round(percentLeft)}% away from ${LEVEL_NAMES[next.level] ?? next.level}`,
-      message: `You need ${Math.ceil(pointsNeeded)} more trust points to reach ${LEVEL_NAMES[next.level] ?? next.level}. Post consistently this week to get there.`,
+      title: `You're close to ${LEVEL_NAMES[next.level] ?? next.level}`,
+      message: `Just ${Math.ceil(pointsNeeded)} more trust points to reach ${LEVEL_NAMES[next.level] ?? next.level}. Keep sharing and connecting to get there.`,
       url: `/dashboard`,
     });
     if (redis) await redis.set(throttleKey, "1", { ex: 48 * 3600 });

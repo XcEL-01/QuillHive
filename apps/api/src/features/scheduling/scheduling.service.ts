@@ -54,7 +54,7 @@ export async function expireBoostCampaigns(): Promise<void> {
 
     logger.info({ count: expired.length }, "Boost campaigns expired");
 
-    // Notify each creator and prompt them to boost again
+    // Notify each member and prompt them to boost again
     const { notify } = await import("../notifications/notification.service");
     for (const campaign of expired) {
       try {
@@ -177,13 +177,13 @@ async function sendDraftReminders(): Promise<void> {
         .where(_and(_eq(notifs.userId, draft.authorId), _eq(notifs.type, "draft_reminder"), _eq(notifs.postId, draft.id)))
         .limit(1);
       if (existing.length > 0) continue;
-      const label = draft.title ? `"${draft.title.slice(0, 50)}"` : "An unfinished draft";
+      const label = draft.title ? `"${draft.title.slice(0, 50)}"` : "A draft in progress";
       await db.insert(notifs).values({
         userId: draft.authorId,
         actorId: draft.authorId,
         type: "draft_reminder",
         postId: draft.id,
-        message: `✍️ ${label} is waiting for you. Pick up where you left off and publish it!`,
+        message: `✍️ ${label} is waiting for you. Pick up where you left off when you're ready to share it.`,
         priority: "normal",
         category: "growth",
       });
@@ -385,7 +385,7 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
 
       const subject = report.newFollowers > 0
         ? `${creator.displayName}, you gained ${report.newFollowers} new follower${report.newFollowers !== 1 ? "s" : ""} this week!`
-        : `Your weekly creator report on QuillHive`;
+        : `Your weekly QuillHive community recap`;
 
       const topPostLine = report.topPost
         ? `Your best-performing post: "${report.topPost.title || "Untitled"}" with ${report.topPost.views || 0} views.`
@@ -403,7 +403,7 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
         ``,
         topPostLine,
         ``,
-        `Keep creating! Your audience is growing.`,
+        `Keep sharing — your hive is growing.`,
         ``,
         `View your full dashboard: ${appUrl}/dashboard`,
         ``,
@@ -445,7 +445,7 @@ async function sendNurtureEmails(): Promise<void> {
         to: u.email,
         subject: `${u.displayName}, day 3 check-in from QuillHive 👋`,
         html: day3NurtureHtml({ displayName: u.displayName, username: u.username, appUrl }),
-        text: `Hi ${u.displayName},\n\nIt's been 3 days! Creators who post in their first week are 3× more likely to build a lasting following.\n\nWrite something today: ${appUrl}/write\n\n— QuillHive`,
+        text: `Hi ${u.displayName},\n\nIt's been 3 days! Members who share in their first week are 3× more likely to build lasting connections.\n\nShare something today: ${appUrl}/write\n\n— QuillHive`,
       });
       await new Promise((r) => setTimeout(r, 80));
     } catch { /* skip */ }

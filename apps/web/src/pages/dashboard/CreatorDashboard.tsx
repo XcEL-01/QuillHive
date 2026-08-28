@@ -250,7 +250,7 @@ export default function CreatorDashboard() {
             {/* Momentum Card */}
             {weeklyReport && <MomentumCard report={weeklyReport} />}
 
-            {/* Content Intelligence */}
+            {/* Performance Insights */}
             <ContentIntelligenceCard />
 
             {/* Growth Timeline */}

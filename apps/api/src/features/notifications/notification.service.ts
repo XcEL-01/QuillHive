@@ -83,6 +83,17 @@ const PRIORITY_MAP: Record<NotificationType, { priority: string; category: strin
   digest: { priority: "low", category: "system" },
 };
 
+const NOTIFICATION_TITLE_MAP: Partial<Record<NotificationType, string>> = {
+  milestone: "A QuillHive milestone",
+  trending: "Your voice is gaining momentum",
+  referral_reward: "A new friend joined the hive",
+  achievement: "Achievement unlocked",
+  streak_milestone: "Your sharing streak",
+  opportunity_nudge: "A new opportunity",
+  digest: "Your QuillHive recap",
+  system: "A QuillHive update",
+};
+
 /**
  * Create a notification and push it to the recipient over the socket.
  * Self-notifications (userId === actorId) are silently skipped.
@@ -155,10 +166,10 @@ export async function notify(opts: NotifyOpts): Promise<void> {
     }
 
     if (pushEnabled) {
-      const actorName = actor?.displayName || actor?.username || "Someone";
+      const actorName = actor?.displayName || actor?.username;
       void sendPushToUser(opts.userId, {
-        title: opts.title ?? `QuillHive — ${opts.type.replace(/_/g, " ")}`,
-        body: `${actorName}: ${opts.message}`,
+        title: opts.title ?? NOTIFICATION_TITLE_MAP[opts.type] ?? "QuillHive",
+        body: actorName ? `${actorName}: ${opts.message}` : opts.message,
         url: opts.url ?? (opts.postId ? `/post/${opts.postId}` : "/notifications"),
       });
     }

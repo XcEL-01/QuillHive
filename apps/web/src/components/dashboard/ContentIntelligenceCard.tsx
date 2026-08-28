@@ -132,7 +132,7 @@ export function ContentIntelligenceCard() {
     <Card className="rounded-2xl border-border/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Brain className="w-4 h-4 text-violet-500" /> Content Intelligence
+          <Brain className="w-4 h-4 text-violet-500" /> Performance Insights
           <Badge variant="secondary" className="ml-auto text-[10px] font-medium">AI-powered</Badge>
         </CardTitle>
       </CardHeader>

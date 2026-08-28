@@ -674,7 +674,7 @@
     "noIncomeYet": "No income logged yet.",
     "logFirstEntry": "Log your first entry",
     "totalShown": "Total (shown)",
-    "growthScore": "Creator Growth Score",
+    "growthScore": "Your QuillHive Score",
     "thisWeek": "this week",
     "noChange": "No change this week",
     "nextTier": "Next:",
@@ -686,7 +686,7 @@
     "nextSteps": "Next Steps",
     "addService": "Add Service",
     "editProfile": "Edit Profile",
-    "shareScore": "Share my creator score"
+    "shareScore": "Share my QuillHive Score"
   },
   "topics": {
     "browseTopics": "Browse Topics",
@@ -1011,7 +1011,7 @@
   },
   "footer": {
     "platform": "Platform",
-    "aboutUs": "About Us",
+    "aboutUs": "About",
     "blog": "Blog",
     "explore": "Explore",
     "communities": "Communities",
@@ -1031,14 +1031,14 @@
     "dmca": "DMCA",
     "privacySettings": "Privacy Settings",
     "connect": "Connect",
-    "contactUs": "Contact Us",
+    "contactUs": "Contact",
     "support": "Support",
     "feedback": "Feedback",
     "pressKit": "Press Kit",
     "accessibility": "Accessibility",
     "sitemap": "Sitemap",
     "madeWith": "Made with",
-    "forWriters": "for writers"
+    "forWriters": "for everyone"
   },
   "cookie": {
     "ariaLabel": "Cookie consent",

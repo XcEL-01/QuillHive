@@ -120,7 +120,7 @@ export function GrowthScoreCard() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             {cfg.icon}
-            {t("dashboard.growthScore", "Creator Growth Score")}
+            {t("dashboard.growthScore", "Your QuillHive Score")}
           </CardTitle>
           <Badge variant="outline" className={`text-[10px] font-semibold border rounded-full ${cfg.badgeClass}`}>
             {data.tierLabel}
@@ -200,11 +200,11 @@ export function GrowthScoreCard() {
 
         <button
           onClick={async () => {
-            const text = `My Creator Growth Score on QuillHive: ${data.score}/100 — ${data.tierLabel} tier 🚀`;
+            const text = `My QuillHive Score: ${data.score}/100 — ${data.tierLabel} tier 🚀`;
             const url = window.location.origin + "/dashboard";
             try {
               if (navigator.share) {
-                await navigator.share({ title: "My QuillHive Growth Score", text, url });
+                await navigator.share({ title: "My QuillHive Score", text, url });
               } else {
                 await navigator.clipboard.writeText(`${text}\n${url}`);
                 toast.success(t("common.copied", "Copied!"));
@@ -216,7 +216,7 @@ export function GrowthScoreCard() {
             text-xs font-medium text-muted-foreground hover:text-foreground"
         >
           <Share2 className="w-3.5 h-3.5" />
-          {t("dashboard.shareScore", "Share my creator score")}
+          {t("dashboard.shareScore", "Share my QuillHive Score")}
         </button>
       </CardContent>
     </Card>

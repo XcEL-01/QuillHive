@@ -180,13 +180,13 @@ async function processJob(job: Job): Promise<void> {
         const creatorLevel = trustRow?.creatorLevel ?? "new_voice";
         const trustScore = Math.round(Number(trustRow?.uti ?? 0));
 
-        let cta = "Keep creating and building your reputation.";
+        let cta = "Keep sharing and building your place in the hive.";
         if (currentStreak === 0) {
-          cta = "Start a new writing streak this week — even one post counts.";
+          cta = "Share something this week — even one post can start a new streak.";
         } else if (currentStreak >= 7) {
           cta = `You're on a ${currentStreak}-day streak — you're building something real. Don't stop now.`;
         } else if (newFollowers >= 5) {
-          cta = `${newFollowers} new people followed you this week. Give them something great to read.`;
+          cta = `${newFollowers} new people followed you this week. Give them something great to discover.`;
         } else if (weekViews > 0 && topPost) {
           cta = `Your post "${(topPost.title ?? "").slice(0, 40)}" is resonating. Build on that momentum.`;
         }
@@ -228,9 +228,9 @@ async function processJob(job: Job): Promise<void> {
 </head>
 <body>
 <div class="wrapper">
-  <div class="header"><h1>QuillHive</h1><p>Your weekly creator report</p></div>
+  <div class="header"><h1>QuillHive</h1><p>Your weekly community recap</p></div>
   <div class="body">
-    <p class="greeting">Hey ${name} — here's how your week on QuillHive went.</p>
+    <p class="greeting">Hey ${name} — here's what grew around your voice this week.</p>
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">${weekViews.toLocaleString()}</div>
@@ -247,7 +247,7 @@ async function processJob(job: Job): Promise<void> {
       </div>
       <div class="stat-card">
         <div class="stat-number">${trustScore}</div>
-        <div class="stat-label">Trust score</div>
+        <div class="stat-label">Community standing</div>
         <div class="stat-trend">${creatorLevel.replace(/_/g, ' ')}</div>
       </div>
     </div>
@@ -282,7 +282,7 @@ async function processJob(job: Job): Promise<void> {
         const { sendEmail } = await import("../../features/email/email.service");
         await sendEmail({
           to: user.email,
-          subject: `Your QuillHive week: ${weekViews} views${newFollowers > 0 ? `, ${newFollowers} new followers` : ""}`,
+          subject: `Your QuillHive recap: ${weekViews} views${newFollowers > 0 ? `, ${newFollowers} new followers` : ""}`,
           html,
         });
 

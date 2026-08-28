@@ -589,18 +589,18 @@ export default function Home() {
                 {feedSource === 'following' ? <UserPlus className="w-8 h-8 text-primary" /> : <Rocket className="w-8 h-8 text-primary" />}
               </div>
               <h3 className="text-xl font-serif font-semibold mb-2">
-                {feedSource === 'following' ? 'Your growth feed is empty' : 'Be the first to share'}
+                {feedSource === 'following' ? 'Welcome to QuillHive' : 'Be the first to share'}
               </h3>
               <p className="text-muted-foreground max-w-xs mx-auto text-sm mb-5">
                 {feedSource === 'following'
-                  ? "Follow people you find interesting to grow together. Everyone you follow helps personalise your feed and increases your own discoverability."
+                  ? "Your quill is your voice. Your hive is where it grows. Follow people whose voices you value and start building your hive."
                   : feedSource === 'sparks'
                   ? "No sparks yet — share a quick thought and get discovered by the community."
                   : 'The first posts here get the most visibility. Start your growth journey now.'}
               </p>
               <Link href={feedSource === 'following' ? '/explore' : '/write'}>
                 <Button className="rounded-xl bg-gradient-to-r from-primary to-violet-500 border-0 text-white gap-2">
-                  {feedSource === 'following' ? <><UserPlus className="w-4 h-4" /> Discover Creators</> : <><TrendingUp className="w-4 h-4" /> Post & Grow</>}
+                  {feedSource === 'following' ? <><UserPlus className="w-4 h-4" /> Explore the hive</> : <><TrendingUp className="w-4 h-4" /> Post & Grow</>}
                 </Button>
               </Link>
             </div>

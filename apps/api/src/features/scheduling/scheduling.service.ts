@@ -739,6 +739,16 @@ export function startScheduling(): void {
       lastDraftReminder = now;
       sendDraftReminders().catch(() => {});
     }
+    // Self-ping to prevent Render free tier sleep
+    if (process.env.NODE_ENV === "production" && process.env.API_URL) {
+      setInterval(async () => {
+          try {
+                await fetch(`${process.env.API_URL}/api/healthz`);
+                    } catch {
+                          // ignore errors silently
+                              }
+                                }, 4 * 60 * 1000); // every 4 minutes
+                                }
     if (now - lastStreakNudge > 24 * 60 * 60 * 1000) {
       lastStreakNudge = now;
       sendStreakMilestoneNudges().catch(() => {});

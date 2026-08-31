@@ -9,7 +9,8 @@ import { rateLimit } from "../../middleware/rateLimit";
 // Production: 20 login attempts / 15 min, 5 registrations / hr.
 // Development/preview: 6× headroom (applied inside rateLimit middleware).
 const authStrictLimit = rateLimit({ windowMs: 15 * 60_000, max: 5 }); // 5 prod, 50 dev (10× multiplier)
-const registerStrictLimit = rateLimit({ windowMs: 60 * 60_000, max: 5 });
+// TEMP: raised for launch testing — lower back to 5/hr once the platform is stable and public
+const registerStrictLimit = rateLimit({ windowMs: 60 * 60_000, max: 30 });
 
 const registerSchema = z.object({
   username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/),

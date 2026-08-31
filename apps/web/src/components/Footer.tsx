@@ -63,7 +63,7 @@ export function Footer() {
                 </h3>
             <ul className="space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.aboutUs", "About")}</Link></li>
-              <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.blog", "Blog")}</Link></li>
+              <li><Link href="/explore" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.blog", "Blog")}</Link></li>
               <li><Link href="/explore" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.explore", "Explore")}</Link></li>
               <li><Link href="/groups" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communities", "Communities")}</Link></li>
               <li><Link href="/jobs" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.jobsBoard", "Jobs Board")}</Link></li>
@@ -78,11 +78,11 @@ export function Footer() {
               {t("footer.resources", "Resources")}
             </h3>
             <ul className="space-y-2">
-              <li><Link href="/help" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.helpCenter", "Help Center")}</Link></li>
+              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.helpCenter", "Help Center")}</Link></li>
               <li><Link href="/community-guidelines" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communityGuidelines", "Community Guidelines")}</Link></li>
-              <li><Link href="/writing-tips" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.writingTips", "Writing Tips")}</Link></li>
-              <li><Link href="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.faq", "FAQ")}</Link></li>
-              <li><Link href="/status" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.status", "Status")}</Link></li>
+              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.writingTips", "Writing Tips")}</Link></li>
+              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.faq", "FAQ")}</Link></li>
+              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.status", "Status")}</Link></li>
             </ul>
           </div>
 
@@ -97,7 +97,7 @@ export function Footer() {
               <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.terms", "Terms of Service")}</Link></li>
               <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacy", "Privacy Policy")}</Link></li>
               <li><Link href="/content-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contentPolicy", "Content Policy")}</Link></li>
-              <li><Link href="/cookies" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.cookiePolicy", "Cookie Policy")}</Link></li>
+              <li><Link href="/content-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.cookiePolicy", "Cookie Policy")}</Link></li>
               <li><Link href="/copyright" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.copyright", "Copyright Policy")}</Link></li>
               <li><Link href="/settings?section=privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacySettings", "Privacy Settings")}</Link></li>
             </ul>
@@ -112,8 +112,8 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact")}</Link></li>
               <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.support", "Support")}</Link></li>
-              <li><Link href="/feedback" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.feedback", "Feedback")}</Link></li>
-              <li><Link href="/press" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.pressKit", "Press Kit")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.feedback", "Feedback")}</Link></li>
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.pressKit", "Press Kit")}</Link></li>
             </ul>
           </div>
         </div>
@@ -126,9 +126,9 @@ export function Footer() {
             </p>
             
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <Link href="/accessibility" className="hover:text-primary transition-colors">{t("footer.accessibility", "Accessibility")}</Link>
+              <Link href="/about" className="hover:text-primary transition-colors">{t("footer.accessibility", "Accessibility")}</Link>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-              <Link href="/sitemap" className="hover:text-primary transition-colors">{t("footer.sitemap", "Sitemap")}</Link>
+              <Link href="/explore" className="hover:text-primary transition-colors">{t("footer.sitemap", "Sitemap")}</Link>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
               <div className="flex items-center gap-1">
                 <span>{t("footer.madeWith", "Made with")}</span>

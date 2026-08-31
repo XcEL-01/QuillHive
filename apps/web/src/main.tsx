@@ -1,9 +1,30 @@
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ?? "";
+
+if (API_BASE) {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    if (typeof input === 'string' && input.startsWith('/api')) {
+      return originalFetch(API_BASE + input, init);
+    }
+    if (input instanceof Request && input.url.includes(window.location.origin + '/api')) {
+      const newUrl = input.url.replace(window.location.origin, API_BASE);
+      return originalFetch(new Request(newUrl, input), init);
+    }
+    return originalFetch(input, init);
+  };
+}
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import './index.css'
 import { useI18n } from './lib/i18n'
+import { setBaseUrl } from '@workspace/api-client-react'
+
+if (API_BASE) {
+  setBaseUrl(API_BASE);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {

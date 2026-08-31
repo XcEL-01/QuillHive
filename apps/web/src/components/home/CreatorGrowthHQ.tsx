@@ -122,7 +122,7 @@ export function CreatorGrowthHQ() {
       animate={{ opacity: 1, y: 0 }}
       className={`bg-gradient-to-br ${gradient} border border-border/60 rounded-2xl overflow-hidden mb-5`}
     >
-      {/* Header row — always visible */}
+      {/* Header row - always visible */}
       <button
         onClick={() => {
           setExpanded(v => {
@@ -198,17 +198,17 @@ export function CreatorGrowthHQ() {
                 {[
                   {
                     label: 'Views',
-                    value: weeklyStats?.totalViews != null ? weeklyStats.totalViews.toLocaleString() : '—',
+                    value: weeklyStats?.totalViews != null ? weeklyStats.totalViews.toLocaleString() : '-',
                     icon: Eye, color: 'text-blue-500'
                   },
                   {
                     label: 'Followers',
-                    value: weeklyStats?.followers != null ? weeklyStats.followers.toLocaleString() : '—',
+                    value: weeklyStats?.followers != null ? weeklyStats.followers.toLocaleString() : '-',
                     icon: Users, color: 'text-emerald-500'
                   },
                   {
                     label: 'Engagement',
-                    value: weeklyStats?.engagementRate != null ? `${weeklyStats.engagementRate}%` : '—',
+                    value: weeklyStats?.engagementRate != null ? `${weeklyStats.engagementRate}%` : '-',
                     icon: Zap, color: 'text-amber-500'
                   },
                 ].map(s => (
@@ -228,7 +228,7 @@ export function CreatorGrowthHQ() {
                     <span className="text-[11px] font-semibold text-muted-foreground">Opportunity Score</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold">{opportunity?.score ?? '—'}</span>
+                    <span className="text-xl font-bold">{opportunity?.score ?? '-'}</span>
                     {opportunity?.label && (
                       <Badge className="text-[9px] rounded-full border-0 bg-violet-500/15 text-violet-600 dark:text-violet-400">
                         {opportunity.label}

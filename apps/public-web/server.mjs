@@ -91,16 +91,16 @@ app.get("/p/:id", async (req, res) => {
   const post = await fetchJson(`${API_URL}/api/posts/${req.params.id}`);
   if (!post) {
     return res.status(404).send(htmlPage({
-      title: "Post — QuillHive",
-      description: "Your quill is your voice. Your hive is where it grows. QuillHive — for everyone with something to share.",
+      title: "Post - QuillHive",
+      description: "Your quill is your voice. Your hive is where it grows. QuillHive - for everyone with something to share.",
       ogUrl: `${APP_URL}/post/${req.params.id}`,
     }));
   }
   const plainContent = (post.content || "").replace(/<[^>]+>/g, "").slice(0, 160);
   const postDescription = post.excerpt || plainContent;
   res.send(htmlPage({
-    title: `${post.title || "Untitled"} — QuillHive`,
-    description: `${postDescription} on QuillHive — where everyone grows.`,
+    title: `${post.title || "Untitled"} - QuillHive`,
+    description: `${postDescription} on QuillHive - where everyone grows.`,
     ogImage: post.imageUrl || undefined,
     ogUrl: `${APP_URL}/post/${req.params.id}`,
     ogType: "article",
@@ -114,14 +114,14 @@ app.get("/u/:username", async (req, res) => {
   const profile = await fetchJson(`${API_URL}/api/users/${req.params.username}`);
   if (!profile) {
     return res.status(404).send(htmlPage({
-      title: "Profile — QuillHive",
-      description: "Your quill is your voice. Your hive is where it grows. QuillHive — for everyone with something to share.",
+      title: "Profile - QuillHive",
+      description: "Your quill is your voice. Your hive is where it grows. QuillHive - for everyone with something to share.",
       ogUrl: `${APP_URL}/profile/${req.params.username}`,
     }));
   }
   res.send(htmlPage({
-    title: `${profile.displayName || req.params.username} — QuillHive`,
-    description: profile.bio || `Discover ${profile.displayName || req.params.username}'s work on QuillHive — where everyone grows, gets discovered, and finds real opportunities.`,
+    title: `${profile.displayName || req.params.username} - QuillHive`,
+    description: profile.bio || `Discover ${profile.displayName || req.params.username}'s work on QuillHive - where everyone grows, gets discovered, and finds real opportunities.`,
     ogImage: profile.avatarUrl || undefined,
     ogUrl: `${APP_URL}/profile/${req.params.username}`,
   }));
@@ -138,9 +138,9 @@ function landingPageHtml() {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>QuillHive — Your Voice. Your Hive.</title>
-<meta name="description" content="Your quill is your voice. Your hive is where it grows. QuillHive — grow, get discovered, and find real opportunities. For everyone." />
-<meta property="og:title" content="QuillHive — Your Voice. Your Hive." />
+<title>QuillHive - Your Voice. Your Hive.</title>
+<meta name="description" content="Your quill is your voice. Your hive is where it grows. QuillHive - grow, get discovered, and find real opportunities. For everyone." />
+<meta property="og:title" content="QuillHive - Your Voice. Your Hive." />
 <meta property="og:description" content="Your quill is your voice. Your hive is where it grows. For everyone with something to share." />
 <meta property="og:image" content="${APP_URL}/opengraph.jpg" />
 <meta property="og:url" content="${APP_URL}" />
@@ -196,7 +196,7 @@ footer{border-top:1px solid var(--border);padding:2rem;text-align:center}
   <h1>Grow, get <span>discovered</span>, and find real opportunities</h1>
   <p class="subtitle">QuillHive is where everyone with something to share builds a presence, gets discovered, and finds real opportunities. Your work deserves an audience.</p>
   <div class="hero-actions">
-    <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Join QuillHive — it's free</a>
+    <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Join QuillHive - it's free</a>
     <a href="${APP_URL}/explore" class="btn btn-ghost btn-lg">Explore →</a>
   </div>
   <p style="color:#737373;font-size:0.875rem;margin-top:0.75rem;">For everyone with something to share.</p>
@@ -204,18 +204,18 @@ footer{border-top:1px solid var(--border);padding:2rem;text-align:center}
 <section class="features">
   <p class="features-label">What makes QuillHive different</p>
   <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon">🏆</div><div class="feature-title">Build Your Reputation</div><div class="feature-desc">Your Trust Score grows from consistent, genuine contributions — not just follower counts. Show the world you're serious.</div></div>
-    <div class="feature-card"><div class="feature-icon">🔍</div><div class="feature-title">Get Discovered</div><div class="feature-desc">Our discovery engine puts your work in front of the right people — readers, collaborators, clients, and employers looking for exactly what you do.</div></div>
+    <div class="feature-card"><div class="feature-icon">🏆</div><div class="feature-title">Build Your Reputation</div><div class="feature-desc">Your Trust Score grows from consistent, genuine contributions - not just follower counts. Show the world you're serious.</div></div>
+    <div class="feature-card"><div class="feature-icon">🔍</div><div class="feature-title">Get Discovered</div><div class="feature-desc">Our discovery engine puts your work in front of the right people - readers, collaborators, clients, and employers looking for exactly what you do.</div></div>
     <div class="feature-card"><div class="feature-icon">💼</div><div class="feature-title">Find Opportunities</div><div class="feature-desc">A built-in Workspace connects you to freelance gigs, collaborations, and career opportunities matched to your skills and reputation.</div></div>
-    <div class="feature-card"><div class="feature-icon">✨</div><div class="feature-title">Share Anything</div><div class="feature-desc">Posts, short Sparks, polls, or collaborative Chains — pick the format that fits what you want to say.</div></div>
+    <div class="feature-card"><div class="feature-icon">✨</div><div class="feature-title">Share Anything</div><div class="feature-desc">Posts, short Sparks, polls, or collaborative Chains - pick the format that fits what you want to say.</div></div>
     <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Your Growth, Tracked</div><div class="feature-desc">Streaks, creator levels, analytics, and weekly reports show you exactly how your presence is growing.</div></div>
     <div class="feature-card"><div class="feature-icon">🤝</div><div class="feature-title">Real Community</div><div class="feature-desc">Groups, direct messages, collaboration requests, and challenges connect you to people who share your interests.</div></div>
   </div>
 </section>
 <section class="cta-section">
-  <h2>Join QuillHive — it's free</h2>
+  <h2>Join QuillHive - it's free</h2>
   <p>For everyone with something to share.</p>
-  <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Join QuillHive — it's free</a>
+  <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Join QuillHive - it's free</a>
 </section>
 <footer>
   <div class="footer-links">
@@ -238,7 +238,7 @@ app.get("/", (_req, res) => {
 
 app.get("/*path", (req, res) => {
   const path = req.path;
-  // Known SEO/deep-link paths handled above — redirect everything else
+  // Known SEO/deep-link paths handled above - redirect everything else
   res.redirect(APP_URL + path);
 });
 

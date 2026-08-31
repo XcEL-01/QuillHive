@@ -116,7 +116,7 @@ export default function PostJob() {
             <h1 className="text-2xl font-bold font-serif">Post an Opportunity</h1>
           </div>
           <p className="text-muted-foreground ml-11 text-sm">
-            Reach verified creators — ranked by skill endorsements, creator level, and published proof-of-work.
+            Reach verified creators - ranked by skill endorsements, creator level, and published proof-of-work.
           </p>
         </div>
 
@@ -272,7 +272,7 @@ export default function PostJob() {
             <Label htmlFor="companyName" className="text-sm font-semibold">Company / Organization</Label>
             <Input
               id="companyName"
-              placeholder="Optional — leave blank to post as individual"
+              placeholder="Optional - leave blank to post as individual"
               value={companyName}
               onChange={e => setCompanyName(e.target.value)}
               className="h-10 rounded-xl"

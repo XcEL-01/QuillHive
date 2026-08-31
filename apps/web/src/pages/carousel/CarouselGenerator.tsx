@@ -142,7 +142,7 @@ export default function CarouselGenerator() {
           <div>
             <h1 className="text-2xl font-bold">Carousel Generator</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Generate unique, high-quality image carousels for social media — powered by millions of photos.
+              Generate unique, high-quality image carousels for social media - powered by millions of photos.
               Every generation picks fresh images that have never been shown to you before.
             </p>
           </div>
@@ -302,7 +302,7 @@ export default function CarouselGenerator() {
 
             {carousel && (
               <p className="text-xs text-center text-muted-foreground">
-                Each generation pulls fresh images — you'll never see the same carousel twice.
+                Each generation pulls fresh images - you'll never see the same carousel twice.
               </p>
             )}
           </div>

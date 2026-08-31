@@ -91,7 +91,7 @@ export function StreakWidget() {
               <div
                 key={di}
                 className={`w-3 h-3 rounded-sm ${intensity(cell.count)} hover:ring-1 hover:ring-primary/40 transition`}
-                title={`${cell.date.toDateString()} — ${cell.count} read${cell.count !== 1 ? 's' : ''}`}
+                title={`${cell.date.toDateString()} - ${cell.count} read${cell.count !== 1 ? 's' : ''}`}
               />
             ))}
           </div>

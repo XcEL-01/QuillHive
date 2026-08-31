@@ -301,7 +301,7 @@ export default function Opportunities() {
             </h1>
           </div>
           <p className="text-muted-foreground ml-10 mb-5">
-            {t('opportunities.subtitle', 'Verified creators — ranked by peer endorsements, creator level, and work portfolio.')}
+            {t('opportunities.subtitle', 'Verified creators - ranked by peer endorsements, creator level, and work portfolio.')}
           </p>
 
           {/* Employer / Creator dual-entry */}
@@ -439,7 +439,7 @@ export default function Opportunities() {
             </div>
             <h3 className="font-semibold text-lg mb-2">{t('opportunities.emptyTitle', 'No creators available yet')}</h3>
             <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-              {t('opportunities.emptyDesc', 'Try loosening your filters, or check back soon — creators update their availability regularly.')}
+              {t('opportunities.emptyDesc', 'Try loosening your filters, or check back soon - creators update their availability regularly.')}
             </p>
           </div>
         )}

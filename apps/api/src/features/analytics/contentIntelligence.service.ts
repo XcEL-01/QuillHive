@@ -41,12 +41,12 @@ function analyzeHookStrength(content: string | null, title: string | null): {
 
   const insight =
     score >= 75
-      ? "Your opening hook is compelling — readers are likely to keep going."
+      ? "Your opening hook is compelling - readers are likely to keep going."
       : score >= 55
       ? "Good opening. Try adding a specific number or bold question to boost click-through."
       : score >= 38
       ? "Your hook needs more punch. Open with a bold statement, question, or surprising fact."
-      : "Start stronger — your first 2 lines decide whether readers continue.";
+      : "Start stronger - your first 2 lines decide whether readers continue.";
 
   return { score, label, insight };
 }
@@ -70,10 +70,10 @@ function explainPerformance(
   if (hookScore >= 68) reasons.push("Strong opening hook kept readers engaged");
   if (engRate > 0.05) reasons.push("Above-average engagement rate from your audience");
   if (comments > 0 && likes > 0 && comments / likes > 0.25) reasons.push("Generated real discussion (high comment-to-like ratio)");
-  if (views >= 500) reasons.push(`Excellent reach — ${views.toLocaleString()} views`);
-  if (viralScore >= 60) reasons.push("High view velocity — shared quickly after publishing");
-  if (likes >= 20) reasons.push("Resonated emotionally — above-average like count");
-  if (reasons.length === 0) reasons.push("Still building momentum — share it to accelerate growth");
+  if (views >= 500) reasons.push(`Excellent reach - ${views.toLocaleString()} views`);
+  if (viralScore >= 60) reasons.push("High view velocity - shared quickly after publishing");
+  if (likes >= 20) reasons.push("Resonated emotionally - above-average like count");
+  if (reasons.length === 0) reasons.push("Still building momentum - share it to accelerate growth");
   return reasons;
 }
 
@@ -199,7 +199,7 @@ export async function getContentIntelligence(userId: number) {
   const engRate = (topLikes + topComments) / Math.max(topViews, 1);
   const whyItWorked = explainPerformance(topViews, topLikes, topComments, viralScore, engRate, hookAnalysis.score);
 
-  let whatToPostNext = "Keep creating consistently — your audience is growing.";
+  let whatToPostNext = "Keep creating consistently - your audience is growing.";
   if (topContentType && posts.length >= 3) {
     whatToPostNext = `Your ${topContentType.type} posts get the most engagement. Try publishing on ${DAYS[bestDay]}s around ${fmtHour(bestHour)} UTC for maximum reach.`;
   }

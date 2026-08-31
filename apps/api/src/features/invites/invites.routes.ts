@@ -105,9 +105,9 @@ export async function consumeInvite(code: string, newUserId: number): Promise<nu
 
       const MILESTONES: Record<number, string> = {
         1:  `🎉 ${name} just joined using your invite! Your first referral reward is on its way.`,
-        3:  `🚀 ${name} joined — that's 3 referrals! You've unlocked a bonus creator badge.`,
+        3:  `🚀 ${name} joined - that's 3 referrals! You've unlocked a bonus creator badge.`,
         10: `🏆 10 friends joined through your link! You've reached Elite Referrer status.`,
-        25: `👑 Incredible — 25 referrals! You've unlocked the Ambassador tier.`,
+        25: `👑 Incredible - 25 referrals! You've unlocked the Ambassador tier.`,
       };
 
       const message = MILESTONES[referralCount]

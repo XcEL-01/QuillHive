@@ -39,7 +39,7 @@ export type NotificationType =
 
 interface NotifyOpts {
   userId: number;
-  /** actorId=0 (or omitted) means a system-generated notification — self-skip guard is bypassed */
+  /** actorId=0 (or omitted) means a system-generated notification - self-skip guard is bypassed */
   actorId?: number;
   type: NotificationType;
   message: string;
@@ -97,7 +97,7 @@ const NOTIFICATION_TITLE_MAP: Partial<Record<NotificationType, string>> = {
 /**
  * Create a notification and push it to the recipient over the socket.
  * Self-notifications (userId === actorId) are silently skipped.
- * All errors are caught — notifications must never break the parent action.
+ * All errors are caught - notifications must never break the parent action.
  */
 // In-memory dedup window: collapse repeated like/follow notifications from same actor→recipient
 const recentNotifKeys = new Map<string, number>();

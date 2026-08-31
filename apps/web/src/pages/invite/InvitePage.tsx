@@ -164,7 +164,7 @@ export default function InvitePage() {
                   <div>
                     <p className="text-white text-sm font-medium">Invited creator</p>
                     <p className="text-white/40 text-xs">
-                      Joined {code.usedAt ? new Date(code.usedAt).toLocaleDateString() : "—"}
+                      Joined {code.usedAt ? new Date(code.usedAt).toLocaleDateString() : "-"}
                     </p>
                   </div>
                 </div>

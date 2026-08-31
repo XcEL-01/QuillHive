@@ -8,7 +8,7 @@ import { logger } from "./logger";
  * Otherwise this becomes a no-op that just logs through pino.
  *
  * Keeping the import dynamic means we don't force every dev environment
- * to install @sentry/node — production can opt in via env vars + install.
+ * to install @sentry/node - production can opt in via env vars + install.
  */
 
 type SentryLike = {

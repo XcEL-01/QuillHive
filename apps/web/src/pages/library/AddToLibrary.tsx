@@ -42,10 +42,10 @@ const CONTENT_TYPES = [
 ];
 
 const LICENSES = [
-  { key: "cc_by", label: "CC BY — Free with attribution" },
-  { key: "cc_by_sa", label: "CC BY-SA — Share alike" },
-  { key: "cc_by_nc", label: "CC BY-NC — Non-commercial" },
-  { key: "cc0", label: "CC0 — Public domain" },
+  { key: "cc_by", label: "CC BY - Free with attribution" },
+  { key: "cc_by_sa", label: "CC BY-SA - Share alike" },
+  { key: "cc_by_nc", label: "CC BY-NC - Non-commercial" },
+  { key: "cc0", label: "CC0 - Public domain" },
   { key: "all_rights_reserved", label: "© All Rights Reserved" },
 ];
 
@@ -336,7 +336,7 @@ export default function AddToLibrary() {
             <div className="flex items-start gap-3">
               <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-medium">Public — indexed by search engines</p>
+                <p className="text-sm font-medium">Public - indexed by search engines</p>
                 <p className="text-xs text-muted-foreground">
                   {form.isPublic
                     ? "Google and other search engines can index this entry. Your name will be credited."

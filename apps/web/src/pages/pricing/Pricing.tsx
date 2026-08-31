@@ -302,7 +302,7 @@ export default function Pricing() {
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Boost your content, reach more people, and unlock opportunities.
-            Every boost is reviewed by our team — no surprises, just real growth.
+            Every boost is reviewed by our team - no surprises, just real growth.
           </p>
         </div>
 
@@ -367,7 +367,7 @@ export default function Pricing() {
         <section className="mb-16">
           <h2 className="text-2xl font-serif font-bold mb-2">How boosting works</h2>
           <p className="text-muted-foreground mb-8">
-            Boosting is transparent and human-reviewed — no black-box algorithms.
+            Boosting is transparent and human-reviewed - no black-box algorithms.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {([
@@ -404,7 +404,7 @@ export default function Pricing() {
         <section className="mb-16">
           <h2 className="text-2xl font-serif font-bold mb-2">Creator Spotlight</h2>
           <p className="text-muted-foreground mb-8">
-            Amplify your entire profile — great for creators launching a new project or growing their audience.
+            Amplify your entire profile - great for creators launching a new project or growing their audience.
           </p>
           <div className="grid md:grid-cols-2 gap-6">
             {[

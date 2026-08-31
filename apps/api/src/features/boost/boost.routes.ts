@@ -30,7 +30,7 @@ function boostReceiptHtml(opts: {
 <span style="color:#888">Expires</span><strong style="font-size:12px">${endsStr}</strong></div>
 </div>
 <a href="${process.env.PUBLIC_APP_URL ?? "https://quillhive.app"}/promotions" style="display:inline-block;background:#f59e0b;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">View My Promotions</a>
-<p style="color:#555;font-size:12px;margin-top:24px">QuillHive — Your quill is your voice. Your hive is where it grows. For everyone.</p>
+<p style="color:#555;font-size:12px;margin-top:24px">QuillHive - Your quill is your voice. Your hive is where it grows. For everyone.</p>
 </div></body></html>`;
 }
 
@@ -175,7 +175,7 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
     amount: planInfo.amountUsd,
     currency: "USD",
     source: "boost",
-    description: `${planInfo.label} — Post #${boostRequest.postId}`,
+    description: `${planInfo.label} - Post #${boostRequest.postId}`,
     date: now,
   }).catch(() => {});
 
@@ -266,7 +266,7 @@ boostRouter.post("/webhook", async (req: Request, res: Response) => {
           amount: event.data.amount ?? planInfo.amountUsd,
           currency: "USD",
           source: "boost",
-          description: `${planInfo.label} — Post #${boostRequest.postId} (webhook)`,
+          description: `${planInfo.label} - Post #${boostRequest.postId} (webhook)`,
           date: now,
         }).catch(() => {});
 

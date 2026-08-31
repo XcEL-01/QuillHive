@@ -32,14 +32,14 @@ export function ContentPolicy() {
               disability, or nationality.
             </li>
             <li>
-              <strong>Content that sexualizes minors</strong> in any form — zero tolerance, immediate
+              <strong>Content that sexualizes minors</strong> in any form - zero tolerance, immediate
               permanent ban, and reporting to authorities where required by law.
             </li>
             <li>
-              <strong>Plagiarism</strong> — posting another person's work without credit or permission.
+              <strong>Plagiarism</strong> - posting another person's work without credit or permission.
             </li>
             <li>
-              <strong>Doxxing</strong> — sharing private personal information about another person without
+              <strong>Doxxing</strong> - sharing private personal information about another person without
               their consent.
             </li>
             <li>

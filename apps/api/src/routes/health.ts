@@ -16,7 +16,7 @@ router.get(["/healthz", "/api/healthz"], async (_req, res) => {
     checks.database = "fail";
   }
 
-  // Redis (non-critical — degrade gracefully)
+  // Redis (non-critical - degrade gracefully)
   try {
     const redis = getRedis();
     if (redis) {
@@ -88,7 +88,7 @@ router.get("/health/cache", async (_req, res) => {
   if (!redis) {
     return res.status(503).json({
       status: "unconfigured",
-      message: "Redis (Upstash) credentials not set — set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
+      message: "Redis (Upstash) credentials not set - set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
       checked_at: new Date().toISOString(),
     });
   }

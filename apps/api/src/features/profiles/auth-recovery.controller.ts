@@ -21,7 +21,7 @@ const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const email = String(req.body?.email || "").toLowerCase().trim();
-  // Always respond OK to avoid user enumeration — but log and 500 in prod if email fails.
+  // Always respond OK to avoid user enumeration - but log and 500 in prod if email fails.
   if (!email) return res.json({ success: true });
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
@@ -36,7 +36,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const resetUrl = `${process.env.APP_URL || "http://localhost:5000"}/reset-password?token=${rawToken}`;
     const brand = process.env.BRAND_NAME || "QuillHive";
 
-    logger.info({ userId: user.id }, "Password reset requested — sending email");
+    logger.info({ userId: user.id }, "Password reset requested - sending email");
 
     try {
       await sendEmail({

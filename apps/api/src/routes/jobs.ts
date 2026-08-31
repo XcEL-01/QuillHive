@@ -180,7 +180,7 @@ router.post("/", async (req, res) => {
   return res.status(201).json(enriched);
 });
 
-// ── GET /my-matches — top matched opportunities for the logged-in creator ──────
+// ── GET /my-matches - top matched opportunities for the logged-in creator ──────
 router.get("/my-matches", async (req, res) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
@@ -245,7 +245,7 @@ router.get("/my-matches", async (req, res) => {
   return res.json({ matches: enriched });
 });
 
-// ── GET /:id/creator-matches — top creators matching a specific job ────────────
+// ── GET /:id/creator-matches - top creators matching a specific job ────────────
 router.get("/:id/creator-matches", async (req, res) => {
   const viewerId = getViewerId(req);
   const id = parseInt(req.params.id);

@@ -133,7 +133,7 @@ router.use("/me/api-keys", apiKeysAdminRouter);
 // Outbound webhooks (per-user)
 router.use("/me/webhooks", webhooksRouter);
 
-// Owner intelligence — admin-only
+// Owner intelligence - admin-only
 router.use("/admin/monitoring", monitoringRouter);
 
 // Admin extensions: job/post/group moderation, featured slots

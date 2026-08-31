@@ -346,7 +346,7 @@ export default function Onboarding() {
             <motion.div key="type" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-foreground mb-1">What brings you to QuillHive?</h2>
-                <p className="text-muted-foreground text-sm">Pick whatever fits best — you can change this later.</p>
+                <p className="text-muted-foreground text-sm">Pick whatever fits best - you can change this later.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {IDENTITY_TYPES.map(type => {
@@ -381,7 +381,7 @@ export default function Onboarding() {
             <motion.div key="goals" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-foreground mb-1">What are you here to achieve?</h2>
-                <p className="text-muted-foreground text-sm">Pick up to 3 goals — we'll personalise your experience around them.</p>
+                <p className="text-muted-foreground text-sm">Pick up to 3 goals - we'll personalise your experience around them.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {CREATOR_GOALS.map(goal => {
@@ -484,7 +484,7 @@ export default function Onboarding() {
             <motion.div key="profile" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-foreground mb-1">Tell your story</h2>
-                <p className="text-muted-foreground text-sm">Optional — you can always update this later in settings.</p>
+                <p className="text-muted-foreground text-sm">Optional - you can always update this later in settings.</p>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
@@ -528,7 +528,7 @@ export default function Onboarding() {
               </div>
               <div className="space-y-3">
                 {suggestedCreators.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-6">No suggestions yet — you'll discover great people in your feed.</p>
+                  <p className="text-sm text-muted-foreground text-center py-6">No suggestions yet - you'll discover great people in your feed.</p>
                 )}
                 {suggestedCreators.map((creator) => (
                   <div key={creator.id as number} className="flex items-center gap-3 p-3 rounded-2xl border border-border/60 bg-card">

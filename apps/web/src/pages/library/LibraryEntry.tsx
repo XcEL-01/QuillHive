@@ -108,7 +108,7 @@ export default function LibraryEntry() {
       .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
       .then(d => {
         setEntry(d.entry);
-        document.title = `${d.entry.title} — QuillHive Library`;
+        document.title = `${d.entry.title} - QuillHive Library`;
         // fetch more by same author
         return fetch(
           `/api/library?category=${d.entry.category}&limit=4`,

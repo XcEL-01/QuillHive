@@ -162,7 +162,7 @@ export const register = async (req: Request, res: Response) => {
 
   const verificationToken = await createEmailVerification(user.id);
 
-  // Send welcome email (fire-and-forget — never block registration)
+  // Send welcome email (fire-and-forget - never block registration)
   const appUrl = process.env.PUBLIC_APP_URL || process.env.APP_URL || "";
   sendEmail({
     to: emailCheck.email,
@@ -950,7 +950,7 @@ export const getProfileStrength = async (req: Request, res: Response) => {
     { label: "Portfolio item", key: "portfolio", done: portfolioCount >= 1, points: 10, category: "work", tip: "Add at least one portfolio piece to showcase your best work.", actionUrl: "/profile/" + user.username },
     { label: "Creator skills", key: "skills", done: skills.length >= 2, points: 5, category: "work", tip: "List your skills so collaborators can find you.", actionUrl: "/profile/" + user.username },
     { label: "Open for hire", key: "hire", done: !!(user.hireMeEnabled), points: 3, category: "opportunities", tip: "Toggle 'Open for Hire' so clients know you're available.", actionUrl: "/settings" },
-    { label: "Skill endorsement", key: "endorsed", done: endorsementCount >= 1, points: 5, category: "social", tip: "Get endorsed by a peer — collaborate and ask for endorsements.", actionUrl: "/profile/" + user.username },
+    { label: "Skill endorsement", key: "endorsed", done: endorsementCount >= 1, points: 5, category: "social", tip: "Get endorsed by a peer - collaborate and ask for endorsements.", actionUrl: "/profile/" + user.username },
     { label: "Service listing", key: "service", done: servicesCount >= 1, points: 5, category: "opportunities", tip: "Add a service to unlock income and booking opportunities.", actionUrl: "/profile/" + user.username },
     { label: "Creator links", key: "links", done: creatorLinks.length >= 1, points: 2, category: "branding", tip: "Add links to your external work, Gumroad, Patreon, or newsletter.", actionUrl: "/profile/" + user.username },
   ] as const;

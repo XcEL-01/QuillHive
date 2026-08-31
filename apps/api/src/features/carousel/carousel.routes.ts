@@ -34,7 +34,7 @@ async function getNextPage(
     await redis.set(key, String(next), { ex: 60 * 60 * 24 * 7 }); // 7 days
     return next;
   } catch (err) {
-    logger.warn({ err }, "redis_cursor_error — falling back to random page");
+    logger.warn({ err }, "redis_cursor_error - falling back to random page");
     return Math.floor(Math.random() * maxPage) + 1;
   }
 }
@@ -157,7 +157,7 @@ carouselRouter.post(
       const redis = getRedis();
       const perSource = Math.ceil((slideCount * 2) / (sources === "both" ? 2 : 1));
 
-      // Advance cursors — guarantees new pages each call
+      // Advance cursors - guarantees new pages each call
       const [unsplashPage, pexelsPage] = await Promise.all([
         sources !== "pexels"
           ? getNextPage(redis, unsplashCursorKey(userId, topic), 40)
@@ -226,7 +226,7 @@ function pickLayout(
   return pool[idx % pool.length]!;
 }
 
-// GET /api/carousel/topics — curated topic suggestions
+// GET /api/carousel/topics - curated topic suggestions
 const CURATED_TOPICS: Record<string, string[]> = {
   "Creator & Career": [
     "content creator", "freelance work", "personal brand", "remote work",

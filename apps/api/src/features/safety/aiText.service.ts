@@ -1,6 +1,6 @@
 /**
  * Lightweight AI-text heuristic. Returns a 0..1 score where higher = more likely
- * machine-generated. This is **not** a verdict — it's a soft signal for moderators.
+ * machine-generated. This is **not** a verdict - it's a soft signal for moderators.
  *
  * Combines three cheap signals known to over-index on LLM output:
  *  - Function-word ratio (LLMs slightly under-use connective tissue vs humans)

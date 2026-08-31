@@ -21,7 +21,7 @@ export default function AdminDashboard({ token, toast }: AdminProps) {
   return <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
     {cards.map(([label, value, Icon]) => <div key={label} className="rounded-xl border border-white/5 bg-[#111] p-5">
       <div className="flex items-center justify-between text-xs text-zinc-400 uppercase tracking-wider"><span>{label}</span><Icon className="w-4 h-4" /></div>
-      <p className="text-3xl font-bold mt-3">{loading ? "—" : (value ?? 0).toLocaleString()}</p>
+      <p className="text-3xl font-bold mt-3">{loading ? "-" : (value ?? 0).toLocaleString()}</p>
     </div>)}
   </div>;
 }

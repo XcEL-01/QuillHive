@@ -327,7 +327,7 @@ export default function Auth() {
             "Your quill is your voice. Your hive is where it grows."
           </p>
           <p className="text-xs text-muted-foreground text-center mt-1">
-            Grow, get discovered, and find real opportunities — for everyone.
+            Grow, get discovered, and find real opportunities - for everyone.
           </p>
           <div className="flex items-center gap-6 mt-8">
             {[

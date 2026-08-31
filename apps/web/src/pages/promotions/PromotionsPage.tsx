@@ -404,7 +404,7 @@ function CampaignCard({
   const active = isLive(campaign);
   const expired = isExpired(campaign);
   const planClass = PLAN_COLORS[campaign.plan] ?? "bg-white/10 text-white/60";
-  const spent = campaign.paidAmountCents ? `$${(campaign.paidAmountCents / 100).toFixed(2)}` : "—";
+  const spent = campaign.paidAmountCents ? `$${(campaign.paidAmountCents / 100).toFixed(2)}` : "-";
 
   return (
     <div

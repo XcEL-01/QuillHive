@@ -70,7 +70,7 @@ export default function AchievementBadgeRow({ username, isMe }: Props) {
       <Card className="p-4 border-dashed">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Award className="w-5 h-5 text-primary" />
-          <span>No achievements yet — publish your first post to unlock one!</span>
+          <span>No achievements yet - publish your first post to unlock one!</span>
         </div>
       </Card>
     );

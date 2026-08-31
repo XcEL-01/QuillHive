@@ -139,7 +139,7 @@ async function sendEngagementNudges(): Promise<void> {
         actorId: post.authorId,
         type: "share_nudge",
         postId: post.id,
-        message: `📤 ${postLabel} hasn't gotten much traction yet — try sharing it on social media to reach more readers.`,
+        message: `📤 ${postLabel} hasn't gotten much traction yet - try sharing it on social media to reach more readers.`,
         priority: "normal",
         category: "growth",
       });
@@ -219,7 +219,7 @@ async function sendStreakMilestoneNudges(): Promise<void> {
         .limit(1);
       if (existing.length > 0) continue;
       const emoji = streak >= 100 ? '🏆' : streak >= 30 ? '💎' : streak >= 14 ? '🌟' : streak >= 7 ? '🔥' : '⚡';
-      const msg = `${emoji} ${streak}-day streak! You're on fire — keep the momentum going.`;
+      const msg = `${emoji} ${streak}-day streak! You're on fire - keep the momentum going.`;
       await db.insert(notifs).values({
         userId: row.userId,
         actorId: row.userId,
@@ -403,11 +403,11 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
         ``,
         topPostLine,
         ``,
-        `Keep sharing — your hive is growing.`,
+        `Keep sharing - your hive is growing.`,
         ``,
         `View your full dashboard: ${appUrl}/dashboard`,
         ``,
-        `— The QuillHive Team`,
+        `- The QuillHive Team`,
         ``,
         `To unsubscribe from weekly digests, visit ${appUrl}/settings`,
       ].filter(line => line !== undefined).join("\n");
@@ -429,7 +429,7 @@ async function sendNurtureEmails(): Promise<void> {
 
   const appUrl = process.env.PUBLIC_APP_URL || process.env.APP_URL || "";
 
-  // Day 3 nurture — created 3 days ago (±30 min window)
+  // Day 3 nurture - created 3 days ago (±30 min window)
   const day3Users = await _db.execute(_sql`
     SELECT id, email, display_name as "displayName", username
     FROM users
@@ -445,13 +445,13 @@ async function sendNurtureEmails(): Promise<void> {
         to: u.email,
         subject: `${u.displayName}, day 3 check-in from QuillHive 👋`,
         html: day3NurtureHtml({ displayName: u.displayName, username: u.username, appUrl }),
-        text: `Hi ${u.displayName},\n\nIt's been 3 days! Members who share in their first week are 3× more likely to build lasting connections.\n\nShare something today: ${appUrl}/write\n\n— QuillHive`,
+        text: `Hi ${u.displayName},\n\nIt's been 3 days! Members who share in their first week are 3× more likely to build lasting connections.\n\nShare something today: ${appUrl}/write\n\n- QuillHive`,
       });
       await new Promise((r) => setTimeout(r, 80));
     } catch { /* skip */ }
   }
 
-  // Day 7 nurture — created 7 days ago (±30 min window)
+  // Day 7 nurture - created 7 days ago (±30 min window)
   const day7Users = await _db.execute(_sql`
     SELECT u.id, u.email, u.display_name as "displayName", u.username,
            (SELECT COUNT(*) FROM posts p WHERE p.author_id = u.id AND p.is_published = true) as post_count,
@@ -467,14 +467,14 @@ async function sendNurtureEmails(): Promise<void> {
     try {
       await sendEmail({
         to: u.email,
-        subject: `One week on QuillHive — your progress, ${u.displayName}`,
+        subject: `One week on QuillHive - your progress, ${u.displayName}`,
         html: day7NurtureHtml({
           displayName: u.displayName,
           postCount: parseInt(u.post_count, 10) || 0,
           followerCount: parseInt(u.follower_count, 10) || 0,
           appUrl,
         }),
-        text: `One week in! You've published ${u.post_count} posts and earned ${u.follower_count} followers. Keep going: ${appUrl}/dashboard\n\n— QuillHive`,
+        text: `One week in! You've published ${u.post_count} posts and earned ${u.follower_count} followers. Keep going: ${appUrl}/dashboard\n\n- QuillHive`,
       });
       await new Promise((r) => setTimeout(r, 80));
     } catch { /* skip */ }
@@ -567,7 +567,7 @@ async function sendOpportunityNotifications(): Promise<void> {
     for (const creator of creators.rows) {
       const messages: string[] = [];
       if ((creator.followers_gained ?? 0) >= 3) {
-        messages.push(`⚡ You gained ${creator.followers_gained} new followers this week — your growth is accelerating!`);
+        messages.push(`⚡ You gained ${creator.followers_gained} new followers this week - your growth is accelerating!`);
       }
       if ((creator.post_count ?? 0) >= 2) {
         messages.push(`📈 Great posting streak! Your content consistency is building long-term audience trust.`);
@@ -619,10 +619,10 @@ async function sendProfileViewNotifications(): Promise<void> {
       const lastWeek = Number(row.lastWeek);
       const trend = lastWeek > 0
         ? thisWeek > lastWeek
-          ? ` — up ${Math.round(((thisWeek - lastWeek) / lastWeek) * 100)}% from last week`
+          ? ` - up ${Math.round(((thisWeek - lastWeek) / lastWeek) * 100)}% from last week`
           : lastWeek > thisWeek
-            ? ` — down ${Math.round(((lastWeek - thisWeek) / lastWeek) * 100)}% from last week`
-            : " — same as last week"
+            ? ` - down ${Math.round(((lastWeek - thisWeek) / lastWeek) * 100)}% from last week`
+            : " - same as last week"
         : "";
       await notify({
         userId: row.profileUserId,
@@ -676,7 +676,7 @@ async function sendChallengeDeadlineReminders(): Promise<void> {
         await notify({
           userId: u.id,
           type: "system",
-          title: `⏰ Last 24 hours — "${challenge.title}"`,
+          title: `⏰ Last 24 hours - "${challenge.title}"`,
           message: `The ${challenge.title} challenge closes tomorrow. Submit your entry before it ends.`,
           url: `/challenges/${challenge.id}`,
         });
@@ -778,14 +778,14 @@ export function startScheduling(): void {
         logger.error({ err }, "scheduled moderation rules failed");
       });
     }
-    // Challenge deadline reminders — checked hourly (24-25h window prevents duplicates)
+    // Challenge deadline reminders - checked hourly (24-25h window prevents duplicates)
     if (now - lastChallengeReminder > 60 * 60 * 1000) {
       lastChallengeReminder = now;
       sendChallengeDeadlineReminders().catch((err) => {
         logger.error({ err }, "challenge deadline reminders failed");
       });
     }
-    // Profile view notifications — weekly (7-day guard)
+    // Profile view notifications - weekly (7-day guard)
     if (now - lastProfileViewNotif > 7 * 24 * 60 * 60 * 1000) {
       lastProfileViewNotif = now;
       sendProfileViewNotifications().catch((err) => {

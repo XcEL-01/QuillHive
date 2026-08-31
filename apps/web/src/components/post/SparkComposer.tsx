@@ -55,7 +55,7 @@ export function SparkComposer({ onPosted }: { onPosted?: () => void }) {
         if (isFirstPost) {
           toast({
             title: '🎉 Your first spark is live!',
-            description: "We're showing it to the QuillHive community now — you'll appear in the Fresh Voices section for new readers to discover.",
+            description: "We're showing it to the QuillHive community now - you'll appear in the Fresh Voices section for new readers to discover.",
             duration: 8000,
           });
         } else {

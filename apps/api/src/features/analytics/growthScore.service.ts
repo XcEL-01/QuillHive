@@ -161,9 +161,9 @@ export async function getCreatorGrowthScore(userId: number): Promise<GrowthScore
   const tips: string[] = [];
   if (profileCompletion < 80) tips.push("Complete your profile (bio, headline, avatar) for a stronger growth signal.");
   if (consistency < 50) tips.push("Post at least 3–5 times per month to build audience consistency.");
-  if (endorsementScore < 30) tips.push("Get skill endorsements from collaborators — they boost your opportunity score.");
+  if (endorsementScore < 30) tips.push("Get skill endorsements from collaborators - they boost your opportunity score.");
   if (servicesScore === 0) tips.push("Add a service listing to unlock income and collaboration opportunities.");
-  if (trustQuality < 55) tips.push("Focus on content quality — saves, deep reads, and thoughtful comments lift your trust score.");
+  if (trustQuality < 55) tips.push("Focus on content quality - saves, deep reads, and thoughtful comments lift your trust score.");
 
   return {
     score: clamp(score),

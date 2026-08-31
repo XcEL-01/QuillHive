@@ -67,14 +67,14 @@ export function SmartProjectDraft({ open, onOpenChange, defaultTitle = '', colla
 
   const generateContractText = () => {
     const lines = [
-      `SMART PROJECT AGREEMENT — QuillHive`,
+      `SMART PROJECT AGREEMENT - QuillHive`,
       ``,
       `Project: ${projectTitle || '(untitled)'}`,
       `Total Budget: ${currency} ${totalBudget || '0'}`,
       `Platform Commission: 0% (QuillHive charges no take-rate)`,
       ``,
       `MILESTONES`,
-      ...milestones.map((m, i) => `  ${i + 1}. ${m.title} — ${currency} ${m.amount || '0'}\n     ${m.description}`),
+      ...milestones.map((m, i) => `  ${i + 1}. ${m.title} - ${currency} ${m.amount || '0'}\n     ${m.description}`),
     ];
 
     if (collaborators.length > 1) {
@@ -162,7 +162,7 @@ export function SmartProjectDraft({ open, onOpenChange, defaultTitle = '', colla
               </div>
               <div className="space-y-2">
                 {collaborators.map(c => {
-                  const amount = totalVal ? ((c.share / 100) * totalVal).toFixed(2) : '—';
+                  const amount = totalVal ? ((c.share / 100) * totalVal).toFixed(2) : '-';
                   return (
                     <div key={c.displayName} className="flex items-center justify-between text-sm">
                       <span className="font-medium">{c.displayName}</span>

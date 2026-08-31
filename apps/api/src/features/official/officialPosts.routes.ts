@@ -121,7 +121,7 @@ async function ensureQuillHiveAccount(): Promise<number> {
 }
 
 /**
- * Seed the @quillhive system account safely — called from app startup.
+ * Seed the @quillhive system account safely - called from app startup.
  * Will update the account if it already exists but needs elevation.
  */
 export async function seedQuillHiveAccount(): Promise<void> {
@@ -269,7 +269,7 @@ async function sendOfficialNotifications(
 
 // ─── Admin Routes ──────────────────────────────────────────────────────────
 
-// GET /admin/official-posts — list all official posts (paginated)
+// GET /admin/official-posts - list all official posts (paginated)
 officialPostsRouter.get("/official-posts", requireAdmin, async (req: AuthedReq, res: Response) => {
   const limit = Math.min(Number(req.query["limit"] ?? 50), 100);
   const offset = Math.max(Number(req.query["offset"] ?? 0), 0);
@@ -308,7 +308,7 @@ officialPostsRouter.get("/official-posts", requireAdmin, async (req: AuthedReq, 
   return res.json({ posts, total, limit, offset });
 });
 
-// POST /admin/official-posts — create an official post
+// POST /admin/official-posts - create an official post
 officialPostsRouter.post("/official-posts", requireAdmin, async (req: AuthedReq, res: Response) => {
   const parse = createOfficialPostSchema.safeParse(req.body);
   if (!parse.success) {
@@ -367,7 +367,7 @@ officialPostsRouter.post("/official-posts", requireAdmin, async (req: AuthedReq,
   return res.status(201).json({ post });
 });
 
-// PATCH /admin/official-posts/:id — update an official post
+// PATCH /admin/official-posts/:id - update an official post
 officialPostsRouter.patch("/official-posts/:id", requireAdmin, async (req: AuthedReq, res: Response) => {
   const id = Number(req.params["id"]);
   if (!id) return res.status(400).json({ error: "Invalid id" });
@@ -411,7 +411,7 @@ officialPostsRouter.patch("/official-posts/:id", requireAdmin, async (req: Authe
   return res.json({ post: updated });
 });
 
-// DELETE /admin/official-posts/:id — soft-delete an official post
+// DELETE /admin/official-posts/:id - soft-delete an official post
 officialPostsRouter.delete("/official-posts/:id", requireAdmin, async (req: AuthedReq, res: Response) => {
   const id = Number(req.params["id"]);
   if (!id) return res.status(400).json({ error: "Invalid id" });
@@ -433,7 +433,7 @@ officialPostsRouter.delete("/official-posts/:id", requireAdmin, async (req: Auth
   return res.json({ ok: true });
 });
 
-// POST /admin/official-posts/:id/publish — publish a draft/scheduled post now
+// POST /admin/official-posts/:id/publish - publish a draft/scheduled post now
 officialPostsRouter.post("/official-posts/:id/publish", requireAdmin, async (req: AuthedReq, res: Response) => {
   const id = Number(req.params["id"]);
   if (!id) return res.status(400).json({ error: "Invalid id" });
@@ -448,7 +448,7 @@ officialPostsRouter.post("/official-posts/:id/publish", requireAdmin, async (req
   return res.json({ ok: true });
 });
 
-// GET /admin/official-posts/analytics — per-category performance stats
+// GET /admin/official-posts/analytics - per-category performance stats
 officialPostsRouter.get("/official-posts/analytics", requireAdmin, async (_req: Request, res: Response) => {
   const rows = await db
     .select({
@@ -464,7 +464,7 @@ officialPostsRouter.get("/official-posts/analytics", requireAdmin, async (_req: 
   return res.json({ stats: rows });
 });
 
-// POST /posts/:id/cta-click — track CTA button clicks (public, no auth required)
+// POST /posts/:id/cta-click - track CTA button clicks (public, no auth required)
 officialPostsRouter.post("/posts/:id/cta-click", async (req: Request, res: Response) => {
   const id = Number(req.params["id"]);
   const ctaLabel = typeof req.body?.label === "string" ? req.body.label.slice(0, 80) : "unknown";
@@ -493,7 +493,7 @@ officialPostsRouter.post("/posts/:id/cta-click", async (req: Request, res: Respo
   return res.json({ ok: true });
 });
 
-// GET /official/feed — public endpoint returning current official posts for feed injection
+// GET /official/feed - public endpoint returning current official posts for feed injection
 officialPostsRouter.get("/official/feed", async (req: Request, res: Response) => {
   const limit = Math.min(Number(req.query["limit"] ?? 5), 20);
 

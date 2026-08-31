@@ -20,7 +20,7 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   }
 } else {
   logger.warn(
-    "Web push disabled — set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY env vars to enable. Generate via `npx web-push generate-vapid-keys`.",
+    "Web push disabled - set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY env vars to enable. Generate via `npx web-push generate-vapid-keys`.",
   );
 }
 

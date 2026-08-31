@@ -255,7 +255,7 @@ export async function updateUserTrustScore(userId: number) {
       })();
     }
 
-    // Proximity nudge — fire after level-up check so it doesn't fire on the same update
+    // Proximity nudge - fire after level-up check so it doesn't fire on the same update
     void sendLevelProximityNudge(userId, newLevel, scores.uti);
 
     return updated;

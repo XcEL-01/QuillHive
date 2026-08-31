@@ -1,6 +1,6 @@
 /**
  * QuillHive platform seed script.
- * Safe to run on every startup — all operations are idempotent (ON CONFLICT DO NOTHING).
+ * Safe to run on every startup - all operations are idempotent (ON CONFLICT DO NOTHING).
  * Populates: official QuillHive account, super admin, default topics, achievement definitions.
  */
 import { db } from "@workspace/db";
@@ -76,7 +76,7 @@ async function seedOfficialAccount(): Promise<void> {
         .update(usersTable)
         .set({ isOfficialAccount: true, reachMultiplier: 10 })
         .where(eq(usersTable.id, existing.id));
-      logger.info("[Seed] @quillhive account already exists — flags verified");
+      logger.info("[Seed] @quillhive account already exists - flags verified");
       return;
     }
 
@@ -102,7 +102,7 @@ async function seedCareereviveAdmin(): Promise<void> {
           .where(eq(usersTable.id, existing.id));
         logger.info("[Seed] careerevive@gmail.com promoted to super_admin");
       } else {
-        logger.info("[Seed] careerevive@gmail.com already super_admin — skipping");
+        logger.info("[Seed] careerevive@gmail.com already super_admin - skipping");
       }
       return;
     }
@@ -118,7 +118,7 @@ async function seedTopics(): Promise<void> {
   try {
     const [first] = await db.select({ id: topicsTable.id }).from(topicsTable).limit(1);
     if (first) {
-      logger.info("[Seed] Topics already seeded — skipping");
+      logger.info("[Seed] Topics already seeded - skipping");
       return;
     }
     for (const topic of DEFAULT_TOPICS) {

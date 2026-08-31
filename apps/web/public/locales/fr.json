@@ -76,7 +76,7 @@
     "signUpTagline": "Rejoignez des milliers de créatifs sur QuillHive.",
     "or": "ou",
     "magicLink": "Envoyez-moi un lien de connexion",
-    "magicLinkSent": "Lien envoyé — vérifiez votre boîte de réception",
+    "magicLinkSent": "Lien envoyé - vérifiez votre boîte de réception",
     "passkeyHint": "La connexion par clé d'accès est disponible dans Paramètres → Sécurité après votre première connexion.",
     "noAccount": "Vous n'avez pas de compte ?",
     "hasAccount": "Vous avez déjà un compte ?",
@@ -126,7 +126,7 @@
   "motion": {
     "title": "Motion Studio",
     "subtitle": "Une vitrine motion pensée pour les créateurs",
-    "description": "Courts-métrages, essais animés, portfolios vidéo et narration visuelle — créés par la communauté QuillHive. Découvrez les œuvres, créditez les créateurs et suivez ce qui vous touche.",
+    "description": "Courts-métrages, essais animés, portfolios vidéo et narration visuelle - créés par la communauté QuillHive. Découvrez les œuvres, créditez les créateurs et suivez ce qui vous touche.",
     "upload": "Téléverser votre motion",
     "fresh": "Récent",
     "trending": "Tendances",
@@ -528,7 +528,7 @@
   "streak": {
     "dayStreak": "Série de {{count}} jours",
     "keepGoing": "Continuez à écrire quotidiennement pour construire votre série.",
-    "onFire": "Vous êtes en feu — gardez l'élan !",
+    "onFire": "Vous êtes en feu - gardez l'élan !",
     "milestones": {
       "kindling": "Allumage",
       "burning": "Embrasé",

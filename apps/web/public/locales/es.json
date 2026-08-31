@@ -76,7 +76,7 @@
     "signUpTagline": "Únete a miles de creativos en QuillHive.",
     "or": "o",
     "magicLink": "Envíame un enlace de inicio de sesión",
-    "magicLinkSent": "Enlace enviado — revisa tu bandeja de entrada",
+    "magicLinkSent": "Enlace enviado - revisa tu bandeja de entrada",
     "passkeyHint": "El inicio de sesión con clave de acceso está disponible en Configuración → Seguridad después de iniciar sesión una vez.",
     "noAccount": "¿No tienes cuenta?",
     "hasAccount": "¿Ya tienes cuenta?",
@@ -528,7 +528,7 @@
   "streak": {
     "dayStreak": "Racha de {{count}} días",
     "keepGoing": "Sigue escribiendo diariamente para construir tu racha.",
-    "onFire": "¡Estás en llamas — mantén el impulso!",
+    "onFire": "¡Estás en llamas - mantén el impulso!",
     "milestones": {
       "kindling": "Chispa",
       "burning": "Ardiente",

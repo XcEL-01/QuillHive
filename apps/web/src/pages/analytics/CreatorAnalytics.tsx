@@ -496,12 +496,12 @@ export default function CreatorAnalytics() {
                                     <span className="text-zinc-400 text-xs">
                                       {c.boostStartsAt && c.boostEndsAt
                                         ? `${Math.round((new Date(c.boostEndsAt).getTime() - new Date(c.boostStartsAt).getTime()) / 3600000)}h`
-                                        : "—"}
+                                        : "-"}
                                     </span>
                                   </td>
                                   <td className="py-3 text-right hidden lg:table-cell">
                                     <span className="text-zinc-400 text-xs">
-                                      {c.boostStartsAt ? `${fmtDate(c.boostStartsAt)} → ${c.boostEndsAt ? fmtDate(c.boostEndsAt) : "?"}` : "—"}
+                                      {c.boostStartsAt ? `${fmtDate(c.boostStartsAt)} → ${c.boostEndsAt ? fmtDate(c.boostEndsAt) : "?"}` : "-"}
                                     </span>
                                   </td>
                                 </tr>
@@ -635,7 +635,7 @@ export default function CreatorAnalytics() {
                               </Badge>
                             </td>
                             <td className="py-3 pr-4 hidden md:table-cell">
-                              <span className="text-zinc-400 text-xs">{tx.description ?? "—"}</span>
+                              <span className="text-zinc-400 text-xs">{tx.description ?? "-"}</span>
                             </td>
                             <td className="py-3 text-right">
                               <span className="text-emerald-400 font-semibold">
@@ -662,8 +662,8 @@ export default function CreatorAnalytics() {
               </div>
               <h2 className="text-xl font-bold text-white mb-2">Earnings Coming Soon</h2>
               <p className="text-zinc-400 text-sm max-w-md leading-relaxed mb-6">
-                Track your creator earnings — subscriptions, tips, affiliate revenue, and
-                sponsored content — all in one place. We're building this now.
+                Track your creator earnings - subscriptions, tips, affiliate revenue, and
+                sponsored content - all in one place. We're building this now.
               </p>
               <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
                 {["Subscriptions", "Tips & Gifts", "Affiliates"].map((f) => (

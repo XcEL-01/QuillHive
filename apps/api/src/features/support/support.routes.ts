@@ -93,7 +93,7 @@ supportRouter.post("/report", preventSpam("reports", { max: 8, windowMs: 60_000,
   }).returning();
   res.status(201).json(report);
 
-  // Fire-and-forget AI content moderation — does not block the response
+  // Fire-and-forget AI content moderation - does not block the response
   (async () => {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -115,7 +115,7 @@ supportRouter.post("/report", preventSpam("reports", { max: 8, windowMs: 60_000,
 Review this content and respond with ONLY a JSON object, no extra text:
 { "flagged": boolean, "severity": "low" | "medium" | "high", "reason": string }
 
-Content to review: ${post.title ?? '(untitled)'} — ${excerpt}`;
+Content to review: ${post.title ?? '(untitled)'} - ${excerpt}`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -145,7 +145,7 @@ Content to review: ${post.title ?? '(untitled)'} — ${excerpt}`;
         logger.warn({ reportId: report.id, aiFlag }, 'AI flagged report as high severity');
       }
     } catch (err) {
-      // Swallow all errors — AI flagging must never break the report submission
+      // Swallow all errors - AI flagging must never break the report submission
       logger.warn({ err }, 'AI content flagging failed silently');
     }
   })();

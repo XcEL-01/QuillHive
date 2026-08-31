@@ -22,7 +22,7 @@ function fmtTime(ts: number): string {
 
 function formatSystemAlert(event: SystemEvent): string {
   return [
-    `🚨 SYSTEM ALERT — QuillHive`,
+    `🚨 SYSTEM ALERT - QuillHive`,
     ``,
     `Severity: ${event.severity.toUpperCase()}`,
     `Type:     ${event.type}`,
@@ -34,13 +34,13 @@ function formatSystemAlert(event: SystemEvent): string {
     `Details:`,
     JSON.stringify(event.metadata ?? {}, null, 2),
     ``,
-    `— Owner Intelligence`,
+    `- Owner Intelligence`,
   ].join("\n");
 }
 
 function formatSecurityAlert(event: SystemEvent): string {
   return [
-    `⚠️ SECURITY EVENT — QuillHive`,
+    `⚠️ SECURITY EVENT - QuillHive`,
     ``,
     `Time:    ${fmtTime(event.timestamp)}`,
     `Message: ${event.message}`,
@@ -49,7 +49,7 @@ function formatSecurityAlert(event: SystemEvent): string {
     JSON.stringify(event.metadata ?? {}, null, 2),
     ``,
     `Note: IP addresses are masked for privacy.`,
-    `— Owner Intelligence`,
+    `- Owner Intelligence`,
   ].join("\n");
 }
 
@@ -108,7 +108,7 @@ export async function sendDailyDigest(): Promise<void> {
       `  • New users:    ${newUsers?.c ?? 0}`,
       `  • New posts:    ${newPosts?.c ?? 0}`,
       ``,
-      `— Owner Intelligence`,
+      `- Owner Intelligence`,
     ].join("\n");
 
     await sendAlertEmail("📊 QuillHive Daily Report", body);
@@ -204,7 +204,7 @@ export function startAnomalyMonitor(): void {
       if (shouldSend(key)) {
         void sendAlertEmail(
           `⚠️ QuillHive Anomaly Detected`,
-          `Anomaly: ${a.kind}\nValue: ${a.value}\nThreshold: ${a.threshold}\n\n${a.message}\n\n— Owner Intelligence`,
+          `Anomaly: ${a.kind}\nValue: ${a.value}\nThreshold: ${a.threshold}\n\n${a.message}\n\n- Owner Intelligence`,
         );
       }
     }

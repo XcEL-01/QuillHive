@@ -60,7 +60,7 @@ async function loadPollWithResults(pollId: number, viewerId: number | null) {
   };
 }
 
-/** Standalone poll creation — creates the backing post + poll in one shot */
+/** Standalone poll creation - creates the backing post + poll in one shot */
 const standalonePollSchema = z.object({
   question: z.string().min(3).max(280),
   options: z.array(z.string().min(1).max(120)).min(2).max(8),

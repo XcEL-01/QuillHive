@@ -11,10 +11,10 @@ async function getPost(id: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPost(params.id);
-  if (!post) return { title: 'Post — QuillHive' };
+  if (!post) return { title: 'Post - QuillHive' };
   const appUrl = process.env.APP_URL || 'http://localhost:3001';
   return {
-    title: `${post.title || 'Untitled'} — QuillHive`,
+    title: `${post.title || 'Untitled'} - QuillHive`,
     description: (post.excerpt || (post.content || '').replace(/<[^>]+>/g, '').slice(0, 160)),
     openGraph: {
       title: post.title || 'QuillHive Post',

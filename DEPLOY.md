@@ -36,19 +36,19 @@ Railway and Render use this endpoint to determine instance health.
 
 ## Environment variables checklist
 
-See `apps/api/.env.example` — all fields are documented there.
+See `apps/api/.env.example` - all fields are documented there.
 
 Required for production:
-- `DATABASE_URL` — PostgreSQL connection string
-- `JWT_SECRET` — long random string (32+ chars)
-- `REFRESH_SECRET` — different long random string
-- `APP_URL` — your production frontend URL (e.g. `https://app.quillhive.com`)
-- `SESSION_SECRET` — session signing secret
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - long random string (32+ chars)
+- `REFRESH_SECRET` - different long random string
+- `APP_URL` - your production frontend URL (e.g. `https://app.quillhive.com`)
+- `SESSION_SECRET` - session signing secret
 
 Recommended for production:
-- `RESEND_API_KEY` — email delivery (magic links, verification, digests)
-- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` — image CDN
-- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — GitHub OAuth
+- `RESEND_API_KEY` - email delivery (magic links, verification, digests)
+- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` - image CDN
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - GitHub OAuth
 
 ## Services
 

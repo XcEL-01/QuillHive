@@ -99,7 +99,7 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Public feature flags — read-only, no auth required
+// Public feature flags - read-only, no auth required
 app.get("/api/features", async (_req, res) => {
   try {
     const { getAllFeatureFlags } = await import("./lib/featureFlags");
@@ -252,7 +252,7 @@ app.get("/profile/:username", async (req, res, next) => {
     const origin = process.env.APP_URL || `https://${req.hostname}`;
     res.send(injectOgMeta(html, {
       title: `${user.displayName || req.params.username} on QuillHive`,
-      description: (user.bio || `Discover ${user.displayName || req.params.username}'s work on QuillHive — where everyone grows, gets discovered, and finds real opportunities.`).slice(0, 160),
+      description: (user.bio || `Discover ${user.displayName || req.params.username}'s work on QuillHive - where everyone grows, gets discovered, and finds real opportunities.`).slice(0, 160),
       image: user.avatarUrl || "",
       url: `${origin}/profile/${req.params.username}`,
     }));
@@ -323,7 +323,7 @@ app.get("/library/:slug", async (req, res, next) => {
       },
     });
     const inject = `
-    <title>${entry.title.replace(/</g, "&lt;")} — QuillHive Library</title>
+    <title>${entry.title.replace(/</g, "&lt;")} - QuillHive Library</title>
     <meta name="description" content="${entry.summary.replace(/"/g, "&quot;")}" />
     <meta name="keywords" content="${tags.replace(/"/g, "&quot;")}" />
     <meta name="author" content="${entry.authorName?.replace(/"/g, "&quot;") ?? ""}" />
@@ -386,7 +386,7 @@ app.get("/u/:username", async (req, res, next) => {
       worksFor: { "@type": "Organization", name: "QuillHive", url: origin },
     });
     const inject = `
-    <title>${(user.displayName ?? "").replace(/</g, "&lt;")} (@${user.username}) — QuillHive</title>
+    <title>${(user.displayName ?? "").replace(/</g, "&lt;")} (@${user.username}) - QuillHive</title>
     <meta name="description" content="${description.replace(/"/g, "&quot;")}" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="${profileUrl}" />

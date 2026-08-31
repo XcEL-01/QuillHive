@@ -925,7 +925,7 @@ export default function Settings() {
                               <div>
                                 <p className="font-semibold">{entry.title}</p>
                                 <p className="text-sm text-primary font-medium">{entry.organization}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">{entry.startYear} — {entry.endYear || t('settings.present')}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{entry.startYear} - {entry.endYear || t('settings.present')}</p>
                               </div>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button size="sm" variant="ghost" onClick={() => openEditWork(entry)} className="h-7 w-7 p-0 rounded-lg"><Pencil className="w-3.5 h-3.5" /></Button>
@@ -967,7 +967,7 @@ export default function Settings() {
                               <div>
                                 <p className="font-semibold">{entry.school}</p>
                                 <p className="text-sm text-primary font-medium">{entry.degree}{entry.field ? ` · ${entry.field}` : ''}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">{entry.startYear} — {entry.endYear || t('settings.present')}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{entry.startYear} - {entry.endYear || t('settings.present')}</p>
                               </div>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button size="sm" variant="ghost" onClick={() => openEditEdu(entry)} className="h-7 w-7 p-0 rounded-lg"><Pencil className="w-3.5 h-3.5" /></Button>
@@ -1683,7 +1683,7 @@ function BillingSection() {
         ) : (
           <div className="space-y-2">
             {boosts.map(b => {
-              const planInfo = PLAN_LABELS[b.plan] ?? { label: b.plan, amount: '—' };
+              const planInfo = PLAN_LABELS[b.plan] ?? { label: b.plan, amount: '-' };
               return (
                 <div key={b.id} className="flex items-center justify-between gap-3 border border-border/60 rounded-2xl px-4 py-3 bg-card">
                   <div className="min-w-0 flex-1">

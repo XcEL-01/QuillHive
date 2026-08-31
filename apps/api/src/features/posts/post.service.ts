@@ -553,7 +553,7 @@ export async function toggleLike(postId: number, userId: number) {
       const crossedThreshold = TRENDING_THRESHOLDS.find(t => recentCount === t);
 
       if (crossedThreshold) {
-        // Only fire once per threshold — check for existing trending_notif on this post in the last 24h
+        // Only fire once per threshold - check for existing trending_notif on this post in the last 24h
         const existingTrending = await db
           .select({ id: notificationsTable.id })
           .from(notificationsTable)
@@ -576,7 +576,7 @@ export async function toggleLike(postId: number, userId: number) {
               actorId: post.authorId,
               type: "trending_notif",
               postId,
-              message: `🔥 Your post is trending — ${crossedThreshold} likes in the last 24 hours!`,
+              message: `🔥 Your post is trending - ${crossedThreshold} likes in the last 24 hours!`,
               isRead: false,
             })
             .returning();

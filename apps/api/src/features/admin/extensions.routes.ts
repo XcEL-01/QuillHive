@@ -55,7 +55,7 @@ adminExtensionsRouter.patch("/jobs/:id/reject", async (req: Request, res: Respon
   res.json({ ok: true });
 });
 
-// Posts — sponsor / unsponsor
+// Posts - sponsor / unsponsor
 adminExtensionsRouter.patch("/posts/:id/sponsor", async (req: Request, res: Response) => {
   const adminId = (req as AuthedReq).currentUser.id;
   const id = Number(req.params["id"]);

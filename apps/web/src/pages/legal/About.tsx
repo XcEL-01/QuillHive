@@ -19,7 +19,7 @@ export function About() {
               Your quill is your voice. Your hive is where it grows.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Grow, get discovered, and find real opportunities — for everyone.
+              Grow, get discovered, and find real opportunities - for everyone.
             </p>
           </div>
         </section>

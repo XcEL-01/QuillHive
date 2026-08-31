@@ -81,7 +81,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 /**
- * Optional auth — attaches userId if a valid Bearer token is present,
+ * Optional auth - attaches userId if a valid Bearer token is present,
  * but never rejects the request for missing/invalid credentials.
  */
 export async function optionalAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {

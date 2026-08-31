@@ -29,7 +29,7 @@ export function CommunityGuidelines() {
               <li>Original writing, technical content, creative work, research, and professional insights.</li>
               <li>Thoughtful sparks, behind-the-scenes updates, and creator momentum posts.</li>
               <li>Long-form stories, essays, and immersive creative work.</li>
-              <li>Collaborative engagement — meaningful comments, respectful debate, and constructive feedback.</li>
+              <li>Collaborative engagement - meaningful comments, respectful debate, and constructive feedback.</li>
             </ul>
           </section>
 
@@ -39,7 +39,7 @@ export function CommunityGuidelines() {
             <ul className="list-disc pl-6 space-y-2 leading-relaxed">
               <li>Be original or properly attributed where it builds on others' work.</li>
               <li>Respect the intellectual property rights of others.</li>
-              <li>Meet basic quality standards — we are a professional platform, not a dump for AI-generated spam.</li>
+              <li>Meet basic quality standards - we are a professional platform, not a dump for AI-generated spam.</li>
               <li>Be accurate when presenting factual claims. Do not publish deliberate misinformation.</li>
             </ul>
           </section>
@@ -53,7 +53,7 @@ export function CommunityGuidelines() {
               <li>Sexual content involving minors, in any form.</li>
               <li>Violent, graphic, or disturbing content shared without clear creative or educational purpose.</li>
               <li>Illegal content including content promoting drug trafficking, fraud, or criminal activity.</li>
-              <li>Spam — mass-posting low-quality content, cross-posting identical content, or using the platform for unsolicited promotions.</li>
+              <li>Spam - mass-posting low-quality content, cross-posting identical content, or using the platform for unsolicited promotions.</li>
               <li>Phishing, malware, or content designed to deceive or defraud other users.</li>
               <li>Impersonation of other creators, brands, or {brand} staff.</li>
             </ul>

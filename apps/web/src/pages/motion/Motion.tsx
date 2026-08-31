@@ -411,7 +411,7 @@ export default function Motion() {
                 {t('motion.subtitle', 'A creator-first motion showcase')}
               </h1>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
-                {t('motion.description', 'Short films, animated essays, video portfolios, and visual storytelling — made by the QuillHive community. Discover work, credit the makers, follow what moves you.')}
+                {t('motion.description', 'Short films, animated essays, video portfolios, and visual storytelling - made by the QuillHive community. Discover work, credit the makers, follow what moves you.')}
               </p>
             </div>
             <Link href="/upload">
@@ -477,7 +477,7 @@ export default function Motion() {
                 <Film className="mb-3 h-10 w-10 text-muted-foreground opacity-50" />
                 <p className="text-base font-semibold">{t('motion.noMotionsYet', 'No motions to show yet')}</p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  {t('motion.noMotionsDesc', "When creators upload videos to QuillHive, they'll appear here as showcase cards — not addictive scrolls.")}
+                  {t('motion.noMotionsDesc', "When creators upload videos to QuillHive, they'll appear here as showcase cards - not addictive scrolls.")}
                 </p>
                 <Link href="/upload" className="mt-4">
                   <Button className="gap-2 rounded-xl">
@@ -518,7 +518,7 @@ export default function Motion() {
             <div className="rounded-2xl border border-border/60 bg-card p-5">
               <h3 className="mb-3 text-sm font-semibold">{t('motion.aboutTitle', 'About Motion Studio')}</h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                {t('motion.aboutBody', "Motion Studio is QuillHive's creator-first video space. It's built for portfolios and storytelling — not endless scrolling. Every piece is presented with credit, context, and tags so creators get discovered for their craft.")}
+                {t('motion.aboutBody', "Motion Studio is QuillHive's creator-first video space. It's built for portfolios and storytelling - not endless scrolling. Every piece is presented with credit, context, and tags so creators get discovered for their craft.")}
               </p>
             </div>
 

@@ -2,30 +2,30 @@
 
 > "Your quill is your voice. Your hive is where it grows."
 
-**Grow, get discovered, and find real opportunities — for everyone.**
+**Grow, get discovered, and find real opportunities - for everyone.**
 
 QuillHive is a professional growth and discovery platform
-for anyone with something to share — writers, developers,
+for anyone with something to share - writers, developers,
 designers, photographers, musicians, entrepreneurs,
 educators, students, and everyone in between.
 
 ## What QuillHive offers
 
-- **Trust Score & Creator Level** — your reputation built
+- **Trust Score & Creator Level** - your reputation built
   from consistency and genuine engagement, not follower counts
-- **Discovery Engine** — get your work in front of the right
+- **Discovery Engine** - get your work in front of the right
   people: readers, collaborators, clients, and employers
-- **Workspace** — find freelance work, hire talent, and
+- **Workspace** - find freelance work, hire talent, and
   collaborate on projects, all in one place
-- **AI Writing Tools** — built-in assistance for every
+- **AI Writing Tools** - built-in assistance for every
   kind of content
-- **Writing Streaks** — track your consistency and
+- **Writing Streaks** - track your consistency and
   celebrate milestones
-- **Real-time Everything** — live notifications, message
+- **Real-time Everything** - live notifications, message
   delivery, and reader counts
-- **Groups** — dedicated spaces to connect with people
+- **Groups** - dedicated spaces to connect with people
   who share your interests
-- **Boost Campaigns** — promote your best work to reach a
+- **Boost Campaigns** - promote your best work to reach a
   wider audience
 
 ## Tech Stack

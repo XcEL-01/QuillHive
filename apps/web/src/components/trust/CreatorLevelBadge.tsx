@@ -63,7 +63,7 @@ export function CreatorLevelProgressPanel({ level, uti }: { level: string | null
       </div>
       {nextLevel && nextThreshold && (
         <p className="text-xs text-muted-foreground">
-          {progress}% toward <strong>{labels[nextLevel]}</strong> — keep creating and engaging!
+          {progress}% toward <strong>{labels[nextLevel]}</strong> - keep creating and engaging!
         </p>
       )}
       {!nextLevel && (

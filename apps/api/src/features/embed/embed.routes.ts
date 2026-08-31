@@ -42,7 +42,7 @@ embedRouter.get("/:id", validateParams(idParams), async (req, res) => {
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${safeTitle} — QuillHive</title>
+<title>${safeTitle} - QuillHive</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0f0f11;color:#e2e2e6;min-height:100vh;display:flex;align-items:center;justify-content:center}

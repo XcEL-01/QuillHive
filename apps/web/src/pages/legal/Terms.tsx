@@ -20,7 +20,7 @@ export function Terms() {
           <section>
             <h2 className="text-xl font-semibold mb-4 text-foreground">1. About {brand}</h2>
             <p className="mb-3 leading-relaxed">
-              {brand} is a creator growth and opportunity platform. We help professional creators — writers, technical creators, educators, researchers, freelancers, and thinkers — build visible career identities, grow their audience, and convert that visibility into real-world opportunities.
+              {brand} is a creator growth and opportunity platform. We help professional creators - writers, technical creators, educators, researchers, freelancers, and thinkers - build visible career identities, grow their audience, and convert that visibility into real-world opportunities.
             </p>
             <p className="leading-relaxed">
               {brand} is not a social media entertainment platform. It is a professional growth infrastructure for creators who take their craft seriously. By using {brand}, you agree to these Terms of Service in full.

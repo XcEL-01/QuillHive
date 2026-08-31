@@ -374,12 +374,12 @@ function Router() {
       <Route path="/portfolio/:username"><Portfolio /></Route>
       <Route path="/portfolio"><Portfolio /></Route>
 
-      {/* Library — public, no auth required */}
+      {/* Library - public, no auth required */}
       <Route path="/library" component={Library} />
       <Route path="/library/new" component={AddToLibrary} />
       <Route path="/library/:slug" component={LibraryEntry} />
 
-      {/* Public profile at /u/:username — SEO-friendly canonical URL */}
+      {/* Public profile at /u/:username - SEO-friendly canonical URL */}
       <Route path="/u/:username">
         <AuthGuard><Profile /></AuthGuard>
       </Route>

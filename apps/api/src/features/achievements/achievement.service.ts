@@ -70,7 +70,7 @@ export async function awardAchievement(userId: number, key: string): Promise<boo
       .returning();
     emitToUser(userId, "notification:new", { ...notif, achievement: ach });
     void sendPushToUser(userId, {
-      title: `Achievement unlocked — ${ach.name}`,
+      title: `Achievement unlocked - ${ach.name}`,
       body: ach.description,
       url: `/profile`,
     });

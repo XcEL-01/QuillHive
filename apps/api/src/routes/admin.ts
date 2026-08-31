@@ -346,7 +346,7 @@ router.patch("/settings", requireSuperAdmin, async (req: any, res) => {
 });
 
 // ============================================================================
-// EXTENDED ADMIN ROUTES — moderation queue, warnings, user details, post flag
+// EXTENDED ADMIN ROUTES - moderation queue, warnings, user details, post flag
 // ============================================================================
 
 router.get("/reports/grouped", async (_req, res) => {

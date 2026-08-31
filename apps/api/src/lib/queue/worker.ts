@@ -165,7 +165,7 @@ async function processJob(job: Job): Promise<void> {
         ]);
 
         if (weekViews === 0 && newFollowers === 0 && unreadCount === 0) {
-          logger.info({ userId }, "Weekly report skipped — no activity");
+          logger.info({ userId }, "Weekly report skipped - no activity");
           break;
         }
 
@@ -182,9 +182,9 @@ async function processJob(job: Job): Promise<void> {
 
         let cta = "Keep sharing and building your place in the hive.";
         if (currentStreak === 0) {
-          cta = "Share something this week — even one post can start a new streak.";
+          cta = "Share something this week - even one post can start a new streak.";
         } else if (currentStreak >= 7) {
-          cta = `You're on a ${currentStreak}-day streak — you're building something real. Don't stop now.`;
+          cta = `You're on a ${currentStreak}-day streak - you're building something real. Don't stop now.`;
         } else if (newFollowers >= 5) {
           cta = `${newFollowers} new people followed you this week. Give them something great to discover.`;
         } else if (weekViews > 0 && topPost) {
@@ -199,7 +199,7 @@ async function processJob(job: Job): Promise<void> {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Your QuillHive Week — ${name}</title>
+<title>Your QuillHive Week - ${name}</title>
 <style>
   body{margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
   .wrapper{max-width:580px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -230,7 +230,7 @@ async function processJob(job: Job): Promise<void> {
 <div class="wrapper">
   <div class="header"><h1>QuillHive</h1><p>Your weekly community recap</p></div>
   <div class="body">
-    <p class="greeting">Hey ${name} — here's what grew around your voice this week.</p>
+    <p class="greeting">Hey ${name} - here's what grew around your voice this week.</p>
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number">${weekViews.toLocaleString()}</div>
@@ -256,14 +256,14 @@ async function processJob(job: Job): Promise<void> {
       <div class="section-title">Top post this week</div>
       <div class="top-post">
         <div class="top-post-title">${(topPost.title ?? "Untitled").slice(0, 80)}</div>
-        <div style="font-size:13px;color:#737373">Your best-performing post — <a href="${appUrl}/post/${topPost.id}" style="color:#8b5cf6">read it →</a></div>
+        <div style="font-size:13px;color:#737373">Your best-performing post - <a href="${appUrl}/post/${topPost.id}" style="color:#8b5cf6">read it →</a></div>
       </div>
     </div>` : ""}
     ${currentStreak > 0 ? `
     <div class="section">
       <div class="streak-bar" style="display:flex;align-items:center;gap:12px">
         <span style="font-size:24px">🔥</span>
-        <span style="font-size:14px;color:#9a3412;font-weight:600">${currentStreak}-day writing streak — keep it going</span>
+        <span style="font-size:14px;color:#9a3412;font-weight:600">${currentStreak}-day writing streak - keep it going</span>
       </div>
     </div>` : ""}
     <div class="cta-section">
@@ -415,7 +415,7 @@ async function processJob(job: Job): Promise<void> {
               userId: s.userId,
               type: "system",
               title: `🔥 Keep your ${s.currentStreak}-day streak alive!`,
-              message: "Write something today — even a short spark counts. Don't let your streak break.",
+              message: "Write something today - even a short spark counts. Don't let your streak break.",
               url: "/write",
             }).catch(() => {});
           }
@@ -436,7 +436,7 @@ async function processJob(job: Job): Promise<void> {
 export function startWorker(): void {
   const redisUrl = process.env.BULLMQ_REDIS_URL;
   if (!redisUrl) {
-    logger.warn("BULLMQ_REDIS_URL not set — job worker disabled");
+    logger.warn("BULLMQ_REDIS_URL not set - job worker disabled");
     return;
   }
 
@@ -467,7 +467,7 @@ export function startWorker(): void {
 
     logger.info("Job worker started");
 
-    // Register repeatable jobs — these run on a fixed schedule regardless of
+    // Register repeatable jobs - these run on a fixed schedule regardless of
     // whether they were already enqueued. The unique jobId prevents duplicates.
     void (async () => {
       try {
@@ -495,7 +495,7 @@ export function startWorker(): void {
         logger.info("Repeatable jobs registered (expire_boosts hourly, streak_break_check daily)");
         await mainQueue.close();
       } catch (repeatErr) {
-        logger.warn({ err: repeatErr }, "Could not register repeatable jobs — BullMQ may not be connected");
+        logger.warn({ err: repeatErr }, "Could not register repeatable jobs - BullMQ may not be connected");
       }
     })();
   } catch (err) {

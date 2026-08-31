@@ -39,7 +39,7 @@ export function Footer() {
               </span>
               <br />
               <span className="text-muted-foreground text-sm">
-                Grow, get discovered, and find real opportunities — for everyone.
+                Grow, get discovered, and find real opportunities - for everyone.
               </span>
             </p>
             <div className="flex gap-3 mt-4">

@@ -204,9 +204,9 @@ export async function getWeeklyReport(userId: number): Promise<WeeklyReport> {
   }
 
   const recommendations: string[] = [];
-  if (postsPublished === 0) recommendations.push("You didn't post this week — consistency is the #1 growth driver.");
+  if (postsPublished === 0) recommendations.push("You didn't post this week - consistency is the #1 growth driver.");
   if (followerGain === 0 && postsPublished > 0) recommendations.push("Try engaging with comments and following similar creators to spark new follower growth.");
-  if (totalViews > 0 && (totalLikes + totalComments) / totalViews < 0.03) recommendations.push("Your engagement rate is low — try ending posts with a question or call to action.");
+  if (totalViews > 0 && (totalLikes + totalComments) / totalViews < 0.03) recommendations.push("Your engagement rate is low - try ending posts with a question or call to action.");
   if (postsPublished >= 3) recommendations.push("Great posting cadence this week! Try sharing your top post on social media for wider reach.");
   if (followerGain >= 5) recommendations.push("Strong follower growth this week! Keep the momentum going with consistent content.");
 

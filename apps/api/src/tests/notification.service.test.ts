@@ -25,14 +25,14 @@ vi.mock("../features/notifications/push.service", () => ({
   sendPushToUser: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe("notify() — service is importable", () => {
+describe("notify() - service is importable", () => {
   it("exports notify function", async () => {
     const mod = await import("../features/notifications/notification.service");
     expect(typeof mod.notify).toBe("function");
   });
 });
 
-describe("notify() — self-notification guard", () => {
+describe("notify() - self-notification guard", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("skips notification when userId === actorId", async () => {
@@ -46,7 +46,7 @@ describe("notify() — self-notification guard", () => {
   });
 });
 
-describe("notify() — deduplication", () => {
+describe("notify() - deduplication", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("does not insert when userId === actorId", async () => {

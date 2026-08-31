@@ -73,7 +73,7 @@ async function getChainWithEntries(chainId: number, viewerId: number | null) {
   return { ...chain, entries, hasJoined: myEntryIds.length > 0, entryCount: entries.length };
 }
 
-// E5: GET /api/chains — discover chains
+// E5: GET /api/chains - discover chains
 chainsRouter.get("/chains", async (req, res) => {
   const limit = Math.min(Number(req.query.limit ?? 20), 50);
   const category = req.query.category as string | undefined;
@@ -108,7 +108,7 @@ chainsRouter.get("/chains", async (req, res) => {
   res.json({ chains });
 });
 
-// E6: GET /api/chains/mine — my chains (created + participated)
+// E6: GET /api/chains/mine - my chains (created + participated)
 chainsRouter.get("/chains/mine", requireAuth, async (req, res) => {
   const viewerId = getViewerId(req)!;
 
@@ -149,7 +149,7 @@ chainsRouter.get("/chains/mine", requireAuth, async (req, res) => {
   res.json({ created, participated });
 });
 
-// E3: GET /api/chains/:id — view chain + entries
+// E3: GET /api/chains/:id - view chain + entries
 chainsRouter.get("/chains/:id", async (req, res) => {
   const chainId = parseInt(req.params.id, 10);
   if (isNaN(chainId)) return res.status(400).json({ error: "Invalid chain ID" });
@@ -167,7 +167,7 @@ chainsRouter.get("/chains/:id", async (req, res) => {
   res.json(chain);
 });
 
-// E4: GET /api/chains/:id/analytics — chain analytics
+// E4: GET /api/chains/:id/analytics - chain analytics
 chainsRouter.get("/chains/:id/analytics", requireAuth, async (req, res) => {
   const chainId = parseInt(req.params.id, 10);
   if (isNaN(chainId)) return res.status(400).json({ error: "Invalid chain ID" });
@@ -246,7 +246,7 @@ chainsRouter.get("/chains/:id/analytics", requireAuth, async (req, res) => {
   });
 });
 
-// E1: POST /api/chains — create chain
+// E1: POST /api/chains - create chain
 chainsRouter.post("/chains", requireAuth, async (req, res) => {
   const viewerId = getViewerId(req)!;
   const body = createChainSchema.safeParse(req.body);
@@ -270,7 +270,7 @@ chainsRouter.post("/chains", requireAuth, async (req, res) => {
   res.status(201).json(chain);
 });
 
-// E2: POST /api/chains/:id/entries — add a post to the chain
+// E2: POST /api/chains/:id/entries - add a post to the chain
 chainsRouter.post("/chains/:id/entries", requireAuth, async (req, res) => {
   const chainId = parseInt(req.params.id, 10);
   if (isNaN(chainId)) return res.status(400).json({ error: "Invalid chain ID" });
@@ -313,7 +313,7 @@ chainsRouter.post("/chains/:id/entries", requireAuth, async (req, res) => {
   res.status(201).json({ ...entry, isChainComplete: isNowComplete });
 });
 
-// INVITE: POST /api/chains/:id/invites — invite a user by username
+// INVITE: POST /api/chains/:id/invites - invite a user by username
 chainsRouter.post("/chains/:id/invites", requireAuth, async (req, res) => {
   const chainId = parseInt(req.params.id, 10);
   if (isNaN(chainId)) return res.status(400).json({ error: "Invalid chain ID" });
@@ -348,7 +348,7 @@ chainsRouter.post("/chains/:id/invites", requireAuth, async (req, res) => {
   res.json({ success: true, invitedUser: target.displayName });
 });
 
-// DELETE /api/chains/:id — delete chain (creator only)
+// DELETE /api/chains/:id - delete chain (creator only)
 chainsRouter.delete("/chains/:id", requireAuth, async (req, res) => {
   const chainId = parseInt(req.params.id, 10);
   if (isNaN(chainId)) return res.status(400).json({ error: "Invalid chain ID" });

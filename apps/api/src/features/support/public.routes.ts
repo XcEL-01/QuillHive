@@ -8,7 +8,7 @@ import { logger } from "../../lib/logger";
 
 export const publicSupportRouter = Router();
 
-// Public-facing routes — banned/logged-out users must be able to submit appeals & DMCA notices.
+// Public-facing routes - banned/logged-out users must be able to submit appeals & DMCA notices.
 // Rate-limit per IP: 3 submissions / hour.
 const submissionLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 3 });
 
@@ -74,7 +74,7 @@ publicSupportRouter.post(
         .insert(supportTicketsTable)
         .values({
           userId: null as any,
-          subject: `Appeal — ${body.username}`,
+          subject: `Appeal - ${body.username}`,
           category: "account",
           severity: "high",
         } as any)
@@ -108,7 +108,7 @@ publicSupportRouter.post(
         .insert(supportTicketsTable)
         .values({
           userId: null as any,
-          subject: `DMCA — ${body.infringingUrl}`,
+          subject: `DMCA - ${body.infringingUrl}`,
           category: "abuse",
           severity: "high",
         } as any)

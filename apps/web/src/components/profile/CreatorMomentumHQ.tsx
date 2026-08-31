@@ -129,7 +129,7 @@ export function CreatorMomentumHQ({ userId, isMe }: CreatorMomentumHQProps) {
             Creator Momentum
           </h3>
           <Badge className={`${currentLvl.bgColor} ${currentLvl.color} border-transparent text-xs font-semibold`}>
-            {currentLvl.label} — {currentLvl.subtitle}
+            {currentLvl.label} - {currentLvl.subtitle}
           </Badge>
         </div>
 

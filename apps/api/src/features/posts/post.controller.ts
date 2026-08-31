@@ -451,7 +451,7 @@ export const trackShareClick = async (req: Request, res: Response) => {
       .where(eq(postsTable.id, id));
     await db.insert(postSharesTable).values({ postId: id, userId: null, source, clickCount: 1 });
   } catch {
-    // never throw — fire-and-forget
+    // never throw - fire-and-forget
   }
   return res.json({ ok: true });
 };
@@ -726,7 +726,7 @@ export const getTrending = async (req: Request, res: Response) => {
   return res.json(trendingResult);
 };
 
-// Motion — creator-first video feed. Filters posts where type='video'
+// Motion - creator-first video feed. Filters posts where type='video'
 // or attachments contain a video MIME type / video file extension.
 export const getMotion = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);

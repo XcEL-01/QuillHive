@@ -27,7 +27,7 @@ export function verifyPassword(password: string, storedHash: string): boolean {
       const actual = scryptSync(password, salt, SCRYPT_KEYLEN, SCRYPT_PARAMS);
       return timingSafeEqual(actual, expected);
     }
-    // Legacy SHA-256 fallback — after verifying, caller should upgrade hash
+    // Legacy SHA-256 fallback - after verifying, caller should upgrade hash
     const [salt, hash] = storedHash.split(":");
     if (!salt || !hash) return false;
     const testHash = createHash("sha256").update(password + salt).digest("hex");

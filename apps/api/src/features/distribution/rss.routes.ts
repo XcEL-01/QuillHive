@@ -91,7 +91,7 @@ rssRouter.get("/rss/posts", async (req: Request, res: Response) => {
       .orderBy(desc(postsTable.createdAt))
       .limit(RSS_LIMIT);
 
-    const xml = renderRss("QuillHive — Latest Posts", origin, "Latest posts from creators on QuillHive.", rows);
+    const xml = renderRss("QuillHive - Latest Posts", origin, "Latest posts from creators on QuillHive.", rows);
     res.set("Content-Type", "application/rss+xml; charset=utf-8");
     res.set("Cache-Control", "public, max-age=600");
     res.send(xml);

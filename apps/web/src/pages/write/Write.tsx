@@ -118,7 +118,7 @@ export default function Write() {
           if (isFirstPost) {
             toast({
               title: '🎉 Your first post is live!',
-              description: "We're boosting your visibility to the QuillHive community for the next 30 days — your post will appear in the Fresh Voices section for new readers to discover.",
+              description: "We're boosting your visibility to the QuillHive community for the next 30 days - your post will appear in the Fresh Voices section for new readers to discover.",
               duration: 8000,
             });
           } else {
@@ -230,7 +230,7 @@ export default function Write() {
         if (d.content) editor.commands.setContent(d.content);
         setDraftRestored(true);
         setHasDraft(false);
-        toast({ title: 'Draft loaded — resume editing' });
+        toast({ title: 'Draft loaded - resume editing' });
       })
       .catch(() => toast({ title: 'Could not load draft', variant: 'destructive' }));
   }, [editor, token]);

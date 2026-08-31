@@ -492,7 +492,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
         onclose: () => void;
       }
       const flwCheckout = (window as Window & { FlutterwaveCheckout?: (c: FlwConfig) => void }).FlutterwaveCheckout;
-      if (!flwCheckout) throw new Error('Payment provider not available — please refresh and try again');
+      if (!flwCheckout) throw new Error('Payment provider not available - please refresh and try again');
       flwCheckout({
         public_key: data.publicKey ?? '',
         tx_ref: data.txRef ?? '',
@@ -1021,7 +1021,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
                 Seen by <span className="font-semibold text-foreground">{(post.viewsCount ?? 0).toLocaleString()}</span> people
               </span>
             ) : isFirst24h && isOwner ? (
-              <span className="text-xs text-muted-foreground">Your first 24h — posts get extra reach right now. <button onClick={() => setBoostOpen(true)} className="text-primary hover:underline font-medium">Boost to grow faster →</button></span>
+              <span className="text-xs text-muted-foreground">Your first 24h - posts get extra reach right now. <button onClick={() => setBoostOpen(true)} className="text-primary hover:underline font-medium">Boost to grow faster →</button></span>
             ) : null}
           </div>
         )}
@@ -1051,7 +1051,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
               <Rocket className="w-5 h-5 text-orange-500" /> Boost this post
             </DialogTitle>
             <DialogDescription>
-              Pay once — your post gets boosted immediately upon payment. No review delay.
+              Pay once - your post gets boosted immediately upon payment. No review delay.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">

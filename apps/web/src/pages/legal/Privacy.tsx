@@ -25,7 +25,7 @@ export function Privacy() {
               <li><strong>Content:</strong> posts, sparks, stories, comments, messages, and other content you create.</li>
               <li><strong>Usage data:</strong> page views, clicks, session duration, features used, and interaction patterns.</li>
               <li><strong>Device data:</strong> IP address, browser type, operating system, device type.</li>
-              <li><strong>Payment data:</strong> transaction references, amounts, and payment status (we do not store full card details — payments are processed by Flutterwave).</li>
+              <li><strong>Payment data:</strong> transaction references, amounts, and payment status (we do not store full card details - payments are processed by Flutterwave).</li>
               <li><strong>Communications:</strong> support tickets, report submissions, and feedback you send us.</li>
             </ul>
           </section>
@@ -57,7 +57,7 @@ export function Privacy() {
             <h2 className="text-xl font-semibold mb-4 text-foreground">4. Data Sharing</h2>
             <p className="mb-3 leading-relaxed">We do not sell your personal data. We may share data with:</p>
             <ul className="list-disc pl-6 space-y-2 leading-relaxed">
-              <li><strong>Service providers:</strong> Flutterwave (payments), Cloudinary (media), Resend (email), Upstash (caching) — all bound by data processing agreements.</li>
+              <li><strong>Service providers:</strong> Flutterwave (payments), Cloudinary (media), Resend (email), Upstash (caching) - all bound by data processing agreements.</li>
               <li><strong>Legal authorities:</strong> where required by law, court order, or to protect platform safety.</li>
               <li><strong>Business transfers:</strong> in the event of a merger, acquisition, or platform transfer.</li>
             </ul>

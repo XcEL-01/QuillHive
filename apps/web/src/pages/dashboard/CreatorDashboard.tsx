@@ -295,9 +295,9 @@ export default function CreatorDashboard() {
               const motivationalMsg = completedCount === 0
                 ? "Post your first piece and start your journey."
                 : completedCount < 4
-                ? "You're building momentum — keep going."
+                ? "You're building momentum - keep going."
                 : completedCount < 8
-                ? "Solid progress — the community is noticing you."
+                ? "Solid progress - the community is noticing you."
                 : "You're an established voice on QuillHive.";
 
               return (
@@ -527,7 +527,7 @@ export default function CreatorDashboard() {
 
                         {(activeBoosts.length + pendingBoosts.length) > 3 && (
                           <p className="text-xs text-muted-foreground text-center pt-1">
-                            +{(activeBoosts.length + pendingBoosts.length) - 3} {t("dashboard.moreBoosts", "more")} —{" "}
+                            +{(activeBoosts.length + pendingBoosts.length) - 3} {t("dashboard.moreBoosts", "more")} -{" "}
                             {user?.username && (
                               <Link href={`/profile/${user.username}?tab=boosts`}>
                                 <span className="text-primary hover:underline cursor-pointer">{t("dashboard.viewAll", "view all")}</span>

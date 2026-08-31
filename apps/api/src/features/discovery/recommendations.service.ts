@@ -5,8 +5,8 @@ import { getMutualBlockSet } from "../safety/blocks.service";
 
 /**
  * Posts similar to `postId`. Combines two cheap signals:
- *  - Shingle overlap (post_fingerprints) — captures phrase-level similarity
- *  - Topic overlap (post_topics) — captures subject similarity
+ *  - Shingle overlap (post_fingerprints) - captures phrase-level similarity
+ *  - Topic overlap (post_topics) - captures subject similarity
  * Excludes the source post and any blocked authors.
  */
 export async function similarPosts(postId: number, viewerId: number | null, limit = 6) {

@@ -150,7 +150,7 @@ export default function MotionUpload() {
               </div>
               <div>
                 <p className="font-semibold text-foreground">Drop your video here or click to browse</p>
-                <p className="text-sm text-muted-foreground mt-1">MP4, MOV, WebM — max 500MB</p>
+                <p className="text-sm text-muted-foreground mt-1">MP4, MOV, WebM - max 500MB</p>
               </div>
               <Button variant="outline" className="rounded-xl mt-2">Browse files</Button>
             </div>

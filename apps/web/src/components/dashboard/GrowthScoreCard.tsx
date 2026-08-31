@@ -200,7 +200,7 @@ export function GrowthScoreCard() {
 
         <button
           onClick={async () => {
-            const text = `My QuillHive Score: ${data.score}/100 — ${data.tierLabel} tier 🚀`;
+            const text = `My QuillHive Score: ${data.score}/100 - ${data.tierLabel} tier 🚀`;
             const url = window.location.origin + "/dashboard";
             try {
               if (navigator.share) {

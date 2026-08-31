@@ -25,7 +25,7 @@ const listQuerySchema = z.object({
 
 /**
  * GET /api/opportunities
- * Public endpoint (auth optional — adds affinity score when viewer is logged in).
+ * Public endpoint (auth optional - adds affinity score when viewer is logged in).
  * Returns creators who are available for hire, sorted by:
  *   1. Affinity match (if viewer authenticated)
  *   2. Total endorsement count (desc)

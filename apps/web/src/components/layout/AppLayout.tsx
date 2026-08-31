@@ -183,7 +183,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <span className="font-serif font-bold text-lg text-primary tracking-tight hidden sm:block">QuillHive</span>
           </Link>
 
-          {/* Search — fills centre */}
+          {/* Search - fills centre */}
           <GlobalSearch />
 
           {/* Right: Messages + Theme + Avatar */}

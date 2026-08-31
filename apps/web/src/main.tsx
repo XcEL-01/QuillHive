@@ -48,7 +48,7 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
     },
     mutations: {
-      // Never auto-retry mutations — auth actions must fire exactly once.
+      // Never auto-retry mutations - auth actions must fire exactly once.
       retry: false,
     },
   },

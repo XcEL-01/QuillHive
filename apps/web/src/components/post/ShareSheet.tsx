@@ -34,7 +34,7 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
   const [messageSent, setMessageSent] = useState(false);
 
   const url = `${getAppUrl()}/post/${postId}`;
-  const shareText = title ? `${title} — via QuillHive` : "Read this on QuillHive";
+  const shareText = title ? `${title} - via QuillHive` : "Read this on QuillHive";
 
   // Fire-and-forget share-click telemetry (anonymous, no PII)
   const trackShare = useCallback((source: string) => {
@@ -126,7 +126,7 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
   const sendToConversation = useCallback(
     async (convId: number) => {
       if (!token) return;
-      const messageText = title ? `Shared: "${title}" — ${url}` : `Check this out: ${url}`;
+      const messageText = title ? `Shared: "${title}" - ${url}` : `Check this out: ${url}`;
       try {
         await fetch(`/api/messages/conversations/${convId}/messages`, {
           method: "POST",
@@ -279,7 +279,7 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
               <button
                 className="text-left p-2.5 rounded-lg border border-border hover:bg-muted transition-colors"
                 onClick={async () => {
-                  const t = `I just published${title ? ` "${title}"` : ' a new piece'} on QuillHive — read it here: ${url}`;
+                  const t = `I just published${title ? ` "${title}"` : ' a new piece'} on QuillHive - read it here: ${url}`;
                   await navigator.clipboard.writeText(t);
                   toast({ title: 'LinkedIn format copied' });
                   trackShare('format_linkedin');

@@ -26,7 +26,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 const dbReady = await testConnection();
 if (!dbReady) {
-  logger.error("Database connection failed on startup — exiting");
+  logger.error("Database connection failed on startup - exiting");
   process.exit(1);
 }
 logger.info("Database connection verified");
@@ -35,7 +35,7 @@ logger.info("Database connection verified");
 const jwtSecret = process.env.JWT_SECRET;
 if (!jwtSecret || jwtSecret.length < 32) {
   if (process.env.NODE_ENV === "production") {
-    logger.error("JWT_SECRET must be set to at least 32 characters in production — exiting");
+    logger.error("JWT_SECRET must be set to at least 32 characters in production - exiting");
     process.exit(1);
   }
   logger.warn("JWT_SECRET not properly configured; using development default");

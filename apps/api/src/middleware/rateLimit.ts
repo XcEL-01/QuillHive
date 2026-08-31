@@ -64,7 +64,7 @@ export function rateLimit(
         res.setHeader("X-RateLimit-Remaining", String(max - count - 1));
         return next();
       } catch (err) {
-        logger.warn({ err }, "Redis rate-limit error — falling back to memory");
+        logger.warn({ err }, "Redis rate-limit error - falling back to memory");
       }
     }
 

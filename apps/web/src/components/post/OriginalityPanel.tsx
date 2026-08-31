@@ -64,7 +64,7 @@ export function OriginalityPanel({ postId }: { postId: number }) {
             <div key={s.postId} className="flex items-center justify-between gap-3">
               <Link href={`/post/${s.postId}`} className="underline truncate">
                 {s.post?.title || `Post #${s.postId}`}
-                {s.post?.authorDisplayName ? ` — ${s.post.authorDisplayName}` : ""}
+                {s.post?.authorDisplayName ? ` - ${s.post.authorDisplayName}` : ""}
               </Link>
               <span className="opacity-70 shrink-0">{(s.similarity * 100).toFixed(0)}% overlap</span>
             </div>

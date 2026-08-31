@@ -50,12 +50,12 @@ export function magicLinkEmailHtml(opts: { link: string; displayName?: string })
     <div style="text-align:center;">${primaryButton(opts.link, "Sign in to " + brand)}</div>
     <p style="margin:24px 0 0;font-size:12px;color:#52525b;text-align:center;">If you didn't request this, you can safely ignore this email.</p>
   `;
-  return baseLayout(`Sign in to ${brand}`, `Your sign-in link for ${brand} — expires in 15 minutes`, body);
+  return baseLayout(`Sign in to ${brand}`, `Your sign-in link for ${brand} - expires in 15 minutes`, body);
 }
 
 export function magicLinkEmailText(opts: { link: string; displayName?: string }): string {
   const name = opts.displayName ? `, ${opts.displayName}` : "";
-  return `Hey${name}!\n\nSign in to ${brand} using the link below:\n\n${opts.link}\n\nThis link expires in 15 minutes and can only be used once.\n\nIf you didn't request this, you can ignore this email.\n\n— ${brand}`;
+  return `Hey${name}!\n\nSign in to ${brand} using the link below:\n\n${opts.link}\n\nThis link expires in 15 minutes and can only be used once.\n\nIf you didn't request this, you can ignore this email.\n\n- ${brand}`;
 }
 
 export function streakMilestoneEmailHtml(opts: { displayName: string; days: number; milestoneName: string; profileUrl: string }): string {
@@ -65,7 +65,7 @@ export function streakMilestoneEmailHtml(opts: { displayName: string; days: numb
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fafafa;text-align:center;">${opts.days}-Day Streak!</h1>
     <p style="margin:0 0 4px;font-size:15px;color:#f97316;font-weight:700;text-align:center;">${opts.milestoneName} unlocked</p>
     <p style="margin:16px 0 0;color:#a1a1aa;font-size:15px;line-height:1.6;text-align:center;">
-      Incredible, ${opts.displayName}! You've written on ${brand} for <strong style="color:#fafafa;">${opts.days} days in a row</strong>. That kind of consistency is rare — and it compounds.
+      Incredible, ${opts.displayName}! You've written on ${brand} for <strong style="color:#fafafa;">${opts.days} days in a row</strong>. That kind of consistency is rare - and it compounds.
     </p>
     <div style="text-align:center;">${primaryButton(opts.profileUrl, "See your profile")}</div>
   `;
@@ -76,7 +76,7 @@ export function newFollowerEmailHtml(opts: { recipientName: string; followerDisp
   const body = `
     <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#fafafa;">Someone found you ✨</h1>
     <p style="margin:0 0 20px;color:#a1a1aa;font-size:15px;line-height:1.6;">
-      <strong style="color:#fafafa;">${opts.followerDisplayName}</strong> (@${opts.followerUsername}) just followed you on ${brand}. Keep creating — your audience is growing.
+      <strong style="color:#fafafa;">${opts.followerDisplayName}</strong> (@${opts.followerUsername}) just followed you on ${brand}. Keep creating - your audience is growing.
     </p>
     ${primaryButton(opts.profileUrl, "Visit your profile")}
   `;
@@ -120,7 +120,7 @@ export function weeklyDigestEmailHtml(opts: {
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fafafa;">Your weekly digest 📖</h1>
     <p style="margin:0 0 24px;color:#a1a1aa;font-size:14px;">Top posts from the ${opts.followingCount} creators you follow this week.</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #27272a;">
-      ${postRows || '<tr><td style="padding:24px 0;color:#52525b;font-size:14px;">Nothing new this week — explore new creators to grow your feed.</td></tr>'}
+      ${postRows || '<tr><td style="padding:24px 0;color:#52525b;font-size:14px;">Nothing new this week - explore new creators to grow your feed.</td></tr>'}
     </table>
     <div style="text-align:center;margin-top:24px;">${primaryButton(opts.profileUrl, "Open " + brand)}</div>
   `;
@@ -133,7 +133,7 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
     <div style="text-align:center;margin-bottom:28px;font-size:52px;">🎉</div>
     <h1 style="margin:0 0 8px;font-size:28px;font-weight:800;color:#fafafa;text-align:center;">Welcome to ${brand}, ${opts.displayName}!</h1>
     <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.7;text-align:center;">
-      Your quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities — for everyone.
+      Your quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities - for everyone.
       Here's how to make the most of your first 48 hours.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -152,13 +152,13 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
       <tr><td style="padding:12px 0;border-bottom:1px solid #27272a;">
         <table><tr>
           <td style="padding-right:12px;font-size:20px;">📊</td>
-          <td><strong style="color:#fafafa;font-size:14px;">Visit your Creator Dashboard</strong><br/><span style="color:#a1a1aa;font-size:13px;">Track followers, views, and your Growth Score — all in one place.</span></td>
+          <td><strong style="color:#fafafa;font-size:14px;">Visit your Creator Dashboard</strong><br/><span style="color:#a1a1aa;font-size:13px;">Track followers, views, and your Growth Score - all in one place.</span></td>
         </tr></table>
       </td></tr>
       <tr><td style="padding:12px 0;">
         <table><tr>
           <td style="padding-right:12px;font-size:20px;">🌐</td>
-          <td><strong style="color:#fafafa;font-size:14px;">Explore creators in your niche</strong><br/><span style="color:#a1a1aa;font-size:13px;">Follow 5–10 creators you admire — the feed gets better fast.</span></td>
+          <td><strong style="color:#fafafa;font-size:14px;">Explore creators in your niche</strong><br/><span style="color:#a1a1aa;font-size:13px;">Follow 5–10 creators you admire - the feed gets better fast.</span></td>
         </tr></table>
       </td></tr>
     </table>
@@ -167,12 +167,12 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
       Your profile: <a href="${url}/profile/${opts.username}" style="color:#a1a1aa;">@${opts.username}</a>
     </p>
   `;
-  return baseLayout(`Welcome to ${brand} — let's get you growing`, `You're in. Here's how to make your first 48 hours count.`, body);
+  return baseLayout(`Welcome to ${brand} - let's get you growing`, `You're in. Here's how to make your first 48 hours count.`, body);
 }
 
 export function welcomeEmailText(opts: { displayName: string; username: string; appUrl?: string }): string {
   const url = opts.appUrl || appUrl;
-  return `Welcome to ${brand}, ${opts.displayName}!\n\nYour quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities — for everyone.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore people: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n— The ${brand} team`;
+  return `Welcome to ${brand}, ${opts.displayName}!\n\nYour quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities - for everyone.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore people: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n- The ${brand} team`;
 }
 
 export function day3NurtureHtml(opts: { displayName: string; username: string; appUrl?: string }): string {
@@ -202,15 +202,15 @@ export function day7NurtureHtml(opts: { displayName: string; postCount: number; 
     <p style="margin:0 0 20px;color:#a1a1aa;font-size:15px;line-height:1.7;">
       You've published <strong style="color:#f97316;">${opts.postCount} post${opts.postCount !== 1 ? "s" : ""}</strong> and earned
       <strong style="color:#f97316;">${opts.followerCount} follower${opts.followerCount !== 1 ? "s" : ""}</strong>.
-      That's momentum. Keep it going — your Growth Score rises with consistency.
+      That's momentum. Keep it going - your Growth Score rises with consistency.
     </p>
     ` : `
     <p style="margin:0 0 20px;color:#a1a1aa;font-size:15px;line-height:1.7;">
-      Your first week is the most important. Right now you have a head start — the algorithm favors new creators.
+      Your first week is the most important. Right now you have a head start - the algorithm favors new creators.
       Don't let the window close without publishing something.
     </p>
     `}
     <div style="text-align:center;">${primaryButton(`${url}/dashboard`, "View your Growth Score")}</div>
   `;
-  return baseLayout(`Week 1 wrap-up — how are you doing?`, `Your first week on ${brand} — let's see your progress.`, body);
+  return baseLayout(`Week 1 wrap-up - how are you doing?`, `Your first week on ${brand} - let's see your progress.`, body);
 }

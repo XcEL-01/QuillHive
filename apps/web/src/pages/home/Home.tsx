@@ -443,7 +443,7 @@ export default function Home() {
                 <span className="text-violet-500 font-semibold">discovered</span>
                 , and find{" "}
                 <span className="text-amber-500 font-semibold">real opportunities</span>
-                {" "}— for everyone.
+                {" "}- for everyone.
               </span>
             </div>
           </motion.div>
@@ -461,7 +461,7 @@ export default function Home() {
                   {myStreak}-day writing streak!
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {myStreak >= 7 ? 'You\'re on fire — keep the momentum going.' : 'Keep writing daily to build your streak.'}
+                  {myStreak >= 7 ? 'You\'re on fire - keep the momentum going.' : 'Keep writing daily to build your streak.'}
                 </p>
               </div>
               {myStreak >= 3 && (
@@ -513,7 +513,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Creator Growth HQ — career headquarters panel */}
+        {/* Creator Growth HQ - career headquarters panel */}
         {feedSource === 'explore' && token && <CreatorGrowthHQ />}
 
         {/* Featured hero from admin slot (graceful no-op if none) */}
@@ -522,13 +522,13 @@ export default function Home() {
         {/* Getting started checklist for new users */}
         {feedSource === 'explore' && token && <GettingStartedChecklist />}
 
-        {/* Continue reading shelf — visible on Explore + Following */}
+        {/* Continue reading shelf - visible on Explore + Following */}
         {(feedSource === 'explore' || feedSource === 'following') && token && <ContinueReadingShelf />}
 
         {/* Suggested for you (Explore mode only) */}
         {feedSource === 'explore' && <SuggestedCreators />}
 
-        {/* Fresh Voices — cold-start section for new creators */}
+        {/* Fresh Voices - cold-start section for new creators */}
         {feedSource === 'explore' && <NewVoicesSection />}
 
         {/* Trending now */}
@@ -595,7 +595,7 @@ export default function Home() {
                 {feedSource === 'following'
                   ? "Your quill is your voice. Your hive is where it grows. Follow people whose voices you value and start building your hive."
                   : feedSource === 'sparks'
-                  ? "No sparks yet — share a quick thought and get discovered by the community."
+                  ? "No sparks yet - share a quick thought and get discovered by the community."
                   : 'The first posts here get the most visibility. Start your growth journey now.'}
               </p>
               <Link href={feedSource === 'following' ? '/explore' : '/write'}>

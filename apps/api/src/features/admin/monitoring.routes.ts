@@ -56,7 +56,7 @@ monitoringRouter.post("/test-email", async (_req: Request, res: Response) => {
   }
   const ok = await sendAlertEmail(
     "✅ QuillHive Test Alert",
-    `This is a test alert from your QuillHive Owner Intelligence system.\nIf you can read this, alerts are working.\n\nTime: ${new Date().toISOString()}\n\n— Owner Intelligence`,
+    `This is a test alert from your QuillHive Owner Intelligence system.\nIf you can read this, alerts are working.\n\nTime: ${new Date().toISOString()}\n\n- Owner Intelligence`,
   );
   res.json({ ok });
 });

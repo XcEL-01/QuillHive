@@ -66,7 +66,7 @@ magicLinkRouter.post("/request", magicLinkLimit, async (req, res: Response) => {
 
     if (process.env.NODE_ENV !== "production") {
       // eslint-disable-next-line no-console
-      console.warn(`[magicLink] DEV ONLY — devLink generated for ${email}: ${url}`);
+      console.warn(`[magicLink] DEV ONLY - devLink generated for ${email}: ${url}`);
       return res.json({ ok: true, devLink: url });
     }
   }

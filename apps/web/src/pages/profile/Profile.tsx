@@ -986,7 +986,7 @@ export default function Profile() {
                         <div>
                           <p className="font-bold text-lg text-foreground">{work.title}</p>
                           <p className="font-medium text-primary">{work.organization}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{work.startYear} — {work.endYear || t('profile.present', 'Present')}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{work.startYear} - {work.endYear || t('profile.present', 'Present')}</p>
                         </div>
                       </div>
                       {work.description && <p className="text-sm text-muted-foreground mt-2">{work.description}</p>}
@@ -1012,7 +1012,7 @@ export default function Profile() {
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-lg text-foreground">{edu.school}</p>
                       <p className="font-medium text-primary">{edu.degree}{edu.field ? ` · ${edu.field}` : ''}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{edu.startYear} — {edu.endYear || t('profile.present', 'Present')}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{edu.startYear} - {edu.endYear || t('profile.present', 'Present')}</p>
                       {edu.description && <p className="text-sm text-muted-foreground mt-2">{edu.description}</p>}
                     </div>
                   </div>

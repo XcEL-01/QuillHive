@@ -24,12 +24,12 @@ function getMomentumStatus(report: WeeklyReport): { status: MomentumStatus; labe
   const followers = report.newFollowers ?? 0;
   const posts = report.postsPublished ?? 0;
 
-  if (views > prevViews * 2 && views > 50) return { status: "viral", label: "Viral Momentum 🚀", desc: "Your content is spreading fast — capitalize on this!" };
-  if (followers >= 5 || (views > prevViews * 1.15 && posts >= 2)) return { status: "rising", label: "Rising Fast ⚡", desc: "Strong upward trend — keep the momentum going." };
-  if (posts >= 2 && followers >= 1) return { status: "consistent", label: "Consistent Growth 📈", desc: "Steady and reliable — the foundation of creator success." };
-  if (posts >= 1 && views < prevViews * 0.8 && prevViews > 0) return { status: "cooling", label: "Audience Cooling ❄️", desc: "Engagement dipped — try a new format or topic this week." };
-  if (posts === 0) return { status: "dormant", label: "Not Active 💤", desc: "Your audience misses you — even one post can reignite growth." };
-  return { status: "consistent", label: "Steady Creator 🙂", desc: "You're showing up — keep building your audience." };
+  if (views > prevViews * 2 && views > 50) return { status: "viral", label: "Viral Momentum 🚀", desc: "Your content is spreading fast - capitalize on this!" };
+  if (followers >= 5 || (views > prevViews * 1.15 && posts >= 2)) return { status: "rising", label: "Rising Fast ⚡", desc: "Strong upward trend - keep the momentum going." };
+  if (posts >= 2 && followers >= 1) return { status: "consistent", label: "Consistent Growth 📈", desc: "Steady and reliable - the foundation of creator success." };
+  if (posts >= 1 && views < prevViews * 0.8 && prevViews > 0) return { status: "cooling", label: "Audience Cooling ❄️", desc: "Engagement dipped - try a new format or topic this week." };
+  if (posts === 0) return { status: "dormant", label: "Not Active 💤", desc: "Your audience misses you - even one post can reignite growth." };
+  return { status: "consistent", label: "Steady Creator 🙂", desc: "You're showing up - keep building your audience." };
 }
 
 const STATUS_STYLES: Record<MomentumStatus, { card: string; badge: string }> = {

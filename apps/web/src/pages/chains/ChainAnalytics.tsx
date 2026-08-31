@@ -207,7 +207,7 @@ export default function ChainAnalytics() {
           <StatCard
             icon={TrendingUp}
             label="Completion"
-            value={data.isComplete ? '100%' : data.completionRate !== null ? `${data.completionRate}%` : '—'}
+            value={data.isComplete ? '100%' : data.completionRate !== null ? `${data.completionRate}%` : '-'}
             sub={data.isComplete ? 'Chain complete!' : 'In progress'}
             color={data.isComplete ? 'text-emerald-500' : 'text-amber-500'}
           />
@@ -360,11 +360,11 @@ export default function ChainAnalytics() {
           </div>
         )}
 
-        {/* Empty state — no entries yet */}
+        {/* Empty state - no entries yet */}
         {data.totalEntries === 0 && (
           <div className="text-center py-12 bg-muted/20 rounded-2xl border border-dashed border-border">
             <BarChart3 className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No data yet — share your chain to get contributors!</p>
+            <p className="text-sm text-muted-foreground">No data yet - share your chain to get contributors!</p>
             <Link href={`/chains/${chainId}`}>
               <Button size="sm" className="mt-4 rounded-xl gap-2">
                 <Link2 className="w-3 h-3" /> View Chain

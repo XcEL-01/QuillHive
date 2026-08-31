@@ -1,7 +1,7 @@
 import { createHmac } from "crypto";
 import { logger } from "../../lib/logger";
 
-// Support both naming conventions — FLW_ (short) and FLUTTERWAVE_ (full)
+// Support both naming conventions - FLW_ (short) and FLUTTERWAVE_ (full)
 const FLW_SECRET =
   process.env["FLUTTERWAVE_SECRET_KEY"] ?? process.env["FLW_SECRET_KEY"];
 const FLW_PUBLIC =

@@ -691,7 +691,7 @@ export default function PostDetail() {
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Contribute this post as a Library entry — a free, SEO-indexed knowledge resource open to the world.
+            Contribute this post as a Library entry - a free, SEO-indexed knowledge resource open to the world.
           </p>
           <div className="flex gap-2 justify-end pt-2">
             <Button variant="ghost" onClick={() => setShowLibraryDialog(false)}>Cancel</Button>

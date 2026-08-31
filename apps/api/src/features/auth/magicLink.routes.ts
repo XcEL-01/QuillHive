@@ -6,8 +6,12 @@ import { and, eq, gt, isNull } from "drizzle-orm";
 import { createAuthTokens } from "../../lib/auth";
 import { sendEmail } from "../email/email.service";
 import { magicLinkEmailHtml, magicLinkEmailText } from "../email/email.templates";
+import { rateLimit } from "../../middleware/rateLimit";
 
 export const magicLinkRouter = Router();
+
+// Rate limit magic link requests: max 5 per hour per IP to prevent spam
+const magicLinkLimit = rateLimit({ windowMs: 60 * 60_000, max: 5 });
 
 const TOKEN_TTL_MS = 15 * 60 * 1000;
 
@@ -22,7 +26,7 @@ function ipHash(req: Request): string | null {
   return createHash("sha256").update(ip).digest("hex");
 }
 
-magicLinkRouter.post("/request", async (req, res: Response) => {
+magicLinkRouter.post("/request", magicLinkLimit, async (req, res: Response) => {
   const email = String(req.body?.email ?? "").trim().toLowerCase();
   if (!email || !email.includes("@")) {
     return res.status(400).json({ error: "Valid email required" });

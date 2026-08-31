@@ -31,6 +31,17 @@ if (!dbReady) {
 }
 logger.info("Database connection verified");
 
+// Validate JWT_SECRET early
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret || jwtSecret.length < 32) {
+  if (process.env.NODE_ENV === "production") {
+    logger.error("JWT_SECRET must be set to at least 32 characters in production — exiting");
+    process.exit(1);
+  }
+  logger.warn("JWT_SECRET not properly configured; using development default");
+}
+logger.info("JWT configuration verified");
+
 await seedFeatureFlags();
 logger.info("Feature flags seeded");
 

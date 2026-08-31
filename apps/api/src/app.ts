@@ -21,6 +21,11 @@ import { recordError, recordRequestForAnomaly } from "./lib/alertEngine";
 const app: Express = express();
 app.disable('x-powered-by');
 
+// Trust proxy for rate limiting to work correctly behind reverse proxy/load balancer
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1); // Trust 1 proxy (e.g., load balancer)
+}
+
 app.use(
   pinoHttp({
     logger,

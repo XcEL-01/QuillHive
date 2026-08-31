@@ -5,9 +5,24 @@ import { logger } from "./logger";
 let io: SocketServer | null = null;
 
 export function setupSocket(httpServer: HttpServer): SocketServer {
+  const appUrl = process.env.APP_URL ?? "";
+  
   io = new SocketServer(httpServer, {
     cors: {
-      origin: "*",
+      origin: (origin, callback) => {
+        if (!origin) { callback(null, true); return; }
+        const allowed =
+          (appUrl && origin === appUrl) ||
+          /^https:\/\/[^/]*\.quillhive\.pages\.dev$/.test(origin ?? "") ||
+          (process.env.NODE_ENV !== "production" && (
+            /^https?:\/\/[^/]*\.replit\.dev$/.test(origin ?? "") ||
+            /^https?:\/\/[^/]*\.repl\.co$/.test(origin ?? "") ||
+            /^https?:\/\/localhost(:\d+)?$/.test(origin ?? "")
+          ));
+        if (allowed) callback(null, true);
+        else callback(new Error("Not allowed by CORS"));
+      },
+      credentials: true,
       methods: ["GET", "POST"],
     },
     path: "/api/socket.io",
@@ -76,7 +91,9 @@ export function setupSocket(httpServer: HttpServer): SocketServer {
             }
           }
         }
-      } catch { /* best-effort */ }
+      } catch (error) {
+        logger.warn({ error, postId }, "Failed to update live view count");
+      }
     });
 
     socket.on("leave:post", (postId: number) => {

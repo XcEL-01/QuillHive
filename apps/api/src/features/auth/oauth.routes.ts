@@ -42,12 +42,9 @@ function configFor(p: Provider): ProviderConfig {
 }
 
 function callbackUrl(req: Request, provider: Provider): string {
-  if (provider === "github") {
-    const apiUrl = process.env.API_URL ?? process.env.PUBLIC_APP_URL ?? `${req.protocol}://${req.get("host")}`;
-    return `${apiUrl}/api/auth/oauth/github/callback`;
-  }
-  const base = process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get("host")}`;
-  return `${base}/api/auth/oauth/${provider}/callback`;
+  // Use consistent base URL for all providers
+  const baseUrl = process.env.API_URL || process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get("host")}`;
+  return `${baseUrl}/api/auth/oauth/${provider}/callback`;
 }
 
 const KNOWN_PROVIDERS: Provider[] = ["google", "github"];
@@ -94,101 +91,110 @@ async function handleGithubCallback(req: Request, res: Response): Promise<void> 
   const appUrl = process.env.APP_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:5173";
   const apiUrl = process.env.API_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  const tokenRes = await fetch(cfg.tokenUrl, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": "QuillHive/1.0",
-    },
-    body: new URLSearchParams({
-      client_id: cfg.clientId,
-      client_secret: cfg.clientSecret ?? "",
-      code,
-      redirect_uri: `${apiUrl}/api/auth/oauth/github/callback`,
-    }).toString(),
-  });
+  try {
+    const tokenRes = await fetch(cfg.tokenUrl, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "QuillHive/1.0",
+      },
+      body: new URLSearchParams({
+        client_id: cfg.clientId,
+        client_secret: cfg.clientSecret ?? "",
+        code,
+        redirect_uri: callbackUrl(req, "github"),
+      }).toString(),
+      signal: AbortSignal.timeout(10_000), // 10 second timeout
+    });
 
-  const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
-  if (!tokenData.access_token) {
-    return res.redirect(`${appUrl}/login?error=oauth_failed`);
-  }
+    const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
+    if (!tokenData.access_token) {
+      return res.redirect(`${appUrl}/login?error=oauth_failed`);
+    }
 
-  const ghProfile = await fetch("https://api.github.com/user", {
-    headers: {
-      Authorization: `token ${tokenData.access_token}`,
-      "User-Agent": "QuillHive/1.0",
-      Accept: "application/vnd.github.v3+json",
-    },
-  }).then(r => r.json()) as {
-    id: number; login: string; name?: string;
-    avatar_url?: string; email?: string; bio?: string;
-  };
-
-  let email = ghProfile.email ?? null;
-  if (!email) {
-    const emailList = await fetch("https://api.github.com/user/emails", {
+    const ghProfile = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `token ${tokenData.access_token}`,
         "User-Agent": "QuillHive/1.0",
         Accept: "application/vnd.github.v3+json",
       },
-    }).then(r => r.json()) as Array<{ email: string; primary: boolean; verified: boolean }>;
-    email = emailList.find(e => e.primary && e.verified)?.email
-      ?? emailList.find(e => e.verified)?.email
-      ?? null;
-  }
+      signal: AbortSignal.timeout(10_000),
+    }).then(r => r.json()) as {
+      id: number; login: string; name?: string;
+      avatar_url?: string; email?: string; bio?: string;
+    };
 
-  if (!email) {
-    return res.redirect(`${appUrl}/login?error=no_email`);
-  }
-
-  const providerAccountId = String(ghProfile.id);
-  const displayName = ghProfile.name || ghProfile.login;
-  const avatarUrl = ghProfile.avatar_url ?? null;
-
-  let [link] = await db.select().from(oauthAccountsTable)
-    .where(and(eq(oauthAccountsTable.provider, "github"), eq(oauthAccountsTable.providerAccountId, providerAccountId)));
-
-  let userId: number;
-  if (link) {
-    userId = link.userId;
-  } else {
-    let [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase()));
-    if (!user) {
-      let baseUsername = ghProfile.login.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 28);
-      let username = baseUsername;
-      let suffix = 1;
-      while (true) {
-        const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
-        if (!existing) break;
-        username = `${baseUsername}${suffix}`;
-        suffix++;
-      }
-      [user] = await db.insert(usersTable).values({
-        username,
-        email: email.toLowerCase(),
-        passwordHash: createHash("sha256").update(randomBytes(32)).digest("hex"),
-        displayName,
-        avatarUrl,
-        emailVerified: true,
-      }).returning();
+    let email = ghProfile.email ?? null;
+    if (!email) {
+      const emailList = await fetch("https://api.github.com/user/emails", {
+        headers: {
+          Authorization: `token ${tokenData.access_token}`,
+          "User-Agent": "QuillHive/1.0",
+          Accept: "application/vnd.github.v3+json",
+        },
+        signal: AbortSignal.timeout(10_000),
+      }).then(r => r.json()) as Array<{ email: string; primary: boolean; verified: boolean }>;
+      email = emailList.find(e => e.primary && e.verified)?.email
+        ?? emailList.find(e => e.verified)?.email
+        ?? null;
     }
-    userId = user.id;
-    await db.insert(oauthAccountsTable).values({
-      userId,
-      provider: "github",
-      providerAccountId,
-      email: email.toLowerCase(),
-      isPrimary: true,
-    });
-  }
 
-  const tokens = await createAuthTokens(userId, { userAgent: (req.headers["user-agent"] || "").slice(0, 200) });
-  const target = new URL("/auth/oauth-complete", appUrl);
-  target.searchParams.set("token", tokens.token);
-  target.searchParams.set("refreshToken", tokens.refreshToken);
-  return res.redirect(target.toString());
+    if (!email) {
+      return res.redirect(`${appUrl}/login?error=no_email`);
+    }
+
+    const providerAccountId = String(ghProfile.id);
+    const displayName = ghProfile.name || ghProfile.login;
+    const avatarUrl = ghProfile.avatar_url ?? null;
+
+    let [link] = await db.select().from(oauthAccountsTable)
+      .where(and(eq(oauthAccountsTable.provider, "github"), eq(oauthAccountsTable.providerAccountId, providerAccountId)));
+
+    let userId: number;
+    if (link) {
+      userId = link.userId;
+    } else {
+      let [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase()));
+      if (!user) {
+        let baseUsername = ghProfile.login.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 28);
+        let username = baseUsername;
+        let suffix = 1;
+        while (true) {
+          const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
+          if (!existing) break;
+          username = `${baseUsername}${suffix}`;
+          suffix++;
+        }
+        [user] = await db.insert(usersTable).values({
+          username,
+          email: email.toLowerCase(),
+          passwordHash: createHash("sha256").update(randomBytes(32)).digest("hex"),
+          displayName,
+          avatarUrl,
+          emailVerified: true,
+        }).returning();
+      }
+      userId = user.id;
+      await db.insert(oauthAccountsTable).values({
+        userId,
+        provider: "github",
+        providerAccountId,
+        email: email.toLowerCase(),
+        isPrimary: true,
+      });
+    }
+
+    const tokens = await createAuthTokens(userId, { userAgent: (req.headers["user-agent"] || "").slice(0, 200) });
+    const target = new URL("/auth/oauth-complete", appUrl);
+    target.searchParams.set("token", tokens.token);
+    target.searchParams.set("refreshToken", tokens.refreshToken);
+    return res.redirect(target.toString());
+  } catch (error) {
+    console.error("GitHub OAuth error:", error);
+    const appUrl = process.env.APP_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:5173";
+    return res.redirect(`${appUrl}/login?error=oauth_error`);
+  }
 }
 
 async function handleCallback(req: Request, res: Response, provider: string) {

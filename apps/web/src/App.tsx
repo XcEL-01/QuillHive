@@ -74,6 +74,28 @@ const ChainMine = lazy(() => import("@/pages/chains/ChainMine"));
 const ChainAnalytics = lazy(() => import("@/pages/chains/ChainAnalytics"));
 const CarouselGenerator = lazy(() => import("@/pages/carousel/CarouselGenerator"));
 
+const PUBLIC_ROUTES = [
+  "/about",
+  "/contact",
+  "/content-policy",
+  "/copyright",
+  "/community-guidelines",
+  "/forgot-password",
+  "/library",
+  "/pricing",
+  "/privacy",
+  "/register",
+  "/reset-password",
+  "/signup",
+  "/terms",
+  "/verify-email",
+];
+
+function isPublicRoute(location: string) {
+  const pathname = location.split("?", 1)[0].replace(/\/$/, "") || "/";
+  return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
 function PageLoader() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4 animate-pulse">
@@ -110,7 +132,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isInitializing && !isAuthenticated) {
-      if (location !== "/login" && location !== "/explore") {
+      if (location !== "/login" && location !== "/explore" && !isPublicRoute(location)) {
         setLocation("/login");
       }
     }
@@ -191,6 +213,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Auth} />
+      <Route path="/signup" component={Auth} />
+      <Route path="/register"><Redirect to="/signup" /></Route>
       <Route path="/auth/magic" component={Auth} />
       <Route path="/auth/oauth-complete" component={Auth} />
       <Route path="/verify-email" component={VerifyEmailPage} />

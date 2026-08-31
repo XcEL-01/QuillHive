@@ -29,7 +29,10 @@ function friendlyError(msg: string): string {
 }
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.location.pathname !== "/signup" && new URLSearchParams(window.location.search).get("mode") !== "signup";
+  });
   const [, setLocation] = useLocation();
   const { setAuth } = useAuthStore();
   const [inviteCode, setInviteCode] = useState("");
@@ -51,6 +54,7 @@ export default function Auth() {
       setIsLogin(false);
     }
     if (ref) setRefSource(ref);
+    if (window.location.pathname === "/signup" || params.get("mode") === "signup") setIsLogin(false);
   }, []);
 
   const [email, setEmail] = useState("");
@@ -489,9 +493,9 @@ export default function Auth() {
                         />
                         <span className="text-sm text-foreground leading-snug">
                           I agree to the{" "}
-                          <a href="/terms" className="text-primary hover:underline">Terms of Service</a>
+                          <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
                           {" "}and{" "}
-                          <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
+                          <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
                         </span>
                       </label>
                     </div>
@@ -648,9 +652,9 @@ export default function Auth() {
 
             <p className="text-xs text-center text-muted-foreground mt-6">
               {t("auth.termsPrefix", "By continuing, you agree to our")}{" "}
-              <a href="/terms" className="underline hover:text-foreground">{t("auth.termsLink", "Terms of Service")}</a>
+              <Link href="/terms" className="underline hover:text-foreground">{t("auth.termsLink", "Terms of Service")}</Link>
               {" "}{t("auth.termsAnd", "and")}{" "}
-              <a href="/privacy" className="underline hover:text-foreground">{t("auth.privacyLink", "Privacy Policy")}</a>.
+              <Link href="/privacy" className="underline hover:text-foreground">{t("auth.privacyLink", "Privacy Policy")}</Link>.
             </p>
           </motion.div>
         </div>

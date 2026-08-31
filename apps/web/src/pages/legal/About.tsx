@@ -69,7 +69,7 @@ export function About() {
             Start with a thought, follow a few voices, and let your hive grow from there.
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/register">
+            <Link href="/signup">
               <Button className="w-full rounded-xl sm:w-auto">Join QuillHive</Button>
             </Link>
             <Link href="/explore">

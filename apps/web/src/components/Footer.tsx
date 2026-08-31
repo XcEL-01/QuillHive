@@ -43,13 +43,13 @@ export function Footer() {
               </span>
             </p>
             <div className="flex gap-3 mt-4">
-              <a href="#" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
+              <a href="https://x.com/quillhive" target="_blank" rel="noreferrer" aria-label="QuillHive on X" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
-              <a href="#" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
+              <a href="https://www.instagram.com/quillhive" target="_blank" rel="noreferrer" aria-label="QuillHive on Instagram" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
+              <a href="https://github.com/quillhive" target="_blank" rel="noreferrer" aria-label="QuillHive on GitHub" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
                 <Github className="w-4 h-4" />
               </a>
             </div>

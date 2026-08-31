@@ -42,9 +42,15 @@ function configFor(p: Provider): ProviderConfig {
 }
 
 function callbackUrl(req: Request, provider: Provider): string {
-  // Use consistent base URL for all providers
-  const baseUrl = process.env.API_URL || process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get("host")}`;
+  const baseUrl = process.env.API_URL || `${req.protocol}://${req.get("host")}`;
   return `${baseUrl}/api/auth/oauth/${provider}/callback`;
+}
+
+function frontendUrl(): string {
+  return process.env.APP_URL
+    ?? process.env.FRONTEND_URL
+    ?? process.env.PUBLIC_APP_URL
+    ?? "http://localhost:5173";
 }
 
 const KNOWN_PROVIDERS: Provider[] = ["google", "github"];
@@ -88,8 +94,7 @@ async function handleGithubCallback(req: Request, res: Response): Promise<void> 
   }
   res.clearCookie("oauth_state_github");
 
-  const appUrl = process.env.APP_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:5173";
-  const apiUrl = process.env.API_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = frontendUrl();
 
   try {
     const tokenRes = await fetch(cfg.tokenUrl, {
@@ -192,7 +197,7 @@ async function handleGithubCallback(req: Request, res: Response): Promise<void> 
     return res.redirect(target.toString());
   } catch (error) {
     console.error("GitHub OAuth error:", error);
-    const appUrl = process.env.APP_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:5173";
+    const appUrl = frontendUrl();
     return res.redirect(`${appUrl}/login?error=oauth_error`);
   }
 }
@@ -256,7 +261,7 @@ async function handleCallback(req: Request, res: Response, provider: string) {
   }
 
   const tokens = await createAuthTokens(userId, { userAgent: (req.headers["user-agent"] || "").slice(0, 200) });
-  const base = process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get("host")}`;
+  const base = frontendUrl();
   const target = new URL("/auth/oauth-complete", base);
   target.searchParams.set("token", tokens.token);
   target.searchParams.set("refreshToken", tokens.refreshToken);

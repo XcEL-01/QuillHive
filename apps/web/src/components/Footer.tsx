@@ -1,11 +1,11 @@
 import { Link } from 'wouter';
 import { useT } from "@/lib/i18n";
-import { 
-  Twitter, 
-  Github, 
-  Instagram, 
-  Mail, 
-  Heart, 
+import {
+  Twitter,
+  Github,
+  Instagram,
+  Mail,
+  Heart,
   Feather,
   BookOpen,
   Users,
@@ -21,10 +21,10 @@ export function Footer() {
   return (
     <footer className="border-t border-border/60 bg-card/50 backdrop-blur-sm mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        
+
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
-          
+
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
@@ -63,10 +63,10 @@ export function Footer() {
                 </h3>
             <ul className="space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.aboutUs", "About")}</Link></li>
-              <li><Link href="/explore" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.blog", "Blog")}</Link></li>
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.blog", "Blog")}</Link></li>
               <li><Link href="/explore" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.explore", "Explore")}</Link></li>
-              <li><Link href="/groups" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communities", "Communities")}</Link></li>
-              <li><Link href="/jobs" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.jobsBoard", "Jobs Board")}</Link></li>
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communities", "Communities")}</Link></li>
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.jobsBoard", "Jobs Board")}</Link></li>
               <li><Link href="/library" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("nav.library", "Library")}</Link></li>
             </ul>
           </div>
@@ -78,11 +78,11 @@ export function Footer() {
               {t("footer.resources", "Resources")}
             </h3>
             <ul className="space-y-2">
-              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.helpCenter", "Help Center")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.helpCenter", "Help Center")}</Link></li>
               <li><Link href="/community-guidelines" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communityGuidelines", "Community Guidelines")}</Link></li>
-              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.writingTips", "Writing Tips")}</Link></li>
-              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.faq", "FAQ")}</Link></li>
-              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.status", "Status")}</Link></li>
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.writingTips", "Writing Tips")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.faq", "FAQ")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.status", "Status")}</Link></li>
             </ul>
           </div>
 
@@ -97,9 +97,9 @@ export function Footer() {
               <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.terms", "Terms of Service")}</Link></li>
               <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacy", "Privacy Policy")}</Link></li>
               <li><Link href="/content-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contentPolicy", "Content Policy")}</Link></li>
-              <li><Link href="/content-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.cookiePolicy", "Cookie Policy")}</Link></li>
+              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.cookiePolicy", "Cookie Policy")}</Link></li>
               <li><Link href="/copyright" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.copyright", "Copyright Policy")}</Link></li>
-              <li><Link href="/settings?section=privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacySettings", "Privacy Settings")}</Link></li>
+              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacySettings", "Privacy Settings")}</Link></li>
             </ul>
           </div>
 
@@ -111,7 +111,7 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact")}</Link></li>
-              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.support", "Support")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.support", "Support")}</Link></li>
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.feedback", "Feedback")}</Link></li>
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.pressKit", "Press Kit")}</Link></li>
             </ul>
@@ -124,7 +124,7 @@ export function Footer() {
             <p className="text-xs text-muted-foreground">
               © 2025 QuillHive. All rights reserved.
             </p>
-            
+
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <Link href="/about" className="hover:text-primary transition-colors">{t("footer.accessibility", "Accessibility")}</Link>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>

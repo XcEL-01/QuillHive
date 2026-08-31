@@ -32,12 +32,13 @@ import { RouteProgress } from "./RouteProgress";
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  publicPage?: boolean;
 }
 
 const MOBILE_PRIMARY = ["/" , "/explore", "__create__", "/workspace", "/library"];
 const MOBILE_MORE = ["/notifications", "/motion", "/groups"];
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const motionEnabled = useFeature("motion_enabled");
   const chainsEnabled = useFeature("chains_enabled");
   const [location, navigate] = useLocation();
@@ -159,6 +160,23 @@ export function AppLayout({ children }: AppLayoutProps) {
       </Link>
     );
   };
+
+  if (publicPage) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="border-b border-border bg-background/95">
+          <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4">
+            <Link href="/" className="font-serif text-lg font-bold text-primary">QuillHive</Link>
+            <div className="flex items-center gap-3 text-sm">
+              <Link href="/login" className="text-muted-foreground hover:text-foreground">Sign in</Link>
+              <Link href="/signup" className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">Join free</Link>
+            </div>
+          </div>
+        </header>
+        <main>{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">

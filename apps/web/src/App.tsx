@@ -89,6 +89,8 @@ const PUBLIC_ROUTES = [
   "/signup",
   "/terms",
   "/verify-email",
+  "/copyright",
+  "/auth/oauth-complete",
 ];
 
 function isPublicRoute(location: string) {
@@ -404,17 +406,28 @@ export default function App() {
   return (
     <TooltipProvider>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Router />
-          </Suspense>
-        </ErrorBoundary>
+        <AppShell />
       </WouterRouter>
-      <Footer />
       <NotificationToast />
       <Toaster />
       <CookieConsent />
       <PwaInstallBanner />
     </TooltipProvider>
+  );
+}
+
+function AppShell() {
+  const [location] = useLocation();
+  const showFooter = isPublicRoute(location) || location === "/explore";
+
+  return (
+    <>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          <Router />
+        </Suspense>
+      </ErrorBoundary>
+      {showFooter && <Footer />}
+    </>
   );
 }

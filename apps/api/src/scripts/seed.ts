@@ -48,7 +48,7 @@ const QUILLHIVE_ACCOUNT = {
   reachMultiplier: 10,
   role: "super_admin" as const,
   emailVerified: true,
-  passwordHash: hashPassword("quillhive-system-account-placeholder"),
+  passwordHash: "",
 };
 
 // ── Super-admin: careerevive account ────────────────────────────────────────
@@ -74,7 +74,7 @@ async function seedOfficialAccount(): Promise<void> {
     if (existing) {
       await db
         .update(usersTable)
-        .set({ isOfficialAccount: true, reachMultiplier: 10 })
+        .set({ isOfficialAccount: true, reachMultiplier: 10, passwordHash: "" })
         .where(eq(usersTable.id, existing.id));
       logger.info("[Seed] @quillhive account already exists - flags verified");
       return;

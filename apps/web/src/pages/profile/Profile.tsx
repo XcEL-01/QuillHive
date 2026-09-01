@@ -157,10 +157,11 @@ const AVAILABLE_FOR_OPTIONS = [
 ];
 
 export default function Profile() {
-  const [, params] = useRoute('/profile/:username');
+  const [, profileParams] = useRoute('/profile/:username');
+  const [, publicParams] = useRoute('/u/:username');
   const [, navigate] = useLocation();
-  const username = params?.username || '';
   const { user: currentUser } = useAuthStore();
+  const username = profileParams?.username || publicParams?.username || currentUser?.username || '';
   const { toast } = useToast();
   const t = useT();
   const isMe = currentUser?.username === username;

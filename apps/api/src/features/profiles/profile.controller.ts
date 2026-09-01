@@ -14,6 +14,7 @@ import {
 } from "../../lib/auth";
 import {
   getUserWithCounts,
+  invalidateUserCache,
   enrichPost,
   getCreatorProfile,
   upsertCreatorProfile,
@@ -640,6 +641,7 @@ export const updateMyProfile = async (req: Request, res: Response) => {
   }
 
   await db.update(usersTable).set(updates).where(eq(usersTable.id, viewerId));
+  await invalidateUserCache(viewerId);
   const user = await getUserWithCounts(viewerId, null);
   return res.json(user);
 };
@@ -767,6 +769,7 @@ export const completeOnboarding = async (req: Request, res: Response) => {
     updates.onboardingGoals = JSON.stringify(req.body.onboardingGoals.slice(0, 10));
   }
   await db.update(usersTable).set(updates as any).where(eq(usersTable.id, viewerId));
+  await invalidateUserCache(viewerId);
   const user = await getUserWithCounts(viewerId, null);
 
   // Fire-and-forget: pre-seed topic affinity from selected interests

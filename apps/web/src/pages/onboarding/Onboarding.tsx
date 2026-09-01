@@ -151,7 +151,7 @@ export default function Onboarding() {
     if (currentStepName === 'profile') {
       setIsLoading(true);
       try {
-        await fetch('/api/users/me', {
+        const profileRes = await fetch('/api/users/me/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
           body: JSON.stringify({
@@ -160,6 +160,7 @@ export default function Onboarding() {
             identityType,
           }),
         });
+        if (!profileRes.ok) throw new Error('Could not save your profile.');
 
         for (const slug of selectedInterests.map(i => i.toLowerCase().replace(/\s+/g, '-'))) {
           const topicRes = await fetch(`/api/topics/${slug}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
@@ -181,7 +182,13 @@ export default function Onboarding() {
             body: JSON.stringify({ skills: selectedSkills }),
           }).catch(() => {});
         }
-      } catch {
+      } catch (error) {
+        toast({
+          title: 'Could not save your profile',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
+        return;
       } finally {
         setIsLoading(false);
       }
@@ -245,16 +252,24 @@ export default function Onboarding() {
   const completeOnboarding = async () => {
     setIsLoading(true);
     try {
-      await fetch('/api/users/me', {
+      const res = await fetch('/api/users/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ onboardingComplete: true, onboardingGoals: selectedGoals }),
+        body: JSON.stringify({ onboardingComplete: true, onboardingGoals: selectedGoals, interests: selectedInterests }),
       });
+      if (!res.ok) {
+        const error = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(error?.error || 'Could not complete onboarding.');
+      }
       await refreshUser();
       const goalCta = getGoalCta(selectedGoals);
       setLocation(goalCta.href);
-    } catch {
-      setLocation('/');
+    } catch (error) {
+      toast({
+        title: 'Could not finish onboarding',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }

@@ -48,7 +48,7 @@ const QUILLHIVE_ACCOUNT = {
   reachMultiplier: 10,
   role: "super_admin" as const,
   emailVerified: true,
-  passwordHash: "",
+  passwordHash: "QuillHiveoff.acct.hq",
 };
 
 // ── Super-admin: careerevive account ────────────────────────────────────────

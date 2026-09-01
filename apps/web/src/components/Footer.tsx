@@ -4,14 +4,10 @@ import {
   Twitter,
   Github,
   Instagram,
-  Mail,
   Heart,
   Feather,
   BookOpen,
-  Users,
   Shield,
-  FileText,
-  HelpCircle,
   Globe
 } from 'lucide-react';
 
@@ -23,7 +19,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
 
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
 
           {/* Brand Column */}
           <div className="lg:col-span-1">
@@ -63,10 +59,7 @@ export function Footer() {
                 </h3>
             <ul className="space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.aboutUs", "About")}</Link></li>
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.blog", "Blog")}</Link></li>
               <li><Link href="/explore" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.explore", "Explore")}</Link></li>
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communities", "Communities")}</Link></li>
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.jobsBoard", "Jobs Board")}</Link></li>
               <li><Link href="/library" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("nav.library", "Library")}</Link></li>
             </ul>
           </div>
@@ -80,9 +73,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.helpCenter", "Help Center")}</Link></li>
               <li><Link href="/community-guidelines" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communityGuidelines", "Community Guidelines")}</Link></li>
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.writingTips", "Writing Tips")}</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.faq", "FAQ")}</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.status", "Status")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact & Support")}</Link></li>
             </ul>
           </div>
 
@@ -93,27 +84,10 @@ export function Footer() {
               {t("footer.legal", "Legal")}
             </h3>
             <ul className="space-y-2">
-              <li><Link href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.pricingBoost", "Pricing & Boost")}</Link></li>
               <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.terms", "Terms of Service")}</Link></li>
               <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacy", "Privacy Policy")}</Link></li>
               <li><Link href="/content-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contentPolicy", "Content Policy")}</Link></li>
-              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.cookiePolicy", "Cookie Policy")}</Link></li>
               <li><Link href="/copyright" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.copyright", "Copyright Policy")}</Link></li>
-              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacySettings", "Privacy Settings")}</Link></li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-              <Mail className="w-4 h-4 text-muted-foreground" />
-              {t("footer.connect", "Connect")}
-            </h3>
-            <ul className="space-y-2">
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact")}</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.support", "Support")}</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.feedback", "Feedback")}</Link></li>
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.pressKit", "Press Kit")}</Link></li>
             </ul>
           </div>
         </div>
@@ -126,10 +100,6 @@ export function Footer() {
             </p>
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <Link href="/about" className="hover:text-primary transition-colors">{t("footer.accessibility", "Accessibility")}</Link>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-              <Link href="/explore" className="hover:text-primary transition-colors">{t("footer.sitemap", "Sitemap")}</Link>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
               <div className="flex items-center gap-1">
                 <span>{t("footer.madeWith", "Made with")}</span>
                 <Heart className="w-3 h-3 text-red-500 fill-red-500" />

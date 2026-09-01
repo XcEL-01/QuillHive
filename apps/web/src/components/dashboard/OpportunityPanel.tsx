@@ -62,7 +62,9 @@ export function OpportunityPanel() {
   if (!data) return null;
 
   const cfg = SCORE_CONFIG(data.score);
-  const doneCount = data.factors.filter(f => f.done).length;
+  const factors = Array.isArray(data.factors) ? data.factors : [];
+  const tips = Array.isArray(data.tips) ? data.tips : [];
+  const doneCount = factors.filter(f => f.done).length;
 
   return (
     <Card className={`rounded-2xl border-border/60 bg-gradient-to-br ${cfg.bg} overflow-hidden`}>
@@ -82,14 +84,14 @@ export function OpportunityPanel() {
           <div className="flex-1 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold" style={{ color: cfg.color }}>{data.score}%</span>
-              <span className="text-xs text-muted-foreground">{doneCount}/{data.factors.length} {t("dashboard.factorsComplete", "factors complete")}</span>
+              <span className="text-xs text-muted-foreground">{doneCount}/{factors.length} {t("dashboard.factorsComplete", "factors complete")}</span>
             </div>
             <Progress value={data.score} className="h-2" style={{ "--progress-color": cfg.color } as React.CSSProperties} />
           </div>
         </div>
 
         <div className="space-y-2">
-          {data.factors.map((factor, i) => (
+          {factors.map((factor, i) => (
             <div key={i} className="flex items-center gap-2.5">
               {factor.done
                 ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -111,12 +113,12 @@ export function OpportunityPanel() {
           ))}
         </div>
 
-        {data.tips.length > 0 && (
+        {tips.length > 0 && (
           <div className="rounded-xl bg-background/50 border border-border/40 p-3 space-y-2">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
               <Target className="w-3 h-3" /> {t("dashboard.nextSteps", "Next Steps")}
             </p>
-            {data.tips.map((tip, i) => (
+            {tips.map((tip, i) => (
               <p key={i} className="text-xs text-foreground/80 flex items-start gap-1.5">
                 <Sparkles className="w-3 h-3 text-primary shrink-0 mt-0.5" /> {tip}
               </p>

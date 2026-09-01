@@ -87,8 +87,10 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   useSocketConnection();
   usePushNotifications();
 
-  const { data: notifications } = useGetNotifications();
-  const unreadNotifCount = (notifications?.filter(n => !n.isRead).length ?? 0) + liveNotifCount;
+  const { data: notifications } = useGetNotifications({
+    query: { enabled: !!user, queryKey: ["/api/notifications"] },
+  });
+  const unreadNotifCount = (Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0) + liveNotifCount;
   const unreadMessageCount = baseMessageCount + liveMessageCount;
 
   usePageTitle(undefined, unreadNotifCount > 0 ? unreadNotifCount : undefined);
@@ -448,7 +450,8 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
           <div className="py-2 space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-2">More</p>
             {MOBILE_MORE.map(href => {
-              const item = NAV_ITEMS.find(n => n.href === href)!;
+              const item = NAV_ITEMS.find(n => n.href === href);
+              if (!item) return null;
               const Icon = item.icon;
               const active = isActive(item.href);
               const badge = item.showBadge === "notif" ? unreadNotifCount : 0;

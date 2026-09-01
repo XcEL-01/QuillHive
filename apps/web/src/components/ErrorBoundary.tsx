@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-muted-foreground mt-1">
               This page hit an error. Your data is safe.
             </p>
-            {process.env.NODE_ENV === "development" && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <pre className="mt-3 text-left text-xs bg-muted p-3 rounded-lg overflow-auto max-h-32 text-destructive">
                 {this.state.error.message}
               </pre>

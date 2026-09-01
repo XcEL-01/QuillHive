@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuthStore } from "@/store/auth";
-import { setStoredRefreshToken, setStoredToken } from "@/lib/api";
+import { apiUrl, setStoredRefreshToken, setStoredToken } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -158,7 +158,7 @@ export default function Auth() {
   };
 
   const startOAuth = (provider: "google") => {
-    window.location.href = `/api/auth/oauth/${provider}/start`;
+    window.location.href = apiUrl(`/api/auth/oauth/${provider}/start`);
   };
 
   const [verificationToken, setVerificationToken] = useState("");
@@ -620,7 +620,7 @@ export default function Auth() {
                   {/* GitHub OAuth */}
                   <div>
                     <a
-                      href={`${import.meta.env.VITE_API_URL ?? ""}/api/auth/oauth/github/start`}
+                      href={apiUrl("/api/auth/oauth/github/start")}
                       className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5
                         rounded-xl border border-border bg-card hover:bg-muted transition-colors
                         text-sm font-medium text-foreground"

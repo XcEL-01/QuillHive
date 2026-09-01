@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { clsx } from 'clsx';
 import { safeHtml } from '@/lib/sanitize';
-import { getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken } from '@/lib/api';
 import { useI18n, useT } from '@/lib/i18n';
 import { CreatorLevelBadge } from '@/components/trust/CreatorLevelBadge';
 import { PollBlock } from '@/components/post/PollBlock';
@@ -662,7 +662,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
               )}
               <DropdownMenuItem
                 onClick={() => {
-                  const embedCode = `<iframe src="${window.location.origin}/api/embed/${post.id}" width="100%" height="240" frameborder="0" allowfullscreen></iframe>`;
+                  const embedCode = `<iframe src="${apiUrl(`/api/embed/${post.id}`)}" width="100%" height="240" frameborder="0" allowfullscreen></iframe>`;
                   navigator.clipboard.writeText(embedCode).then(() => toast({ title: 'Embed code copied!', description: 'Paste it anywhere on the web.' }));
                 }}
                 className="gap-2 cursor-pointer"

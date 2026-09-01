@@ -1,5 +1,14 @@
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
+const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+export const API_BASE_URL = (configuredApiUrl || (import.meta.env.PROD ? "https://quillhive.onrender.com" : ""))
+  .replace(/\/+$/, "");
+
+export function apiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path) || !API_BASE_URL || !path.startsWith("/")) return path;
+  return `${API_BASE_URL}${path}`;
+}
+
 export const TOKEN_KEY = "qh_token";
 export const REFRESH_TOKEN_KEY = "qh_refresh_token";
 

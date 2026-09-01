@@ -8,7 +8,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { getStoredToken } from "@/lib/api";
+import { apiUrl, getStoredToken } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, Download, ChevronLeft, ChevronRight,
@@ -66,8 +66,6 @@ const SOURCES = [
   { value: "pexels", label: "Pexels only" },
 ];
 
-const API_BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") + "/api";
-
 export default function CarouselGenerator() {
   const { toast } = useToast();
   const [topic, setTopic] = useState("");
@@ -85,7 +83,7 @@ export default function CarouselGenerator() {
     if (topics) return;
     setLoadingTopics(true);
     try {
-      const r = await fetch(`${API_BASE}/carousel/topics`);
+      const r = await fetch(apiUrl("/api/carousel/topics"));
       if (r.ok) setTopics(await r.json().then((d: any) => d.categories));
     } finally {
       setLoadingTopics(false);
@@ -100,7 +98,7 @@ export default function CarouselGenerator() {
     setGenerating(true);
     try {
       const token = getStoredToken();
-      const r = await fetch(`${API_BASE}/carousel/generate`, {
+      const r = await fetch(apiUrl("/api/carousel/generate"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

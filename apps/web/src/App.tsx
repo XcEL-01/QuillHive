@@ -383,7 +383,7 @@ function Router() {
 
       {/* Public profile at /u/:username - SEO-friendly canonical URL */}
       <Route path="/u/:username">
-        <AuthGuard><Profile /></AuthGuard>
+        <Profile />
       </Route>
 
       <Route path="/admin">

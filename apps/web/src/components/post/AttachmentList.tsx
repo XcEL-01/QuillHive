@@ -1,5 +1,6 @@
 import { attachmentIcon, type Attachment } from './AttachmentPicker';
 import { Download } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 interface AttachmentListProps {
   attachments: Attachment[];
@@ -7,11 +8,10 @@ interface AttachmentListProps {
 
 export function AttachmentList({ attachments }: AttachmentListProps) {
   if (!attachments || attachments.length === 0) return null;
-  const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || '';
   const resolveUrl = (url: string) => {
     if (!url) return '#';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `${apiBase}${url}`;
+    return apiUrl(url);
   };
 
   const images = attachments.filter((a) => a.mimeType.startsWith('image/'));

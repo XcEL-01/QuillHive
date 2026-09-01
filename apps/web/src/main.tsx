@@ -1,14 +1,16 @@
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ?? "";
+import { API_BASE_URL, apiUrl } from "./lib/api";
 
-if (API_BASE) {
+if (API_BASE_URL) {
   const originalFetch = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-    if (typeof input === 'string' && input.startsWith('/api')) {
-      return originalFetch(API_BASE + input, init);
+    if (typeof input === "string" && input.startsWith("/api")) {
+      return originalFetch(apiUrl(input), init);
     }
-    if (input instanceof Request && input.url.includes(window.location.origin + '/api')) {
-      const newUrl = input.url.replace(window.location.origin, API_BASE);
-      return originalFetch(new Request(newUrl, input), init);
+    if (input instanceof URL && input.origin === window.location.origin && input.pathname.startsWith("/api")) {
+      return originalFetch(apiUrl(`${input.pathname}${input.search}`), init);
+    }
+    if (input instanceof Request && input.url.startsWith(`${window.location.origin}/api`)) {
+      return originalFetch(new Request(apiUrl(`${input.url.replace(window.location.origin, "")}`), input), init);
     }
     return originalFetch(input, init);
   };
@@ -22,8 +24,8 @@ import './index.css'
 import { useI18n } from './lib/i18n'
 import { setBaseUrl } from '@workspace/api-client-react'
 
-if (API_BASE) {
-  setBaseUrl(API_BASE);
+if (API_BASE_URL) {
+  setBaseUrl(API_BASE_URL);
 }
 
 const queryClient = new QueryClient({

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Paperclip, X, Loader2, FileText, Image as ImageIcon, Music, Video, File } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiUrl, getStoredToken } from '@/lib/api';
 
 export interface Attachment {
   url: string;
@@ -54,8 +55,6 @@ export function AttachmentPicker({ attachments, onChange, max = 10, label = 'Att
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || '';
-
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     if (attachments.length + files.length > max) {
@@ -75,8 +74,8 @@ export function AttachmentPicker({ attachments, onChange, max = 10, label = 'Att
           continue;
         }
         const dataBase64 = await fileToBase64(file);
-        const token = localStorage.getItem('auth_token') || '';
-        const res = await fetch(`${apiBase}/api/upload`, {
+        const token = getStoredToken() || '';
+        const res = await fetch(apiUrl('/api/upload'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -95,7 +94,7 @@ export function AttachmentPicker({ attachments, onChange, max = 10, label = 'Att
         }
         const data = await res.json();
         next.push({
-          url: data.url || `/api/file/${data.id}`,
+          url: data.url || apiUrl(`/api/file/${data.id}`),
           mimeType: file.type,
           filename: file.name,
           sizeBytes: file.size,

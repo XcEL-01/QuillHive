@@ -181,13 +181,17 @@ export const register = async (req: Request, res: Response) => {
   });
 };
 
-// In-memory tracker for repeated failed logins per IP (security signal)
+// In-memory tracker for repeated failed logins by email + IP (prevents one network from blocking others)
 const loginFailures = new Map<string, { count: number; resetAt: number }>();
-function trackLoginFailure(ip: string): number {
+const loginFailureLockoutMessage = 'Too many failed login attempts for this account. Please wait a few minutes and try again, or use "Forgot password" to reset it.';
+
+function trackLoginFailure(ip: string, email: string): number {
+  const normalizedEmail = (email || "unknown").trim().toLowerCase();
+  const failKey = `${ip}:${normalizedEmail}`;
   const now = Date.now();
-  const entry = loginFailures.get(ip);
+  const entry = loginFailures.get(failKey);
   if (!entry || now > entry.resetAt) {
-    loginFailures.set(ip, { count: 1, resetAt: now + 10 * 60_000 });
+    loginFailures.set(failKey, { count: 1, resetAt: now + 10 * 60_000 });
     return 1;
   }
   entry.count++;
@@ -198,32 +202,37 @@ export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
   const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "unknown";
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const failKey = `${rawIp}:${normalizedEmail}`;
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (!user) {
-    const fails = trackLoginFailure(rawIp);
-    if (fails >= 5) {
+    const fails = trackLoginFailure(rawIp, email);
+    if (fails >= 8) {
       emitEvent({
         type: "SECURITY_ALERT",
         severity: "high",
-        message: `Repeated failed logins from same IP (${fails} attempts in 10m)`,
-        metadata: { ipMasked: maskIp(rawIp), count: fails, reason: "user_not_found" },
+        message: `Repeated failed logins for account (${fails} attempts in 10m)`,
+        metadata: { ipMasked: maskIp(rawIp), email: normalizedEmail, count: fails, reason: "user_not_found" },
       });
+      return res.status(429).json({ error: loginFailureLockoutMessage });
     }
     return res.status(401).json({ error: "Invalid credentials" });
   }
   if (!verifyPassword(password, user.passwordHash)) {
-    const fails = trackLoginFailure(rawIp);
-    if (fails >= 5) {
+    const fails = trackLoginFailure(rawIp, email);
+    if (fails >= 8) {
       emitEvent({
         type: "SECURITY_ALERT",
         severity: "high",
-        message: `Repeated failed logins from same IP (${fails} attempts in 10m)`,
-        metadata: { ipMasked: maskIp(rawIp), count: fails, reason: "bad_password", userId: user.id },
+        message: `Repeated failed logins for account (${fails} attempts in 10m)`,
+        metadata: { ipMasked: maskIp(rawIp), email: normalizedEmail, count: fails, reason: "bad_password", userId: user.id },
       });
+      return res.status(429).json({ error: loginFailureLockoutMessage });
     }
     return res.status(401).json({ error: "Invalid credentials" });
   }
+  loginFailures.delete(failKey);
   // Auto-upgrade weak SHA-256 hashes to scrypt on successful login
   if (isLegacyPasswordHash(user.passwordHash)) {
     void db.update(usersTable).set({ passwordHash: hashPassword(password) }).where(eq(usersTable.id, user.id));

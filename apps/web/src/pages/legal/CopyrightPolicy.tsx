@@ -1,7 +1,7 @@
 import { brandName, legalEmail } from "@/lib/contact";
 import { useT } from "@/lib/i18n";
 import { Link } from "wouter";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { PublicLayout } from "@/components/layout/PublicLayout";
 
 export function CopyrightPolicy() {
   const brand = brandName();
@@ -9,7 +9,7 @@ export function CopyrightPolicy() {
   const t = useT();
 
   return (
-    <AppLayout publicPage>
+    <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-bold text-foreground mb-2">{t("legal.copyright.title", "Copyright Policy")}</h1>
@@ -95,6 +95,6 @@ export function CopyrightPolicy() {
           <Link href="/community-guidelines" className="hover:text-foreground transition-colors">Community Guidelines</Link>
         </div>
       </div>
-    </AppLayout>
+    </PublicLayout>
   );
 }

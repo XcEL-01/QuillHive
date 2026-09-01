@@ -55,17 +55,12 @@ app.use(
     },
   }),
 );
-app.use(rateLimit({ windowMs: 60_000, max: 300 }));
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) { callback(null, true); return; }
-    const allowedAppUrls = [
-      process.env.APP_URL,
-      process.env.FRONTEND_URL,
-      process.env.PUBLIC_APP_URL,
-    ].filter((url): url is string => Boolean(url));
+    const appUrl = process.env.APP_URL ?? "";
     const allowed =
-      allowedAppUrls.includes(origin) ||
+      (appUrl && origin === appUrl) ||
       /^https:\/\/[^/]*\.quillhive\.pages\.dev$/.test(origin ?? "") ||
       (process.env.NODE_ENV !== "production" && (
         /^https?:\/\/[^/]*\.replit\.dev$/.test(origin ?? "") ||
@@ -77,6 +72,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use(rateLimit({ windowMs: 60_000, max: 300 }));
 app.use(
   express.json({
     limit: "1mb",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -289,7 +289,7 @@ export default function Pricing() {
   };
 
   return (
-    <AppLayout>
+    <PublicLayout>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
 
         {/* Hero */}
@@ -600,6 +600,6 @@ export default function Pricing() {
         initialPostId={preselectedPostId}
         posts={userPosts}
       />
-    </AppLayout>
+    </PublicLayout>
   );
 }

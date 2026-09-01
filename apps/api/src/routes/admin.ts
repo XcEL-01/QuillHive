@@ -817,7 +817,7 @@ router.patch("/scheduled-posts/:id/publish", requireSuperAdmin, async (req: any,
     const { db } = await import("@workspace/db");
 
     await db.update(postsTable)
-      .set({ isPublished: true, scheduledAt: null, publishedAt: new Date() })
+      .set({ isPublished: true, scheduledAt: null, updatedAt: new Date() })
       .where(eq(postsTable.id, id));
 
     return res.json({ success: true });

@@ -6,10 +6,9 @@ import { preventSpam } from "../../middleware/abuseProtection";
 import { validateBody } from "../../middleware/validate";
 import { rateLimit } from "../../middleware/rateLimit";
 
-// Production: 20 login attempts / 15 min, 5 registrations / hr.
+// Production: 30 login attempts / 15 min, 30 registrations / hr.
 // Development/preview: 6× headroom (applied inside rateLimit middleware).
-const authStrictLimit = rateLimit({ windowMs: 15 * 60_000, max: 5 }); // 5 prod, 50 dev (10× multiplier)
-// TEMP: raised for launch testing - lower back to 5/hr once the platform is stable and public
+const authStrictLimit = rateLimit({ windowMs: 15 * 60_000, max: 30 });
 const registerStrictLimit = rateLimit({ windowMs: 60 * 60_000, max: 30 });
 
 const registerSchema = z.object({
@@ -61,7 +60,7 @@ const creatorSchema = z.object({
 export const authRouter = Router();
 authRouter.post("/register", registerStrictLimit, preventSpam("register", { max: 5, windowMs: 10 * 60_000, contentField: "email" }), validateBody(registerSchema), ProfileController.register);
 authRouter.post("/signup", registerStrictLimit, preventSpam("signup", { max: 5, windowMs: 10 * 60_000, contentField: "email" }), validateBody(registerSchema), ProfileController.register);
-authRouter.post("/login", authStrictLimit, preventSpam("login", { max: 10, windowMs: 10 * 60_000, contentField: "email" }), validateBody(loginSchema), ProfileController.login);
+authRouter.post("/login", authStrictLimit, validateBody(loginSchema), ProfileController.login);
 authRouter.post("/logout", ProfileController.logout);
 authRouter.post("/refresh", validateBody(refreshSchema), ProfileController.refresh);
 authRouter.post("/verify-email", validateBody(verifyEmailSchema), ProfileController.verifyEmail);

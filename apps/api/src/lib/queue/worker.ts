@@ -115,20 +115,20 @@ async function processJob(job: Job): Promise<void> {
             .where(and(eq(followsTable.followingId, userId), gte(followsTable.createdAt, weekAgo)))
             .then(r => Number(r[0]?.n ?? 0)),
 
-          db.select({ total: sql<number>`coalesce(sum(view_count),0)::int` })
+          db.select({ total: sql<number>`COUNT(*)::int` })
             .from(postViewsTable)
             .where(and(
               sql`post_id IN (SELECT id FROM posts WHERE author_id = ${userId})`,
-              gte(postViewsTable.viewedAt, weekAgo)
+              gte(postViewsTable.createdAt, weekAgo)
             ))
             .then(r => Number(r[0]?.total ?? 0)),
 
-          db.select({ total: sql<number>`coalesce(sum(view_count),0)::int` })
+          db.select({ total: sql<number>`COUNT(*)::int` })
             .from(postViewsTable)
             .where(and(
               sql`post_id IN (SELECT id FROM posts WHERE author_id = ${userId})`,
-              gte(postViewsTable.viewedAt, twoWeeksAgo),
-              sql`viewed_at < ${weekAgo.toISOString()}`
+              gte(postViewsTable.createdAt, twoWeeksAgo),
+              sql`created_at < ${weekAgo.toISOString()}`
             ))
             .then(r => Number(r[0]?.total ?? 0)),
 
@@ -140,7 +140,7 @@ async function processJob(job: Job): Promise<void> {
               eq(postsTable.isDeleted, false),
               gte(postsTable.createdAt, weekAgo)
             ))
-            .orderBy(desc(postsTable.viewCount))
+            .orderBy(desc(postsTable.createdAt))
             .limit(1)
             .then(r => r[0] ?? null),
 

@@ -241,7 +241,12 @@ export default function Auth() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-        const data = await res.json();
+        let data: any = {};
+        try {
+          data = await res.json();
+        } catch {
+          data = { error: `Something went wrong (status ${res.status}). Please try again.` };
+        }
         if (!res.ok) throw new Error(data.error || t("auth.loginFailed", "Login failed"));
         storeAuth(data);
         toast.success(t("auth.welcomeBackToast", "Welcome back!"));
@@ -273,7 +278,12 @@ export default function Auth() {
             turnstileToken,
           }),
         });
-        const data = await res.json();
+        let data: any = {};
+        try {
+          data = await res.json();
+        } catch {
+          data = { error: `Something went wrong (status ${res.status}). Please try again.` };
+        }
         if (!res.ok) throw new Error(data.error || t("auth.registrationFailed", "Registration failed"));
         if (data.verificationRequired) {
           setPendingVerificationToken(data.verificationToken || "");

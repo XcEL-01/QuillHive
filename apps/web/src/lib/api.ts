@@ -1,8 +1,11 @@
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
-export const API_BASE_URL = (configuredApiUrl || (import.meta.env.PROD ? "https://quillhive.onrender.com" : ""))
-  .replace(/\/+$/, "");
+const apiOrigin = configuredApiUrl || (import.meta.env.PROD ? "https://quillhive.onrender.com" : "");
+
+export const API_BASE_URL = apiOrigin
+  .replace(/\/+$/, "")
+  .replace(/\/api$/i, "");
 
 export function apiUrl(path: string): string {
   if (/^https?:\/\//i.test(path) || !API_BASE_URL || !path.startsWith("/")) return path;

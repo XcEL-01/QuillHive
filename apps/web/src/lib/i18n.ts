@@ -30,8 +30,10 @@ function getNestedValue(obj: Translations, key: string): string | undefined {
 }
 
 async function loadLocale(lang: string): Promise<Translations> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch(`/locales/${lang}.json?v=${Date.now()}`);
+    const res = await fetch(`/locales/${lang}.json?v=${Date.now()}`, { signal: controller.signal });
     if (!res.ok) throw new Error(`Failed to load locale ${lang}`);
     return await res.json() as Translations;
   } catch {
@@ -39,6 +41,8 @@ async function loadLocale(lang: string): Promise<Translations> {
       return loadLocale(DEFAULT_LANG);
     }
     return {};
+  } finally {
+    window.clearTimeout(timeout);
   }
 }
 

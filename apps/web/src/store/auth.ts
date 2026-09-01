@@ -82,9 +82,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       const user: AuthUser = await res.json();
       set({ user, isAuthenticated: true, token });
-    } catch {
-      clearStoredToken();
-      set({ user: null, token: null, isAuthenticated: false });
+    } catch (error) {
+      console.warn("[auth] Session check unavailable; keeping the stored session", error);
+      set({ user: null, isAuthenticated: true, token });
     }
   },
 }));

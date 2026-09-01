@@ -10,6 +10,18 @@ interface State {
   error: Error | null;
 }
 
+function diagnosticMessage(error: Error | null): string {
+  if (!error) return "Unknown client error";
+  const message = `${error.name || "Error"}: ${error.message || "Unknown error"}`
+    .replace(/Bearer\s+[\w.-]+/gi, "Bearer [redacted]")
+    .replace(/https?:\/\/[^\s)]+/gi, "[url redacted]")
+    .replace(/\b(?:token|password|secret|authorization)\s*[:=]\s*[^,;\s]+/gi, "$1: [redacted]")
+    .replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, "[email redacted]")
+    .replace(/\s+/g, " ")
+    .trim();
+  return message.length > 240 ? `${message.slice(0, 237)}...` : message;
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null };
 
@@ -18,7 +30,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    console.error("[ErrorBoundary]", error, info.componentStack);
+    console.error("[ErrorBoundary] Unhandled render error", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      componentStack: info.componentStack,
+    });
   }
 
   handleReset = () => {
@@ -42,11 +59,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-muted-foreground mt-1">
               This page hit an error. Your data is safe.
             </p>
-            {import.meta.env.DEV && this.state.error && (
-              <pre className="mt-3 text-left text-xs bg-muted p-3 rounded-lg overflow-auto max-h-32 text-destructive">
-                {this.state.error.message}
-              </pre>
-            )}
+            <pre className="mt-3 text-left text-xs bg-muted p-3 rounded-lg overflow-auto max-h-32 text-destructive">
+              {diagnosticMessage(this.state.error)}
+            </pre>
           </div>
           <button
             onClick={this.handleReset}

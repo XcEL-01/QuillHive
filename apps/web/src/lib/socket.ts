@@ -1,7 +1,7 @@
 import { io, Socket } from "socket.io-client";
+import { API_BASE_URL } from "./api";
 
-const SOCKET_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ||
-  (import.meta.env.PROD ? "https://quillhive.onrender.com" : undefined);
+const SOCKET_URL = API_BASE_URL || undefined;
 
 let socket: Socket | null = null;
 

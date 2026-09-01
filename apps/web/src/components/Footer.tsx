@@ -1,24 +1,22 @@
 import { Link } from 'wouter';
 import { useT } from "@/lib/i18n";
+import { contactEmail } from "@/lib/contact";
 import {
-  Twitter,
-  Github,
-  Instagram,
   Heart,
   Feather,
-  BookOpen,
+  Globe,
+  Headphones,
   Shield,
-  Globe
 } from 'lucide-react';
 
 export function Footer() {
   const t = useT();
+  const feedbackEmail = contactEmail();
 
   return (
     <footer className="border-t border-border/60 bg-card/50 backdrop-blur-sm mt-auto">
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
-        {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
 
           {/* Brand Column */}
@@ -38,17 +36,6 @@ export function Footer() {
                 Grow, get discovered, and find real opportunities - for everyone.
               </span>
             </p>
-            <div className="flex gap-3 mt-4">
-              <a href="https://x.com/quillhive" target="_blank" rel="noreferrer" aria-label="QuillHive on X" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="https://www.instagram.com/quillhive" target="_blank" rel="noreferrer" aria-label="QuillHive on Instagram" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="https://github.com/quillhive" target="_blank" rel="noreferrer" aria-label="QuillHive on GitHub" className="p-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors">
-                <Github className="w-4 h-4" />
-              </a>
-            </div>
           </div>
 
           {/* Platform Links */}
@@ -64,16 +51,15 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Resources */}
           <div>
             <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-muted-foreground" />
-              {t("footer.resources", "Resources")}
+              <Headphones className="w-4 h-4 text-muted-foreground" />
+              {t("footer.helpContact", "Help / Contact")}
             </h3>
             <ul className="space-y-2">
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.helpCenter", "Help Center")}</Link></li>
-              <li><Link href="/community-guidelines" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.communityGuidelines", "Community Guidelines")}</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contactUs", "Contact & Support")}</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contact", "Contact")}</Link></li>
+              <li><Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.support", "Support")}</Link></li>
+              <li><a href={`mailto:${feedbackEmail}`} className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.feedback", "Feedback")}</a></li>
             </ul>
           </div>
 
@@ -92,7 +78,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="border-t border-border/40 pt-6 mt-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">

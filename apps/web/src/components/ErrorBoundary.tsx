@@ -50,28 +50,9 @@ export class ErrorBoundary extends Component<Props, State> {
               This page hit an error. Your data is safe.
             </p>
             {this.state.error && (
-              <div className="mt-3 text-left">
-                <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40 text-destructive whitespace-pre-wrap break-words">
-                  {this.state.error.name}: {this.state.error.message}
-                </pre>
-                {(this.state.error.stack || this.state.componentStack) && (
-                  <details className="mt-2">
-                    <summary className="text-xs text-muted-foreground cursor-pointer">
-                      Show technical details
-                    </summary>
-                    {this.state.error.stack && (
-                      <pre className="text-[10px] bg-muted p-3 rounded-lg overflow-auto max-h-48 mt-1 whitespace-pre-wrap break-words">
-                        {this.state.error.stack}
-                      </pre>
-                    )}
-                    {this.state.componentStack && (
-                      <pre className="text-[10px] bg-muted p-3 rounded-lg overflow-auto max-h-48 mt-1 whitespace-pre-wrap break-words">
-                        {this.state.componentStack}
-                      </pre>
-                    )}
-                  </details>
-                )}
-              </div>
+              <pre className="mt-3 text-left text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40 text-destructive whitespace-pre-wrap break-words">
+                {this.state.error.name}: {this.state.error.message}
+              </pre>
             )}
           </div>
           <button

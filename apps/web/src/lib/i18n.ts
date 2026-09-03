@@ -69,6 +69,22 @@ function applyDocumentDir(lang: string) {
   document.documentElement.lang = lang;
 }
 
+function mergeTranslations(base: Translations, localized: Translations): Translations {
+  const result: Translations = { ...localized };
+  for (const [key, value] of Object.entries(base)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const child = result[key];
+      result[key] = mergeTranslations(
+        value as Translations,
+        child && typeof child === "object" && !Array.isArray(child) ? child as Translations : {},
+      );
+    } else if (!(key in result)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export interface I18nStore {
   lang: string;
   dir: 'ltr' | 'rtl';
@@ -104,7 +120,9 @@ export const useI18n = create<I18nStore>((set, get) => ({
     const isRTL = RTL_LANGS.includes(validLang);
     const dir = isRTL ? 'rtl' : 'ltr';
 
-    const translations = await loadLocale(validLang);
+    const translations = validLang === DEFAULT_LANG
+      ? fallbackCache
+      : mergeTranslations(fallbackCache, await loadLocale(validLang));
 
     try {
       localStorage.setItem(STORAGE_KEY, validLang);
@@ -142,7 +160,7 @@ export const useI18n = create<I18nStore>((set, get) => ({
 
     const translations = detectedLang === DEFAULT_LANG
       ? fallbackCache
-      : await loadLocale(detectedLang);
+      : mergeTranslations(fallbackCache, await loadLocale(detectedLang));
 
     applyDocumentDir(detectedLang);
     set({

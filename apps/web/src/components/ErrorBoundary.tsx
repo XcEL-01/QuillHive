@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   children: ReactNode;
@@ -36,6 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.hasError) return this.props.children;
     if (this.props.fallback) return this.props.fallback;
+    const t = useI18n.getState().t;
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-8">
         <div className="max-w-sm w-full text-center space-y-4">
@@ -45,16 +47,16 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-bold">Something went wrong</h2>
+            <h2 className="text-lg font-bold">{t("common.somethingWentWrong", "Something went wrong")}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              This page hit an error. Your data is safe.
+              {t("common.pageErrorSafe", "This page hit an error. Your data is safe.")}
             </p>
           </div>
           <button
             onClick={this.handleReset}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">
             <RotateCcw className="w-4 h-4" />
-            Reload page
+            {t("common.reloadPage", "Reload page")}
           </button>
         </div>
       </div>

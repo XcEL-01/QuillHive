@@ -16,6 +16,7 @@ export async function getApiErrorMessage(
   response: Response,
   fallback = "Something went wrong. Please try again.",
 ): Promise<string> {
+  if (response.status >= 500) return fallback;
   const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
   if (!contentType.includes("json")) return fallback;
   try {

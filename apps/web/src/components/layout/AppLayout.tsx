@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Link, useLocation } from "wouter";
 import {
-  Home, Compass, PenLine, MessageCircle, User as UserIcon,
+  Home, Compass, PenLine, MessageCircle, User as UserIcon, ArrowLeft,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
   BarChart3, BookOpen, Users, MoreHorizontal, FileText, Zap,
   Bookmark, Archive, Star, Sparkles, Layers, Link2,
@@ -35,8 +35,8 @@ interface AppLayoutProps {
   publicPage?: boolean;
 }
 
-const MOBILE_PRIMARY = ["/" , "/explore", "__create__", "/workspace", "/library"];
-const MOBILE_MORE = ["/notifications", "/motion", "/groups"];
+const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/notifications"];
+const MOBILE_MORE = ["/workspace", "/library", "/settings", "/motion"];
 
 export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const motionEnabled = useFeature("motion_enabled");
@@ -90,7 +90,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const { data: notifications } = useGetNotifications({
     query: { enabled: !!user, queryKey: ["/api/notifications"] },
   });
-  const unreadNotifCount = (Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0) + liveNotifCount;
+  const unreadNotifCount = Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0;
   const unreadMessageCount = baseMessageCount + liveMessageCount;
 
   usePageTitle(undefined, unreadNotifCount > 0 ? unreadNotifCount : undefined);
@@ -170,8 +170,10 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
           <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4">
             <Link href="/" className="font-serif text-lg font-bold text-primary">QuillHive</Link>
             <div className="flex items-center gap-3 text-sm">
-              <Link href="/login" className="text-muted-foreground hover:text-foreground">Sign in</Link>
-              <Link href="/signup" className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">Join free</Link>
+              {user ? <Link href="/" className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">Go to QuillHive</Link> : <>
+                <Link href="/login" className="text-muted-foreground hover:text-foreground">Sign in</Link>
+                <Link href="/signup" className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">Join free</Link>
+              </>}
             </div>
           </div>
         </header>
@@ -186,6 +188,17 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
       {/* ── TOP HEADER ── */}
       <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-background/90 backdrop-blur-lg border-b border-border">
         <div className="h-full flex items-center gap-3 px-4">
+          {location !== "/" && (
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              title="Back"
+              aria-label="Back"
+              className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
             <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-105 transition-transform">
@@ -474,6 +487,16 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                 </Link>
               );
             })}
+            {user && (
+              <Link
+                href={`/profile/${user.username}`}
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-foreground hover:bg-muted"
+              >
+                <UserIcon className="w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">Profile</span>
+              </Link>
+            )}
           </div>
         </SheetContent>
       </Sheet>

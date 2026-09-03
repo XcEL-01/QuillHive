@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useAuthStore } from "@/store/auth";
-import { apiUrl, setStoredRefreshToken, setStoredToken } from "@/lib/api";
+import { apiUrl, getStoredToken, setStoredRefreshToken, setStoredToken } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,7 @@ export default function Auth() {
     return window.location.pathname !== "/signup" && new URLSearchParams(window.location.search).get("mode") !== "signup";
   });
   const [, setLocation] = useLocation();
-  const { setAuth } = useAuthStore();
+  const { setAuth, user, refreshUser } = useAuthStore();
   const [inviteCode, setInviteCode] = useState("");
   const [refSource, setRefSource] = useState("");
 
@@ -43,6 +43,17 @@ export default function Auth() {
   const magicConsumed = useRef(false);
   // Guard: prevent double form submission
   const submitting = useRef(false);
+
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+      return;
+    }
+    if (!getStoredToken()) return;
+    void refreshUser().then(() => {
+      if (useAuthStore.getState().user) setLocation("/");
+    });
+  }, [user, refreshUser, setLocation]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

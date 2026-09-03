@@ -26,16 +26,8 @@ export function useRealtimeNotifications() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  useSocketEvent<RealtimeNotification>('notification', (data) => {
-    queryClient.setQueryData<{ notifications?: RealtimeNotification[] }>(
-      ['notifications'],
-      (old) => {
-        if (!old) return { notifications: [data] };
-        const existing = old.notifications ?? [];
-        if (existing.some(n => n.id === data.id)) return old;
-        return { ...old, notifications: [data, ...existing] };
-      }
-    );
+  useSocketEvent<RealtimeNotification>('notification:new', (data) => {
+    queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
 
     const { dismiss } = toast({
       title: data.title,

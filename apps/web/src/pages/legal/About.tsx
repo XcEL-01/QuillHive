@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Feather, Heart, ShieldCheck, Users } from "lucide-react";
 import { Link } from "wouter";
+import { useAuthStore } from "@/store/auth";
 
 export function About() {
+  const { user } = useAuthStore();
   return (
     <PublicLayout>
       <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-20">
@@ -69,8 +71,8 @@ export function About() {
             Start with a thought, follow a few voices, and let your hive grow from there.
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/signup">
-              <Button className="w-full rounded-xl sm:w-auto">Join QuillHive</Button>
+            <Link href={user ? "/" : "/signup"}>
+              <Button className="w-full rounded-xl sm:w-auto">{user ? "Go to QuillHive" : "Join QuillHive"}</Button>
             </Link>
             <Link href="/explore">
               <Button variant="outline" className="w-full rounded-xl sm:w-auto">Explore</Button>

@@ -211,7 +211,7 @@ export default function CreatorDashboard() {
           </div>
         )}
 
-        {!loading && !error && (
+        {!loading && (
           <>
             {/* Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

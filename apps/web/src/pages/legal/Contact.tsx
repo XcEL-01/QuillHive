@@ -11,14 +11,30 @@ export function Contact() {
     message: ''
   });
   const [isSent, setIsSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const email = contactEmail();
   const t = useT();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSent(true);
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setTimeout(() => setIsSent(false), 3000);
+    setIsSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/support/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || data.error || 'Could not send your message.');
+      setIsSent(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send your message.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -70,13 +86,14 @@ export function Contact() {
                 type="submit"
                 className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
               >
-                {t("legal.contact.send", "Send Message")}
+                {isSubmitting ? t("legal.contact.sending", "Sending...") : t("legal.contact.send", "Send Message")}
               </button>
               {isSent && (
                 <div className="p-3 bg-green-100 text-green-700 rounded-lg text-center">
                   {t("legal.contact.sent", "Thanks! We'll get back to you soon.")}
                 </div>
               )}
+              {error && <div className="p-3 bg-red-100 text-red-700 rounded-lg text-center">{error}</div>}
             </form>
           </div>
 

@@ -30,7 +30,6 @@ export function Terms() {
           <section>
             <h2 className="text-xl font-semibold mb-4 text-foreground">2. Eligibility</h2>
             <ul className="list-disc pl-6 space-y-2 leading-relaxed">
-              <li>You must be at least 16 years of age to use {brand}.</li>
               <li>You must provide accurate registration information.</li>
               <li>You are responsible for maintaining the security of your account credentials.</li>
               <li>You may not create accounts on behalf of others without explicit authorisation.</li>

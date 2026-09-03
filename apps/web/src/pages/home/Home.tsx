@@ -513,27 +513,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Creator Growth HQ - career headquarters panel */}
-        {feedSource === 'explore' && token && <CreatorGrowthHQ />}
-
-        {/* Featured hero from admin slot (graceful no-op if none) */}
-        {feedSource === 'explore' && <FeaturedHero slotKey="home_hero" />}
-
-        {/* Getting started checklist for new users */}
-        {feedSource === 'explore' && token && <GettingStartedChecklist />}
-
-        {/* Continue reading shelf - visible on Explore + Following */}
-        {(feedSource === 'explore' || feedSource === 'following') && token && <ContinueReadingShelf />}
-
-        {/* Suggested for you (Explore mode only) */}
-        {feedSource === 'explore' && <SuggestedCreators />}
-
-        {/* Fresh Voices - cold-start section for new creators */}
-        {feedSource === 'explore' && <NewVoicesSection />}
-
-        {/* Trending now */}
-        {(feedSource === 'explore' || feedSource === 'following') && <TrendingWidget />}
-
         {/* Topics Grid (Topics mode) */}
         {feedSource === 'topics' && <TopicsPanel />}
 
@@ -610,6 +589,16 @@ export default function Home() {
             <PostCard key={post.id} post={post} />
           ))}
         </div>}
+
+        <div className="mt-8 space-y-6">
+          {feedSource === 'explore' && token && <CreatorGrowthHQ />}
+          {feedSource === 'explore' && <FeaturedHero slotKey="home_hero" />}
+          {feedSource === 'explore' && token && <GettingStartedChecklist />}
+          {(feedSource === 'explore' || feedSource === 'following') && token && <ContinueReadingShelf />}
+          {feedSource === 'explore' && <SuggestedCreators />}
+          {feedSource === 'explore' && <NewVoicesSection />}
+          {(feedSource === 'explore' || feedSource === 'following') && <TrendingWidget />}
+        </div>
       </div>
     </AppLayout>
   );

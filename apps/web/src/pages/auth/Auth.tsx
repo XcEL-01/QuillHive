@@ -75,7 +75,6 @@ export default function Auth() {
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [emailStatus, setEmailStatus] = useState<{ allowed: boolean; reason?: string } | null>(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -498,17 +497,6 @@ export default function Auth() {
                         <input
                           type="checkbox"
                           className="mt-0.5 h-4 w-4 rounded border-border accent-primary shrink-0"
-                          checked={ageConfirmed}
-                          onChange={e => setAgeConfirmed(e.target.checked)}
-                        />
-                        <span className="text-sm text-foreground leading-snug">
-                          I confirm I am at least 13 years old.
-                        </span>
-                      </label>
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="mt-0.5 h-4 w-4 rounded border-border accent-primary shrink-0"
                           checked={termsAccepted}
                           onChange={e => setTermsAccepted(e.target.checked)}
                         />
@@ -532,7 +520,7 @@ export default function Auth() {
 
                   <Button
                     type="submit"
-                    disabled={isLoading || (!isLogin && (!ageConfirmed || !termsAccepted))}
+                    disabled={isLoading || (!isLogin && !termsAccepted)}
                     className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-primary to-violet-500 hover:-translate-y-0.5 shadow-lg shadow-primary/25 transition-all mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading

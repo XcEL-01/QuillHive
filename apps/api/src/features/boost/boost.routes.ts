@@ -149,6 +149,9 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
   if (result.status !== "successful") {
     return res.status(402).json({ error: `Payment not successful (status: ${result.status})` });
   }
+  if (result.txRef !== tx_ref || result.currency !== "USD") {
+    return res.status(402).json({ error: "Payment does not match this boost" });
+  }
 
   if (result.amount < planInfo.amountUsd) {
     return res.status(402).json({ error: "Payment amount is insufficient" });
@@ -157,7 +160,7 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
   const now = new Date();
   const boostEndsAt = new Date(now.getTime() + boostRequest.durationHours * 3_600_000);
 
-  await db
+  const updated = await db
     .update(boostRequestsTable)
     .set({
       status: "approved",
@@ -165,10 +168,13 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
       reviewedAt: now,
       boostStartsAt: now,
       boostEndsAt,
-      adminNote: `Auto-approved via Flutterwave (txId: ${result.transactionId})`,
-      flwTransactionId: String(result.transactionId),
+      adminNote: `Auto-approved via Flutterwave (reference: ${result.flwRef})`,
+      flwTransactionId: result.flwRef,
     } as Record<string, unknown>)
-    .where(eq(boostRequestsTable.id, boostRequest.id));
+    .where(and(eq(boostRequestsTable.id, boostRequest.id), eq(boostRequestsTable.status, "pending_payment")))
+    .returning({ id: boostRequestsTable.id });
+
+  if (updated.length === 0) return res.json({ ok: true, message: "Boost already active" });
 
   void db.insert(incomeLogsTable).values({
     userId: boostRequest.userId,
@@ -235,6 +241,17 @@ boostRouter.post("/webhook", async (req: Request, res: Response) => {
   if (event.event === "charge.completed" && event.data?.status === "successful") {
     const txRef = event.data.tx_ref;
     if (!txRef) return res.json({ received: true });
+    if (!event.data.id) return res.json({ received: true });
+
+    let verified;
+    try {
+      verified = await verifyTransaction(String(event.data.id));
+    } catch {
+      return res.status(502).json({ error: "Payment verification unavailable" });
+    }
+    if (!verified.success || verified.txRef !== txRef || verified.currency !== "USD") {
+      return res.status(400).json({ error: "Payment verification failed" });
+    }
 
     const allRequests = await db
       .select()
@@ -245,25 +262,28 @@ boostRouter.post("/webhook", async (req: Request, res: Response) => {
     const boostRequest = allRequests[0];
     if (boostRequest && boostRequest.status === "pending_payment") {
       const planInfo = BOOST_PLANS[boostRequest.plan as PlanKey];
-      if (planInfo && (event.data.amount ?? 0) >= planInfo.amountUsd) {
+      if (planInfo && verified.amount >= planInfo.amountUsd) {
         const now = new Date();
         const boostEndsAt = new Date(now.getTime() + boostRequest.durationHours * 3_600_000);
-        await db
+        const updated = await db
           .update(boostRequestsTable)
           .set({
             status: "approved",
-            paidAmountCents: Math.round((event.data.amount ?? 0) * 100),
+            paidAmountCents: Math.round(verified.amount * 100),
             reviewedAt: now,
             boostStartsAt: now,
             boostEndsAt,
-            adminNote: `Auto-approved via Flutterwave webhook (txId: ${event.data.id})`,
-            flwTransactionId: String(event.data.id ?? ""),
+            adminNote: `Auto-approved via Flutterwave webhook (reference: ${verified.flwRef})`,
+            flwTransactionId: verified.flwRef,
           } as Record<string, unknown>)
-          .where(eq(boostRequestsTable.id, boostRequest.id));
+          .where(and(eq(boostRequestsTable.id, boostRequest.id), eq(boostRequestsTable.status, "pending_payment")))
+          .returning({ id: boostRequestsTable.id });
+
+        if (updated.length === 0) return res.json({ received: true });
 
         void db.insert(incomeLogsTable).values({
           userId: boostRequest.userId,
-          amount: event.data.amount ?? planInfo.amountUsd,
+          amount: verified.amount,
           currency: "USD",
           source: "boost",
           description: `${planInfo.label} - Post #${boostRequest.postId} (webhook)`,

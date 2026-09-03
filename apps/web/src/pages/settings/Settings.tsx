@@ -513,7 +513,7 @@ export default function Settings() {
     { id: 'warnings' as Section, icon: AlertTriangle, label: t('settings.warnings') },
     { id: 'blocked' as Section, icon: Eye, label: t('settings.blockedUsers') },
     { id: 'billing' as Section, icon: CreditCard, label: 'Billing & Boosts' },
-    { id: 'apiKeys' as Section, icon: KeyRound, label: t('settings.apiKeys') },
+    ...((user as { role?: string } | null)?.role === 'super_admin' ? [{ id: 'apiKeys' as Section, icon: KeyRound, label: t('settings.apiKeys') }] : []),
     { id: 'danger' as Section, icon: Trash2, label: t('settings.deleteAccount'), danger: true },
   ];
 
@@ -1263,7 +1263,7 @@ export default function Settings() {
               {activeSection === 'billing' && <BillingSection />}
 
               {/* API KEYS */}
-              {activeSection === 'apiKeys' && <ApiKeysSection />}
+              {activeSection === 'apiKeys' && (user as { role?: string } | null)?.role === 'super_admin' && <ApiKeysSection />}
 
               {/* DANGER ZONE */}
               {activeSection === 'danger' && (

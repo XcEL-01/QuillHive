@@ -4,6 +4,7 @@ import { db } from "@workspace/db";
 import { apiKeysTable, postsTable, usersTable } from "@workspace/db/schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
+import { requireSuperAdmin } from "../../middleware/admin";
 
 function hashKey(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
@@ -117,10 +118,9 @@ publicApiRouter.get("/users/:username", requireApiKey, async (req: Request, res:
 });
 
 // Authenticated owner-side CRUD for managing API keys.
-// Mounted under the existing user-auth surface; we accept a userId from a header set by upstream auth middleware.
 function getOwnerUserId(req: Request): number | null {
-  const reqWithUser = req as Request & { user?: { id?: number } };
-  const v = reqWithUser.user?.id;
+  const reqWithUser = req as Request & { currentUser?: { id?: number } };
+  const v = reqWithUser.currentUser?.id;
   return typeof v === "number" ? v : null;
 }
 
@@ -131,6 +131,7 @@ const createKeySchema = z.object({
 });
 
 export const apiKeysAdminRouter: IRouter = Router();
+apiKeysAdminRouter.use(requireSuperAdmin);
 
 apiKeysAdminRouter.get("/", async (req: Request, res: Response) => {
   const userId = getOwnerUserId(req);

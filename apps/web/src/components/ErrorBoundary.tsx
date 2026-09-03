@@ -8,18 +8,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-}
-
-function diagnosticMessage(error: Error | null): string {
-  if (!error) return "Unknown client error";
-  const message = `${error.name || "Error"}: ${error.message || "Unknown error"}`
-    .replace(/Bearer\s+[\w.-]+/gi, "Bearer [redacted]")
-    .replace(/https?:\/\/[^\s)]+/gi, "[url redacted]")
-    .replace(/\b(?:token|password|secret|authorization)\s*[:=]\s*[^,;\s]+/gi, "$1: [redacted]")
-    .replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, "[email redacted]")
-    .replace(/\s+/g, " ")
-    .trim();
-  return message.length > 240 ? `${message.slice(0, 237)}...` : message;
+  componentStack?: string;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -36,6 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
       stack: error.stack,
       componentStack: info.componentStack,
     });
+    this.setState({ error, componentStack: info.componentStack });
   }
 
   handleReset = () => {
@@ -59,9 +49,30 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-muted-foreground mt-1">
               This page hit an error. Your data is safe.
             </p>
-            <pre className="mt-3 text-left text-xs bg-muted p-3 rounded-lg overflow-auto max-h-32 text-destructive">
-              {diagnosticMessage(this.state.error)}
-            </pre>
+            {this.state.error && (
+              <div className="mt-3 text-left">
+                <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40 text-destructive whitespace-pre-wrap break-words">
+                  {this.state.error.name}: {this.state.error.message}
+                </pre>
+                {(this.state.error.stack || this.state.componentStack) && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-muted-foreground cursor-pointer">
+                      Show technical details
+                    </summary>
+                    {this.state.error.stack && (
+                      <pre className="text-[10px] bg-muted p-3 rounded-lg overflow-auto max-h-48 mt-1 whitespace-pre-wrap break-words">
+                        {this.state.error.stack}
+                      </pre>
+                    )}
+                    {this.state.componentStack && (
+                      <pre className="text-[10px] bg-muted p-3 rounded-lg overflow-auto max-h-48 mt-1 whitespace-pre-wrap break-words">
+                        {this.state.componentStack}
+                      </pre>
+                    )}
+                  </details>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={this.handleReset}

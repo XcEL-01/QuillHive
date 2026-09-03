@@ -12,6 +12,20 @@ export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
+export async function getApiErrorMessage(
+  response: Response,
+  fallback = "Something went wrong. Please try again.",
+): Promise<string> {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  if (!contentType.includes("json")) return fallback;
+  try {
+    const data = await response.clone().json() as { error?: string; message?: string };
+    return data.error || data.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export const TOKEN_KEY = "qh_token";
 export const REFRESH_TOKEN_KEY = "qh_refresh_token";
 
@@ -60,13 +74,10 @@ export async function apiRequest(
     credentials: "include",
   });
   if (!res.ok && res.status >= 400) {
-    let detail = "";
-    try { detail = (await res.clone().json())?.error ?? ""; } catch {}
-    if (detail) {
-      const err = new Error(`${res.status}: ${detail}`);
-      (err as any).status = res.status;
-      throw err;
-    }
+    const detail = await getApiErrorMessage(res);
+    const err = new Error(`${res.status}: ${detail}`);
+    (err as any).status = res.status;
+    throw err;
   }
   return res;
 }

@@ -1,8 +1,9 @@
 import { useCallback } from "react";
+import { apiUrl, getApiErrorMessage } from "@/lib/api";
 
 export function useAdminFetch(token: string | null) {
   return useCallback(async (path: string, options?: RequestInit) => {
-    const res = await fetch(path, {
+    const res = await fetch(apiUrl(path), {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -11,8 +12,7 @@ export function useAdminFetch(token: string | null) {
       },
     });
     if (!res.ok) {
-      const text = await res.text().catch(() => res.statusText);
-      throw new Error(`${res.status}: ${text}`);
+      throw new Error(`${res.status}: ${await getApiErrorMessage(res, "Request failed. Please try again.")}`);
     }
     return res.json();
   }, [token]);

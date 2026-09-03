@@ -49,11 +49,6 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-muted-foreground mt-1">
               This page hit an error. Your data is safe.
             </p>
-            {this.state.error && (
-              <pre className="mt-3 text-left text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40 text-destructive whitespace-pre-wrap break-words">
-                {this.state.error.name}: {this.state.error.message}
-              </pre>
-            )}
           </div>
           <button
             onClick={this.handleReset}

@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { API_BASE_URL } from "./api";
+import { API_BASE_URL, getStoredToken } from "./api";
 
 const SOCKET_URL = API_BASE_URL || undefined;
 
@@ -33,6 +33,7 @@ export function getSocket(): Socket {
 
 export function connectSocket(userId: number) {
   const s = getSocket();
+  s.auth = { token: getStoredToken() };
   if (!s.connected) {
     s.connect();
     s.once("connect", () => {

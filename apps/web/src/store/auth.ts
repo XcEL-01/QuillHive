@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { User } from "@workspace/api-client-react";
-import { getStoredRefreshToken, getStoredToken, clearStoredToken, setStoredToken, setStoredRefreshToken } from "@/lib/api";
+import { apiFetch, getStoredRefreshToken, getStoredToken, clearStoredToken, setStoredToken, setStoredRefreshToken } from "@/lib/api";
 
 export type AuthUser = User & {
   role?: string;
@@ -50,13 +50,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
     try {
-      const res = await fetch("/api/auth/me", {
+      const res = await apiFetch("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const refreshToken = getStoredRefreshToken();
         if (refreshToken) {
-          const refreshRes = await fetch("/api/auth/refresh", {
+          const refreshRes = await apiFetch("/api/auth/refresh", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refreshToken }),
@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             setStoredToken(refreshed.token);
             setStoredRefreshToken(refreshed.refreshToken);
             set({ token: refreshed.token });
-            const retry = await fetch("/api/auth/me", {
+            const retry = await apiFetch("/api/auth/me", {
               headers: { Authorization: `Bearer ${refreshed.token}` },
             });
             if (retry.ok) {

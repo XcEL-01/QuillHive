@@ -1,6 +1,10 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketServer } from "socket.io";
 import { logger } from "./logger";
+import { getSessionUserId, isTokenBlacklisted } from "./auth";
+import { db } from "@workspace/db";
+import { usersTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 
 let io: SocketServer | null = null;
 
@@ -28,10 +32,28 @@ export function setupSocket(httpServer: HttpServer): SocketServer {
     path: "/api/socket.io",
   });
 
+  io.use(async (socket, next) => {
+    const authToken = socket.handshake.auth?.token;
+    const header = socket.handshake.headers.authorization;
+    const token = typeof authToken === "string"
+      ? authToken
+      : header?.startsWith("Bearer ")
+        ? header.slice(7)
+        : null;
+    const userId = token ? getSessionUserId(token) : null;
+    if (!userId || (await isTokenBlacklisted(token!))) {
+      next(new Error("Unauthorized"));
+      return;
+    }
+    socket.data.userId = userId;
+    next();
+  });
+
   io.on("connection", (socket) => {
     logger.info({ socketId: socket.id }, "Client connected");
 
     socket.on("join:user", (userId: number) => {
+      if (userId !== socket.data.userId) return;
       socket.join(`user:${userId}`);
       logger.info({ socketId: socket.id, userId }, "User joined their room");
     });
@@ -101,7 +123,11 @@ export function setupSocket(httpServer: HttpServer): SocketServer {
     });
 
     socket.on("join:admin", () => {
-      socket.join("admin:monitoring");
+      void db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, socket.data.userId)).limit(1)
+        .then(([user]) => {
+          if (user?.role === "admin" || user?.role === "super_admin") socket.join("admin:monitoring");
+        })
+        .catch((error) => logger.warn({ error, userId: socket.data.userId }, "Failed to authorize admin socket room"));
     });
     socket.on("leave:admin", () => {
       socket.leave("admin:monitoring");

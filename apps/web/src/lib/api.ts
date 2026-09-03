@@ -42,7 +42,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   const headers = new Headers(options.headers);
   const token = getStoredToken();
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
-  return fetch(path, { ...options, headers, credentials: options.credentials ?? "include" });
+  return fetch(apiUrl(path), { ...options, headers, credentials: options.credentials ?? "include" });
 }
 
 export async function apiRequest(
@@ -53,7 +53,7 @@ export async function apiRequest(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const token = getStoredToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(url), {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,

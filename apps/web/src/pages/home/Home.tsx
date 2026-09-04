@@ -16,11 +16,7 @@ import { useSocketConnection } from '@/hooks/useSocket';
 import { getStoredToken } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
-import { ContinueReadingShelf } from '@/components/reader/ContinueReadingShelf';
 import { StreakChip } from '@/components/profile/StreakWidget';
-import { TrendingWidget } from '@/components/TrendingWidget';
-import { FeaturedHero } from '@/components/FeaturedHero';
-import { CreatorGrowthHQ } from '@/components/home/CreatorGrowthHQ';
 
 interface ChecklistItem {
   id: string;
@@ -338,17 +334,8 @@ export default function Home() {
   const [feedAlgorithm, setFeedAlgorithm] = useState<FeedAlgorithm>('algorithmic');
   const [feedPosts, setFeedPosts] = useState<import('@workspace/api-client-react').Post[] | null>(null);
   const [feedLoading, setFeedLoading] = useState(false);
-  const [myStreak, setMyStreak] = useState(0);
 
   useSocketConnection();
-
-  useEffect(() => {
-    if (!token) return;
-    fetch('/api/streaks/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then((d: { currentStreak?: number } | null) => { if (d?.currentStreak) setMyStreak(d.currentStreak); })
-      .catch(() => {});
-  }, [token]);
 
   const { data, isLoading, isError: error } = useGetPosts({
     feed: feedSource === 'following' ? 'following' : undefined,
@@ -427,51 +414,6 @@ export default function Home() {
       <div className="max-w-2xl mx-auto px-4 md:px-0">
 
         <div className="flex flex-col gap-4 mb-6 pt-4">
-          {/* Tagline Banner */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-primary/10 via-violet-500/5 to-transparent border border-primary/20 rounded-2xl px-4 py-3 flex items-center gap-3"
-          >
-            <TrendingUp className="w-4 h-4 text-primary flex-shrink-0" />
-            <div className="text-foreground">
-              <span className="block text-lg font-semibold italic text-foreground">
-                "Your quill is your voice. Your hive is where it grows."
-              </span>
-              <span className="block text-sm text-muted-foreground mt-1">
-                Grow, get{" "}
-                <span className="text-violet-500 font-semibold">discovered</span>
-                , and find{" "}
-                <span className="text-amber-500 font-semibold">real opportunities</span>
-                {" "}- for everyone.
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Streak Banner */}
-          {myStreak >= 1 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-orange-500/10 border border-orange-500/25"
-            >
-              <span className="text-xl" role="img" aria-label="flame">🔥</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                  {myStreak}-day writing streak!
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {myStreak >= 7 ? 'You\'re on fire - keep the momentum going.' : 'Keep writing daily to build your streak.'}
-                </p>
-              </div>
-              {myStreak >= 3 && (
-                <span className="text-xs font-bold px-2 py-1 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 shrink-0">
-                  🌱 {myStreak >= 365 ? 'Hive Eternal' : myStreak >= 100 ? 'Legend' : myStreak >= 60 ? 'Unstoppable' : myStreak >= 30 ? 'Inferno' : myStreak >= 14 ? 'Blazing' : myStreak >= 7 ? 'Burning' : 'Kindling'}
-                </span>
-              )}
-            </motion.div>
-          )}
-
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-serif font-bold text-foreground flex items-center gap-3">
               {t('home.title')}
@@ -590,15 +532,6 @@ export default function Home() {
           ))}
         </div>}
 
-        <div className="mt-8 space-y-6">
-          {feedSource === 'explore' && token && <CreatorGrowthHQ />}
-          {feedSource === 'explore' && <FeaturedHero slotKey="home_hero" />}
-          {feedSource === 'explore' && token && <GettingStartedChecklist />}
-          {(feedSource === 'explore' || feedSource === 'following') && token && <ContinueReadingShelf />}
-          {feedSource === 'explore' && <SuggestedCreators />}
-          {feedSource === 'explore' && <NewVoicesSection />}
-          {(feedSource === 'explore' || feedSource === 'following') && <TrendingWidget />}
-        </div>
       </div>
     </AppLayout>
   );

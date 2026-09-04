@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Link, useLocation } from "wouter";
 import {
@@ -50,7 +50,25 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const [trustTier, setTrustTier] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const navigationHistory = useRef<string[]>([location]);
+  const browserPop = useRef(false);
   const t = useT();
+
+  useEffect(() => {
+    const markBrowserPop = () => { browserPop.current = true; };
+    window.addEventListener('popstate', markBrowserPop);
+    return () => window.removeEventListener('popstate', markBrowserPop);
+  }, []);
+
+  useEffect(() => {
+    const history = navigationHistory.current;
+    if (browserPop.current) {
+      browserPop.current = false;
+    } else if (history[history.length - 1] !== location) {
+      history.push(location);
+    }
+    if (history.length > 50) history.shift();
+  }, [location]);
 
   useKeyboardShortcuts({
     onOpenCreate: () => setCreateOpen(true),
@@ -192,8 +210,13 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
             <button
               type="button"
               onClick={() => {
-                if (window.history.length > 1) window.history.back();
-                else navigate('/');
+                const history = navigationHistory.current;
+                if (history.length > 1) {
+                  history.pop();
+                  window.history.back();
+                } else {
+                  navigate('/');
+                }
               }}
               title="Back"
               aria-label="Back"

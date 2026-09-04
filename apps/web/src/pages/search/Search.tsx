@@ -19,7 +19,7 @@ const CATEGORIES = ['developer', 'designer', 'writer', 'photographer', 'artist',
 
 export default function Search() {
   usePageTitle('Search');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
   const [tab, setTab] = useState('posts');
   const [showFilters, setShowFilters] = useState(false);
   const [skillFilter, setSkillFilter] = useState('');

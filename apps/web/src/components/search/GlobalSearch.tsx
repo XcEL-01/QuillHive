@@ -101,7 +101,7 @@ export function GlobalSearch() {
   return (
     <div ref={containerRef} className="relative flex-1 max-w-sm mx-4">
       {/* Desktop: always visible bar */}
-      <div className="hidden md:flex items-center relative">
+      <form className="hidden md:flex items-center relative" onSubmit={(e) => { e.preventDefault(); goToResults(); }}>
         <Search className="absolute left-3 w-4 h-4 text-muted-foreground pointer-events-none" />
         <Input
           id="global-search"
@@ -118,7 +118,7 @@ export function GlobalSearch() {
             <X className="w-3.5 h-3.5" />
           </button>
         )}
-      </div>
+      </form>
 
       {/* Mobile: icon that expands */}
       <div className="md:hidden flex items-center">

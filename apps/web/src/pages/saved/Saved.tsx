@@ -9,6 +9,7 @@ import { useT } from '@/lib/i18n';
 export default function Saved() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const token = getStoredToken();
   const t = useT();
 
@@ -19,9 +20,11 @@ export default function Saved() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not load saved posts');
         setPosts(data.posts || []);
       } catch {
         setPosts([]);
+        setError('Could not load saved posts. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -64,9 +67,9 @@ export default function Saved() {
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
               <Inbox className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-semibold mb-1">{t('saved.noPostsTitle')}</h2>
+            <h2 className="text-lg font-semibold mb-1">{error || t('saved.noPostsTitle')}</h2>
             <p className="text-muted-foreground text-sm max-w-xs">
-              {t('saved.noPostsDesc')}
+              {error ? 'Refresh the page and try again.' : t('saved.noPostsDesc')}
             </p>
           </div>
         )}

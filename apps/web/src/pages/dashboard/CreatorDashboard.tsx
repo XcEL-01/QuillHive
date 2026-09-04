@@ -162,7 +162,7 @@ export default function CreatorDashboard() {
         })
         .catch(() => {}),
       fetch("/api/boost/my", { headers: authHeaders })
-        .then(async res => { if (res.ok) { const d = await res.json(); setBoosts(d.requests ?? []); } })
+        .then(async res => { if (res.ok) { const d = await res.json(); setBoosts(Array.isArray(d) ? d : d.requests ?? []); } })
         .catch(() => {}),
       fetch("/api/analytics/weekly-report", { headers: authHeaders })
         .then(async res => { if (res.ok) setWeeklyReport(await res.json()); })

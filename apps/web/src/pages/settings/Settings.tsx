@@ -1739,7 +1739,7 @@ function ApiKeysSection() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
-      const list: ApiKeyRow[] = Array.isArray(data?.apiKeys) ? data.apiKeys : Array.isArray(data) ? data : [];
+      const list: ApiKeyRow[] = Array.isArray(data?.data) ? data.data : Array.isArray(data?.apiKeys) ? data.apiKeys : Array.isArray(data) ? data : [];
       setKeys(list);
     } catch {
       setKeys([]);
@@ -1766,7 +1766,7 @@ function ApiKeysSection() {
       });
       if (!res.ok) throw new Error('Failed');
       const data = await res.json();
-      const raw = data?.key || data?.apiKey?.key || data?.rawKey;
+      const raw = data?.data?.key || data?.key || data?.apiKey?.key || data?.rawKey;
       if (raw) setRevealedKey(raw);
       setNewKeyName('');
       await load();

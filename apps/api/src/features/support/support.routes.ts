@@ -8,6 +8,7 @@ import { preventSpam } from "../../middleware/abuseProtection";
 import { validateBody, validateParams } from "../../middleware/validate";
 import { emitToUser } from "../../lib/socket";
 import { logger } from "../../lib/logger";
+import { notify } from "../notifications/notification.service";
 
 export const supportRouter = Router();
 supportRouter.use(requireAuth);
@@ -51,6 +52,17 @@ supportRouter.post("/tickets", preventSpam("support-tickets", { max: 5, windowMs
         <p><strong>Message:</strong></p>
         <p>${req.body.message}</p>
       `,
+    }).catch(() => {});
+  }
+  const [supportOwner] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.role, "super_admin")).limit(1);
+  if (supportOwner && supportOwner.id !== req.currentUser.id) {
+    void notify({
+      userId: supportOwner.id,
+      actorId: req.currentUser.id,
+      type: "system",
+      title: "New support ticket",
+      message: `${req.currentUser.displayName ?? req.currentUser.username ?? "A member"}: ${req.body.subject}`,
+      url: "/support",
     }).catch(() => {});
   }
   emitToUser(req.currentUser.id, "support:message", { ticket, message });

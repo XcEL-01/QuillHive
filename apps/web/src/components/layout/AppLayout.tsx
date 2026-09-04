@@ -36,7 +36,7 @@ interface AppLayoutProps {
 }
 
 const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/workspace", "/groups"];
-const MOBILE_MORE = ["/notifications", "/motion", "/library"];
+const MOBILE_MORE = ["/notifications", "/motion", "/library", "/saved", "/dashboard", "/support"];
 
 export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const motionEnabled = useFeature("motion_enabled");
@@ -191,7 +191,10 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
           {location !== "/" && (
             <button
               type="button"
-              onClick={() => window.history.back()}
+              onClick={() => {
+                if (window.history.length > 1) window.history.back();
+                else navigate('/');
+              }}
               title="Back"
               aria-label="Back"
               className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"

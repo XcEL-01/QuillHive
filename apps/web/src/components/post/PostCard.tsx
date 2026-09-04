@@ -446,6 +446,8 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
         const newSaved = !post.isSaved;
         setPost(p => ({ ...p, isSaved: newSaved }));
         toast({ title: newSaved ? 'Saved to bookmarks!' : 'Removed from saved' });
+      } else {
+        toast({ title: 'Failed to save', variant: 'destructive' });
       }
     } catch {
       toast({ title: 'Failed to save', variant: 'destructive' });

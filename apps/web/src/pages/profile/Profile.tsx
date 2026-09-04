@@ -190,7 +190,7 @@ export default function Profile() {
       const url = data.url ?? data.secure_url;
       const field = type === 'avatar' ? 'avatarUrl' : 'coverUrl';
 
-      await fetch(apiUrl('/api/users/me'), {
+      const profileRes = await fetch(apiUrl('/api/users/me/profile'), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -198,6 +198,7 @@ export default function Profile() {
         },
         body: JSON.stringify({ [field]: url }),
       });
+      if (!profileRes.ok) throw new Error('Profile update failed');
 
       toast({ title: `${type === 'avatar' ? 'Profile' : 'Cover'} photo updated` });
       await refetch();

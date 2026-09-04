@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import { useGetUserByUsername, useFollowUser } from '@workspace/api-client-react';
 import { useAuthStore } from '@/store/auth';
@@ -22,10 +22,10 @@ import {
   MapPin, Link as LinkIcon, Calendar, UserPlus, UserCheck, Briefcase, Plus, Trash2,
   Eye, EyeOff, Lock, Upload, Image as ImageIcon, Loader2, Handshake, DollarSign,
   Pencil, X, ExternalLink, Sparkles, GraduationCap, Globe, Facebook, Linkedin, Twitter, Instagram,
-  ShieldCheck, AlertTriangle, BarChart3, Heart, MessageCircle, ArrowUpRight, Users, Zap, Rocket, TrendingUp, Clock, Flame,
+  ShieldCheck, AlertTriangle, BarChart3, Heart, MessageCircle, ArrowUpRight, Users, Zap, Rocket, TrendingUp, Clock, Flame, Camera,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { ReputationTimeline } from '@/components/trust/ReputationTimeline';
 import { CreatorLevelBadge, CreatorLevelProgressPanel } from '@/components/trust/CreatorLevelBadge';
@@ -166,6 +166,48 @@ export default function Profile() {
   const t = useT();
   const isMe = currentUser?.username === username;
   const token = getStoredToken();
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  async function handleImageUpload(file: File, type: 'avatar' | 'cover') {
+    const setLoading = type === 'avatar' ? setUploadingAvatar : setUploadingCover;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+
+      const res = await fetch(apiUrl('/api/upload'), {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      const url = data.url ?? data.secure_url;
+      const field = type === 'avatar' ? 'avatarUrl' : 'coverUrl';
+
+      await fetch(apiUrl('/api/users/me'), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ [field]: url }),
+      });
+
+      toast({ title: `${type === 'avatar' ? 'Profile' : 'Cover'} photo updated` });
+      await refetch();
+    } catch {
+      toast({ title: 'Upload failed. Please try again.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const getCategoryLabel = (category: string) => {
     const map: Record<string, string> = {
       general: t('profile.categoryGeneral', 'General'),
@@ -419,16 +461,58 @@ export default function Profile() {
         ) : (
           <img src={`${import.meta.env.BASE_URL}images/default-cover.png`} alt="Default Cover" className="w-full h-full object-cover opacity-80" />
         )}
+        {isMe && (
+          <>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload(file, 'cover');
+              }}
+            />
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              disabled={uploadingCover}
+              className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs font-medium bg-black/60 text-white px-3 py-1.5 rounded-full hover:bg-black/75 transition-colors"
+            >
+              {uploadingCover ? 'Uploading...' : 'Change cover'}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 relative -top-16 md:-top-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div className="flex items-end gap-4">
-            <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-background shadow-xl">
+            <Avatar className="relative w-32 h-32 md:w-40 md:h-40 border-4 border-background shadow-xl">
               <AvatarImage src={user.avatarUrl || ''} />
               <AvatarFallback className="text-4xl bg-primary/10 text-primary font-serif">
                 {user.displayName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
+              {isMe && (
+                <>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file, 'avatar');
+                    }}
+                  />
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
             </Avatar>
             {creatorProfile.verified && (
               <Badge className="mb-2 bg-primary/10 text-primary border-primary/30 gap-1.5">

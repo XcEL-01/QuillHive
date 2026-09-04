@@ -35,8 +35,8 @@ interface AppLayoutProps {
   publicPage?: boolean;
 }
 
-const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/notifications"];
-const MOBILE_MORE = ["/workspace", "/library", "/settings", "/motion"];
+const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/workspace", "/groups"];
+const MOBILE_MORE = ["/notifications", "/motion", "/library"];
 
 export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const motionEnabled = useFeature("motion_enabled");
@@ -307,6 +307,11 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/library" className="cursor-pointer w-full flex items-center gap-2">
                       <BookOpen className="w-4 h-4" /> Library
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/saved" className="cursor-pointer w-full flex items-center gap-2">
+                      <Bookmark className="w-4 h-4" /> Saved Posts
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

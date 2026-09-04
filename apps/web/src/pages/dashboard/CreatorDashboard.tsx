@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -152,7 +153,13 @@ export default function CreatorDashboard() {
         .then(async res => { if (res.ok) setGeography(await res.json()); })
         .catch(() => {}),
       fetch("/api/income?limit=5", { headers: authHeaders })
-        .then(async res => { if (res.ok) setIncome(await res.json()); })
+        .then(async res => {
+          if (res.status === 403 || res.status === 503) {
+            setIncome([]);
+          } else if (res.ok) {
+            setIncome(await res.json());
+          }
+        })
         .catch(() => {}),
       fetch("/api/boost/my", { headers: authHeaders })
         .then(async res => { if (res.ok) { const d = await res.json(); setBoosts(d.requests ?? []); } })
@@ -186,7 +193,8 @@ export default function CreatorDashboard() {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto px-4 md:px-0 space-y-6 pb-8">
+      <ErrorBoundary>
+        <div className="max-w-5xl mx-auto px-4 md:px-0 space-y-6 pb-8">
         <div className="pt-4">
           <div className="flex items-center justify-between">
             <div>
@@ -803,7 +811,8 @@ export default function CreatorDashboard() {
 
           </>
         )}
-      </div>
+        </div>
+      </ErrorBoundary>
     </AppLayout>
   );
 }

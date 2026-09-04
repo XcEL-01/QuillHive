@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import "@/lib/api";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { useFeature } from "@/lib/features";
@@ -119,63 +119,60 @@ function PageLoader() {
   );
 }
 
+function AppRoot({ children }: { children: React.ReactNode }) {
+  const { refreshUser, setInitializing } = useAuthStore();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    refreshUser().finally(() => {
+      setInitializing(false);
+      setReady(true);
+    });
+  }, []);
+
+  if (!ready) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-4 animate-pulse">
+        <div className="h-9 w-9 rounded-full bg-muted" />
+        <div className="h-40 rounded-2xl bg-muted" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const t = useT();
-  const { isAuthenticated, isInitializing, setInitializing, setUser, refreshUser } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    const init = async () => {
-      await refreshUser();
-      setInitializing(false);
-    };
-    init();
-  }, []);
-
-  useEffect(() => {
-    if (!isInitializing && !isAuthenticated) {
+    if (!isAuthenticated) {
       if (location !== "/login" && location !== "/explore" && !isPublicRoute(location)) {
         setLocation("/login");
       }
     }
-  }, [isInitializing, isAuthenticated, location, setLocation]);
+  }, [isAuthenticated, location, setLocation]);
 
   // Bug A3: sync user language preference after login
   useEffect(() => {
-    if (!isInitializing && isAuthenticated) {
+    if (isAuthenticated) {
       const u = useAuthStore.getState().user as any;
       if (u?.languagePreference) {
         useI18n.getState().setLang(u.languagePreference);
       }
     }
-  }, [isInitializing, isAuthenticated]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const u = useAuthStore.getState().user as any;
-    if (!isInitializing && isAuthenticated && u && u.onboardingComplete === false) {
+    if (isAuthenticated && u && u.onboardingComplete === false) {
       if (location !== "/onboarding") {
         setLocation("/onboarding");
       }
     }
-  }, [isInitializing, isAuthenticated, location, setLocation]);
-
-  if (isInitializing) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-4 animate-pulse">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-9 w-9 rounded-full bg-muted" />
-          <div className="space-y-1.5">
-            <div className="h-3 w-28 rounded bg-muted" />
-            <div className="h-2.5 w-20 rounded bg-muted" />
-          </div>
-        </div>
-        <div className="h-40 rounded-2xl bg-muted" />
-        <div className="h-4 w-full rounded bg-muted" />
-        <div className="h-4 w-4/5 rounded bg-muted" />
-        <div className="h-4 w-3/5 rounded bg-muted" />
-      </div>
-    );
-  }
+  }, [isAuthenticated, location, setLocation]);
 
   return <>{children}</>;
 }
@@ -424,7 +421,7 @@ function AppShell() {
     <>
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
-          <Router />
+          <AppRoot><Router /></AppRoot>
         </Suspense>
       </ErrorBoundary>
       {showFooter && <Footer />}

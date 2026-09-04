@@ -153,6 +153,11 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
         credentials: "include",
         body: JSON.stringify({ postId, plan: selectedPlan }),
       });
+      if (initRes.status === 503) {
+        setErrorMsg("Boost payments aren't set up yet. Please check back soon.");
+        setStep("error");
+        return;
+      }
       const initData = await initRes.json() as {
         txRef?: string;
         amount?: number;

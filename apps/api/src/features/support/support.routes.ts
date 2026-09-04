@@ -40,6 +40,19 @@ supportRouter.post("/tickets", preventSpam("support-tickets", { max: 5, windowMs
     message: req.body.message,
     fileId: req.body.fileId ?? null,
   }).returning();
+  const { sendEmail } = await import("../email/email.service");
+  const ownerEmail = process.env.OWNER_EMAIL;
+  if (ownerEmail) {
+    await sendEmail({
+      to: ownerEmail,
+      subject: `New QuillHive support message: ${req.body.subject ?? "No subject"}`,
+      html: `
+        <p><strong>From:</strong> ${req.currentUser.email ?? "Anonymous"}</p>
+        <p><strong>Message:</strong></p>
+        <p>${req.body.message}</p>
+      `,
+    }).catch(() => {});
+  }
   emitToUser(req.currentUser.id, "support:message", { ticket, message });
   return res.status(201).json({ ticket, message });
 });

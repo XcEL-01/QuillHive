@@ -75,6 +75,7 @@ async function uploadFile(file: File, token: string | null): Promise<string> {
 export default function Settings() {
   usePageTitle('Settings');
   const { user, setUser } = useAuthStore();
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1263,7 +1264,7 @@ export default function Settings() {
               {activeSection === 'billing' && <BillingSection />}
 
               {/* API KEYS */}
-              {activeSection === 'apiKeys' && (user as { role?: string } | null)?.role === 'super_admin' && <ApiKeysSection />}
+              {activeSection === 'apiKeys' && isAdmin && <ApiKeysSection />}
 
               {/* DANGER ZONE */}
               {activeSection === 'danger' && (

@@ -12,6 +12,12 @@ export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
+/** Resolve URLs returned by the API, including local uploaded-file URLs. */
+export function mediaUrl(path: string | null | undefined): string {
+  if (!path) return "";
+  return /^https?:\/\//i.test(path) ? path : apiUrl(path);
+}
+
 export async function getApiErrorMessage(
   response: Response,
   fallback = "Something went wrong. Please try again.",

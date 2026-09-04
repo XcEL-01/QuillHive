@@ -28,10 +28,9 @@ invitesRouter.post("/generate", requireAuth, async (req: Request, res: Response)
     return;
   }
   const code = crypto.randomBytes(6).toString("hex").toUpperCase();
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000);
   const [invite] = await db
     .insert(inviteCodesTable)
-    .values({ code, createdBy: userId, expiresAt })
+    .values({ code, createdBy: userId, expiresAt: null })
     .returning();
   const origin = process.env["APP_URL"] || `${req.protocol}://${req.get("host")}`;
   res.json({ invite, shareUrl: `${origin}/register?invite=${code}` });
@@ -63,10 +62,6 @@ invitesRouter.get("/validate/:code", async (req: Request, res: Response) => {
     res.json({ valid: false });
     return;
   }
-  if (invite.expiresAt && invite.expiresAt < new Date()) {
-    res.json({ valid: false, reason: "expired" });
-    return;
-  }
   res.json({ valid: true, code: invite.code });
 });
 
@@ -77,7 +72,6 @@ export async function consumeInvite(code: string, newUserId: number): Promise<nu
     .from(inviteCodesTable)
     .where(and(eq(inviteCodesTable.code, upper), eq(inviteCodesTable.isActive, true), isNull(inviteCodesTable.usedBy)));
   if (!invite) return null;
-  if (invite.expiresAt && invite.expiresAt < new Date()) return null;
   await db
     .update(inviteCodesTable)
     .set({ usedBy: newUserId, usedAt: new Date() })

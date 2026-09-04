@@ -25,7 +25,7 @@ import {
   ShieldCheck, AlertTriangle, BarChart3, Heart, MessageCircle, ArrowUpRight, Users, Zap, Rocket, TrendingUp, Clock, Flame, Camera,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { apiUrl, getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken, mediaUrl } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { ReputationTimeline } from '@/components/trust/ReputationTimeline';
 import { CreatorLevelBadge, CreatorLevelProgressPanel } from '@/components/trust/CreatorLevelBadge';
@@ -201,7 +201,7 @@ export default function Profile() {
 
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
-      const url = data.url ?? data.secure_url;
+      const url = mediaUrl(data.url ?? data.secure_url);
       const field = type === 'avatar' ? 'avatarUrl' : 'coverUrl';
 
       const profileRes = await fetch(apiUrl('/api/users/me/profile'), {
@@ -472,7 +472,7 @@ export default function Profile() {
       {/* Cover Photo */}
       <div className="w-full h-48 md:h-72 bg-muted relative md:rounded-b-3xl overflow-hidden shadow-sm">
         {user.coverUrl ? (
-          <img src={user.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+          <img src={mediaUrl(user.coverUrl)} alt="Cover" className="w-full h-full object-cover" />
         ) : (
           <img src={`${import.meta.env.BASE_URL}images/default-cover.png`} alt="Default Cover" className="w-full h-full object-cover opacity-80" />
         )}
@@ -503,7 +503,7 @@ export default function Profile() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div className="flex items-end gap-4">
             <Avatar className="relative w-32 h-32 md:w-40 md:h-40 border-4 border-background shadow-xl">
-              <AvatarImage src={user.avatarUrl || ''} />
+              <AvatarImage src={mediaUrl(user.avatarUrl)} />
               <AvatarFallback className="text-4xl bg-primary/10 text-primary font-serif">
                 {user.displayName.substring(0, 2).toUpperCase()}
               </AvatarFallback>

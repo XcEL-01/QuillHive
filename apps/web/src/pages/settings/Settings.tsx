@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getStoredToken } from '@/lib/api';
+import { getStoredToken, mediaUrl } from '@/lib/api';
 import { useI18n, useT, SUPPORTED_LANGS } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { CreatorModeToggle } from '@/components/settings/CreatorModeToggle';
@@ -64,7 +64,7 @@ async function uploadFile(file: File, token: string | null): Promise<string> {
         });
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
-        resolve(data.url);
+        resolve(mediaUrl(data.url ?? data.secure_url));
       } catch (e) { reject(e); }
     };
     reader.onerror = () => reject(new Error('File read failed'));
@@ -560,7 +560,7 @@ export default function Settings() {
                     <div>
                       <Label className="mb-2 block">{t('settings.coverPhoto')}</Label>
                       <div className="relative w-full h-32 rounded-xl overflow-hidden bg-muted border border-border group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
-                        {profileForm.coverUrl ? <img src={profileForm.coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-muted-foreground"><Camera className="w-8 h-8" /></div>}
+                        {profileForm.coverUrl ? <img src={mediaUrl(profileForm.coverUrl)} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-muted-foreground"><Camera className="w-8 h-8" /></div>}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           {isUploadingCover ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Upload className="w-6 h-6 text-white" />}
                         </div>
@@ -571,7 +571,7 @@ export default function Settings() {
                     <div className="flex items-center gap-5">
                       <div className="relative">
                         <Avatar className="w-20 h-20 border-2 border-border">
-                          <AvatarImage src={profileForm.avatarUrl} />
+                          <AvatarImage src={mediaUrl(profileForm.avatarUrl)} />
                           <AvatarFallback className="text-xl font-serif bg-primary/10 text-primary">{profileForm.displayName.substring(0, 2).toUpperCase() || 'QH'}</AvatarFallback>
                         </Avatar>
                         <button onClick={() => avatarInputRef.current?.click()} className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md hover:bg-primary/90">

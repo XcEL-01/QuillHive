@@ -11,7 +11,7 @@ import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, CheckCheck, Trash2
 import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'wouter';
 import { useSocketEvent } from '@/hooks/useSocket';
-import { getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { clsx } from 'clsx';
 import { useT } from '@/lib/i18n';
@@ -57,12 +57,15 @@ export default function Notifications() {
 
   const handleMarkAllRead = async () => {
     try {
-      const res = await fetch('/api/notifications/read-all', {
-        method: 'POST',
+      const res = await fetch(apiUrl('/api/notifications/read-all'), {
+        method: 'PATCH',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        queryClient.setQueryData(['/api/notifications'], (current: any[] | undefined) =>
+          Array.isArray(current) ? current.map(item => ({ ...item, isRead: true })) : current,
+        );
         toast({ title: t('notifications.markedAllRead') });
       }
     } catch {
@@ -174,7 +177,23 @@ export default function Notifications() {
                   !notif.isRead && 'bg-primary/5'
                 )}
               >
-                <Link href={getLink(notif)} className="flex-1 flex items-start gap-4 min-w-0">
+                <Link
+                  href={getLink(notif)}
+                  onClick={() => {
+                    if (!notif.isRead) {
+                      void fetch(apiUrl(`/api/notifications/${notif.id}/read`), {
+                        method: 'PATCH',
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                      });
+                      queryClient.setQueryData(['/api/notifications'], (current: any[] | undefined) =>
+                        Array.isArray(current)
+                          ? current.map(item => item.id === notif.id ? { ...item, isRead: true } : item)
+                          : current,
+                      );
+                    }
+                  }}
+                  className="flex-1 flex items-start gap-4 min-w-0"
+                >
                   <div className="relative shrink-0">
                     <Avatar className="w-12 h-12 border border-border">
                       <AvatarImage src={notif.actor?.avatarUrl || ''} />

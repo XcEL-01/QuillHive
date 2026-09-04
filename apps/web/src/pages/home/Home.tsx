@@ -26,7 +26,7 @@ interface ChecklistItem {
   href?: string;
 }
 
-type FeedSource = 'explore' | 'following' | 'sparks' | 'topics' | 'rising';
+type FeedSource = 'explore' | 'following' | 'sparks';
 type FeedAlgorithm = 'algorithmic' | 'chronological';
 
 interface SuggestedCreator {
@@ -436,7 +436,7 @@ export default function Home() {
     try {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab === 'sparks' || tab === 'following' || tab === 'topics' || tab === 'explore') return tab;
+      if (tab === 'sparks' || tab === 'following' || tab === 'explore') return tab;
     } catch { /* ignore */ }
     return 'explore';
   })();
@@ -507,15 +507,14 @@ export default function Home() {
     setFeedPosts(null);
     if (val === 'explore') fetchAlgorithmicFeed(feedAlgorithm);
     if (val === 'sparks') fetchSparksFeed();
-    if (val === 'rising') fetchRisingFeed();
   };
 
   const displayPosts =
-    feedSource === 'explore' || feedSource === 'sparks' || feedSource === 'rising'
+    feedSource === 'explore' || feedSource === 'sparks'
       ? (feedPosts ?? data?.posts ?? [])
       : (data?.posts ?? []);
   const isDisplayLoading =
-    feedSource === 'explore' || feedSource === 'sparks' || feedSource === 'rising'
+    feedSource === 'explore' || feedSource === 'sparks'
       ? (feedLoading || (feedPosts === null && isLoading))
       : isLoading;
 
@@ -529,52 +528,28 @@ export default function Home() {
         <div className="flex flex-col gap-4 mb-6 pt-4">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-serif font-bold text-foreground flex items-center gap-3">
-              {t('home.title')}
               <StreakChip />
             </h1>
             <Tabs value={feedSource} onValueChange={(v) => handleSourceChange(v as FeedSource)}>
               <TabsList className="flex gap-0.5 bg-muted/50 p-1 rounded-xl overflow-x-auto max-w-[340px] scrollbar-hide">
                 <TabsTrigger value="explore" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-explore">{t('home.tabs.explore')}</TabsTrigger>
                 <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-following">{t('home.tabs.following')}</TabsTrigger>
-                <TabsTrigger value="rising" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-rising">📈 {t('home.tabs.rising', 'Rising')}</TabsTrigger>
                 <TabsTrigger value="sparks" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-sparks">⚡ {t('home.tabs.sparks')}</TabsTrigger>
-                <TabsTrigger value="topics" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-topics">{t('home.tabs.topics')}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
           {feedSource === 'explore' && (
-            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground mr-1">{t('home.sortBy')}</span>
-              <button
-                onClick={() => handleAlgorithmChange('algorithmic')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${feedAlgorithm === 'algorithmic' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-              >
-                <Zap className="w-3 h-3" /> {t('home.algorithmic')}
-              </button>
-              <button
-                onClick={() => handleAlgorithmChange('chronological')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${feedAlgorithm === 'chronological' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-              >
-                <Clock className="w-3 h-3" /> {t('home.chronological')}
-              </button>
-              <Link
-                href="/trending"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-all ml-auto"
-              >
-                <Flame className="w-3 h-3" /> {t('home.trending')}
-              </Link>
-            </motion.div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Discover what is resonating across the hive.</span>
+            </div>
           )}
         </div>
 
         {/* Topics Grid (Topics mode) */}
-        {feedSource === 'topics' && <TopicsPanel />}
+        {token && <SparkComposer />}
 
-        {/* Spark composer + long-form prompt (hidden on topics tab) */}
-        {feedSource !== 'topics' && token && <SparkComposer />}
-
-        {feedSource !== 'topics' && (
+        {(
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -594,7 +569,7 @@ export default function Home() {
           </motion.div>
         )}
 
-        {feedSource !== 'topics' && <div className="space-y-6">
+        <div className="space-y-6">
           {isDisplayLoading && (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">
@@ -643,7 +618,7 @@ export default function Home() {
           {displayPosts?.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
-        </div>}
+        </div>
         </div>
 
         <aside className="hidden lg:block pt-4">

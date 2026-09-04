@@ -67,6 +67,7 @@ const standalonePollSchema = z.object({
   durationHours: z.coerce.number().int().min(1).max(336).optional(),
   multipleChoice: z.boolean().optional(),
   showResultsBeforeVoting: z.boolean().optional(),
+  attachments: z.array(z.any()).max(10).optional(),
 });
 
 pollsRouter.post("/standalone", async (req, res) => {
@@ -78,7 +79,7 @@ pollsRouter.post("/standalone", async (req, res) => {
     return res.status(400).json({ error: "Invalid poll data", issues: parsed.error.issues });
   }
 
-  const { question, options, durationHours, multipleChoice } = parsed.data;
+  const { question, options, durationHours, multipleChoice, attachments } = parsed.data;
   const closesAt = durationHours ? new Date(Date.now() + durationHours * 60 * 60 * 1000) : null;
 
   // Create the backing post (type='post', isPublished=true)
@@ -88,6 +89,7 @@ pollsRouter.post("/standalone", async (req, res) => {
       authorId: userId,
       title: question.slice(0, 180),
       content: question,
+      attachments: JSON.stringify(attachments ?? []),
       isPublished: true,
     } as any)
     .returning();

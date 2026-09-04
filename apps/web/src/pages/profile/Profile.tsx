@@ -175,14 +175,28 @@ export default function Profile() {
     const setLoading = type === 'avatar' ? setUploadingAvatar : setUploadingCover;
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', type);
+      const dataBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          resolve(result.includes(',') ? result.split(',')[1] : result);
+        };
+        reader.onerror = () => reject(reader.error ?? new Error('File read failed'));
+        reader.readAsDataURL(file);
+      });
 
       const res = await fetch(apiUrl('/api/upload'), {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          mimeType: file.type,
+          dataBase64,
+          category: 'profile',
+        }),
       });
 
       if (!res.ok) throw new Error('Upload failed');

@@ -119,8 +119,12 @@ export default function CreatorDashboard() {
   const t = useT();
 
   const fetchTrust = async (token: string | null) => {
-    const res = await fetch("/api/trust/me", { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-    if (res.ok) setTrust(await res.json());
+    try {
+      const res = await fetch("/api/trust/me", { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (res.ok) setTrust(await res.json());
+    } catch {
+      // Trust is optional dashboard context; the core analytics view can load.
+    }
   };
 
   const handleRecalculate = async () => {

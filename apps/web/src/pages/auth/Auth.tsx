@@ -415,7 +415,7 @@ export default function Auth() {
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                           <Input
-                            id="username" placeholder="janeausten" required
+                            id="username" autoComplete="username" placeholder="janeausten" required
                             value={username} onChange={e => setUsername(e.target.value.replace(/[^a-z0-9_]/gi, ""))}
                             className="rounded-xl h-12 bg-muted/30 pl-7"
                             disabled={isLoading}
@@ -428,7 +428,7 @@ export default function Auth() {
                   <div className="space-y-2">
                     <Label htmlFor="email">{t("auth.email", "Email")}</Label>
                     <Input
-                      id="email" type="email" placeholder="name@example.com" required
+                      id="email" type="email" autoComplete="email" placeholder="name@example.com" required
                       value={email} onChange={e => setEmail(e.target.value)}
                       className="rounded-xl h-12 bg-muted/30"
                       disabled={isLoading}
@@ -462,7 +462,7 @@ export default function Auth() {
                     </div>
                     <div className="relative">
                       <Input
-                        id="password" type={showPassword ? "text" : "password"} required
+                        id="password" type={showPassword ? "text" : "password"} autoComplete={isLogin ? "current-password" : "new-password"} required
                         minLength={isLogin ? undefined : 8}
                         value={password} onChange={e => setPassword(e.target.value)}
                         className="rounded-xl h-12 bg-muted/30 pr-11"
@@ -483,7 +483,7 @@ export default function Auth() {
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">{t("auth.confirmPassword", "Confirm Password")}</Label>
                       <Input
-                        id="confirmPassword" type="password" required minLength={8}
+                        id="confirmPassword" type="password" autoComplete="new-password" required minLength={8}
                         value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                         className="rounded-xl h-12 bg-muted/30"
                         disabled={isLoading}

@@ -445,6 +445,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       if (res.ok || res.status === 409) {
         const newSaved = !post.isSaved;
         setPost(p => ({ ...p, isSaved: newSaved }));
+        window.dispatchEvent(new CustomEvent('quillhive:saved-changed'));
         toast({ title: newSaved ? 'Saved to bookmarks!' : 'Removed from saved' });
       } else {
         toast({ title: 'Failed to save', variant: 'destructive' });

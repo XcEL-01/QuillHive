@@ -29,7 +29,10 @@ export default function Saved() {
         setLoading(false);
       }
     };
-    fetchSaved();
+    void fetchSaved();
+    const refreshSaved = () => void fetchSaved();
+    window.addEventListener('quillhive:saved-changed', refreshSaved);
+    return () => window.removeEventListener('quillhive:saved-changed', refreshSaved);
   }, []);
 
   return (

@@ -177,6 +177,18 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function GuestGuard({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isInitializing } = useAuthStore();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isInitializing && isAuthenticated) setLocation("/");
+  }, [isAuthenticated, isInitializing, setLocation]);
+
+  if (isInitializing || isAuthenticated) return null;
+  return <>{children}</>;
+}
+
 const ADMIN_ALLOWED_ROLES = ["moderator", "admin", "super_admin"];
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
@@ -211,8 +223,8 @@ function FeatureRoute({
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Auth} />
-      <Route path="/signup" component={Auth} />
+      <Route path="/login"><GuestGuard><Auth /></GuestGuard></Route>
+      <Route path="/signup"><GuestGuard><Auth /></GuestGuard></Route>
       <Route path="/register"><Redirect to="/signup" /></Route>
       <Route path="/auth/magic" component={Auth} />
       <Route path="/auth/oauth-complete" component={Auth} />

@@ -22,9 +22,10 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
-    hmr: {
-      clientPort: 443,
-    },
+    // The proxied Replit preview serves the app on :5000. Disabling the
+    // direct HMR socket avoids a noisy failed websocket in that iframe while
+    // keeping the server stable for preview and production builds.
+    hmr: false,
     proxy: {
       "/api": {
         target: "http://localhost:9000",

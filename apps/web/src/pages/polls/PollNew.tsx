@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/auth';
 import { getStoredToken } from '@/lib/api';
 import { Plus, X, Loader2, BarChart2, ChevronDown } from 'lucide-react';
+import { AttachmentPicker, type Attachment } from '@/components/post/AttachmentPicker';
 
 const DURATION_OPTIONS = [
   { value: '1', label: '1 hour' },
@@ -31,6 +32,7 @@ export default function PollNew() {
   const [durationHours, setDurationHours] = useState('24');
   const [multipleChoice, setMultipleChoice] = useState(false);
   const [showResultsBefore, setShowResultsBefore] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
@@ -64,6 +66,7 @@ export default function PollNew() {
           durationHours: Number(durationHours),
           multipleChoice,
           showResultsBeforeVoting: showResultsBefore,
+          attachments,
         }),
       });
       if (!res.ok) {
@@ -176,6 +179,12 @@ export default function PollNew() {
             </div>
           )}
         </div>
+
+        <AttachmentPicker
+          attachments={attachments}
+          onChange={setAttachments}
+          label="Attach an image or file"
+        />
 
         {/* Live Preview */}
         {question.trim() && validOptions.length >= 1 && (

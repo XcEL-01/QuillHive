@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, Compass, PenLine, MessageCircle, User as UserIcon, ArrowLeft,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
-  BarChart3, BookOpen, Users, MoreHorizontal, FileText, Zap,
+  BarChart3, BookOpen, Users, MoreHorizontal, FileText, Zap, Handshake,
   Bookmark, Archive, Star, Sparkles, Layers, Link2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
@@ -35,8 +35,13 @@ interface AppLayoutProps {
   publicPage?: boolean;
 }
 
-const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/workspace", "/groups"];
-const MOBILE_MORE = ["/notifications", "/motion", "/library", "/saved", "/dashboard", "/support"];
+const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/workspace?tab=collaborate"];
+const MOBILE_MORE = ["/notifications", "/motion", "/workspace", "/saved", "/dashboard", "/support", "/library"];
+
+// Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
+// inside the component loses the browsing trail whenever the route changes.
+const appNavigationHistory: string[] = [];
+let browserPopPending = false;
 
 export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const motionEnabled = useFeature("motion_enabled");
@@ -50,24 +55,26 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const [trustTier, setTrustTier] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const navigationHistory = useRef<string[]>([location]);
-  const browserPop = useRef(false);
   const t = useT();
 
   useEffect(() => {
-    const markBrowserPop = () => { browserPop.current = true; };
+    const markBrowserPop = () => { browserPopPending = true; };
     window.addEventListener('popstate', markBrowserPop);
     return () => window.removeEventListener('popstate', markBrowserPop);
   }, []);
 
   useEffect(() => {
-    const history = navigationHistory.current;
-    if (browserPop.current) {
-      browserPop.current = false;
-    } else if (history[history.length - 1] !== location) {
-      history.push(location);
+    if (appNavigationHistory.length === 0) {
+      appNavigationHistory.push(location);
+    } else if (browserPopPending) {
+      browserPopPending = false;
+      if (appNavigationHistory[appNavigationHistory.length - 1] !== location) {
+        appNavigationHistory.pop();
+      }
+    } else if (appNavigationHistory[appNavigationHistory.length - 1] !== location) {
+      appNavigationHistory.push(location);
     }
-    if (history.length > 50) history.shift();
+    if (appNavigationHistory.length > 50) appNavigationHistory.shift();
   }, [location]);
 
   useKeyboardShortcuts({
@@ -140,6 +147,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
     ...(motionEnabled ? [{ href: "/motion", icon: Film, label: "Studio" }] : []),
     { href: "/groups", icon: Users, label: "Groups" },
     { href: "/workspace", icon: Briefcase, label: "Workspace" },
+    { href: "/workspace?tab=collaborate", icon: Handshake, label: "Exchange" },
     { href: "/library", icon: BookOpen, label: "Library" },
   ];
 
@@ -210,9 +218,8 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
             <button
               type="button"
               onClick={() => {
-                const history = navigationHistory.current;
-                if (history.length > 1) {
-                  history.pop();
+                 if (appNavigationHistory.length > 1) {
+                   appNavigationHistory.pop();
                   window.history.back();
                 } else {
                   navigate('/');

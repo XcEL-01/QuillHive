@@ -20,6 +20,7 @@ import {
   postViewsTable,
 } from "@workspace/db/schema";
 import { eq, and, gte, count, sql, inArray, desc } from "drizzle-orm";
+import { logger } from "../../lib/logger";
 
 export const analyticsRouter = Router();
 
@@ -68,20 +69,40 @@ analyticsRouter.get("/user", requireAuth, async (req: any, res) => {
 });
 
 analyticsRouter.get("/dashboard", requireAuth, async (req: any, res) => {
-  const analytics = await getUserAnalytics(req.currentUser.id);
-  return res.json({
-    totalViews: analytics.totals.views,
-    totalLikes: analytics.totals.likes,
-    totalComments: analytics.totals.comments,
-    totalPosts: analytics.totals.posts,
-    followers: analytics.totals.followers,
-    engagementRate: analytics.engagementRate,
-    postReach: analytics.postReach,
-    followerGrowth: analytics.followerGrowth,
-    dailyFollowerGrowth: analytics.dailyFollowerGrowth,
-    topPosts: analytics.topPosts,
-    reachMultiplier: analytics.reachMultiplier,
-  });
+  try {
+    const analytics = await getUserAnalytics(req.currentUser.id);
+    return res.json({
+      totalViews: analytics.totals.views,
+      totalLikes: analytics.totals.likes,
+      totalComments: analytics.totals.comments,
+      totalPosts: analytics.totals.posts,
+      followers: analytics.totals.followers,
+      engagementRate: analytics.engagementRate,
+      postReach: analytics.postReach,
+      followerGrowth: analytics.followerGrowth,
+      dailyFollowerGrowth: analytics.dailyFollowerGrowth,
+      topPosts: analytics.topPosts,
+      reachMultiplier: analytics.reachMultiplier,
+    });
+  } catch (err) {
+    // Analytics is an enhancement: an empty creator should still be able to
+    // open the dashboard while an optional analytics table/service is offline.
+    logger.warn({ err, userId: req.currentUser.id }, "dashboard_analytics_unavailable");
+    return res.json({
+      totalViews: 0,
+      totalLikes: 0,
+      totalComments: 0,
+      totalPosts: 0,
+      followers: 0,
+      engagementRate: 0,
+      postReach: 0,
+      followerGrowth: { last30Days: 0, percentage: 0 },
+      dailyFollowerGrowth: [],
+      topPosts: [],
+      reachMultiplier: 1,
+      degraded: true,
+    });
+  }
 });
 
 analyticsRouter.get("/geography", requireAuth, async (req: any, res) => {

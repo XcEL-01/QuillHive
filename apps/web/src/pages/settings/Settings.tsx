@@ -1264,7 +1264,7 @@ export default function Settings() {
               {activeSection === 'billing' && <BillingSection />}
 
               {/* API KEYS */}
-              {activeSection === 'apiKeys' && isAdmin && <ApiKeysSection />}
+              {activeSection === 'apiKeys' && user?.role === 'super_admin' && <ApiKeysSection />}
 
               {/* DANGER ZONE */}
               {activeSection === 'danger' && (

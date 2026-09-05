@@ -92,6 +92,8 @@ const educationSchema = z.object({
 export const usersRouter = Router();
 usersRouter.get("/", ProfileController.listUsers);
 usersRouter.patch("/me", validateBody(z.object({
+  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  displayName: z.string().min(1).max(120).optional(),
   onboardingComplete: z.boolean().optional(),
   onboardingGoals: z.array(z.string().max(60)).max(10).optional(),
   interests: z.array(z.string().max(60)).max(20).optional(),

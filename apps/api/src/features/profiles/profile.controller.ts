@@ -788,6 +788,21 @@ export const completeOnboarding = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
   const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (req.body.username !== undefined) {
+    const username = String(req.body.username).trim();
+    if (RESERVED_USERNAMES.has(username.toLowerCase())) {
+      return res.status(400).json({ error: "This username is reserved and cannot be used." });
+    }
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, username));
+    if (existing && existing.id !== viewerId) {
+      return res.status(409).json({ error: "Username already taken" });
+    }
+    updates.username = username;
+  }
+  if (req.body.displayName !== undefined) updates.displayName = String(req.body.displayName).trim();
   if (typeof req.body.onboardingComplete === "boolean") updates.onboardingComplete = req.body.onboardingComplete;
   if (Array.isArray(req.body.onboardingGoals)) {
     updates.onboardingGoals = JSON.stringify(req.body.onboardingGoals.slice(0, 10));

@@ -119,6 +119,7 @@ export default function Settings() {
     hireMeEnabled: (user as any)?.hireMeEnabled ?? false,
   });
   const [isSavingCreatorSettings, setIsSavingCreatorSettings] = useState(false);
+  const [isSavingAccountInfo, setIsSavingAccountInfo] = useState(false);
 
   const [workHistory, setWorkHistory] = useState<WorkEntry[]>([]);
   const [educationHistory, setEducationHistory] = useState<EduEntry[]>([]);
@@ -375,6 +376,26 @@ export default function Settings() {
       onError: () => toast({ title: t('settings.errorSavingProfileTitle'), description: t('settings.failedToSaveProfile'), variant: 'destructive' }),
     }
   });
+
+  const handleSaveAccountInfo = async () => {
+    setIsSavingAccountInfo(true);
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ username: profileForm.username.trim(), displayName: profileForm.displayName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('settings.failedToSaveProfile'));
+      setUser(data);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({ title: t('settings.accountSaved', 'Account information saved'), description: t('settings.yourChangesSaved') });
+    } catch (error: any) {
+      toast({ title: error?.message || t('settings.failedToSaveProfile'), variant: 'destructive' });
+    } finally {
+      setIsSavingAccountInfo(false);
+    }
+  };
 
   const fetchWorkHistory = async () => {
     setIsLoadingWork(true);
@@ -684,6 +705,10 @@ export default function Settings() {
                   <Separator />
                   <div className="space-y-4">
                     <div><Label>{t('settings.username')}</Label><Input value={profileForm.username} onChange={e => setProfileForm(f => ({ ...f, username: e.target.value }))} className="mt-1.5 rounded-xl" /><p className="text-xs text-muted-foreground mt-1.5">Use 3–32 letters, numbers, or underscores.</p></div>
+                    <div><Label>{t('settings.displayNameLabel', 'Display Name')}</Label><Input value={profileForm.displayName} onChange={e => setProfileForm(f => ({ ...f, displayName: e.target.value }))} className="mt-1.5 rounded-xl" /></div>
+                    <Button onClick={handleSaveAccountInfo} disabled={isSavingAccountInfo} className="rounded-xl">
+                      {isSavingAccountInfo ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Save changes
+                    </Button>
                     <div><Label>{t('settings.email')}</Label><Input defaultValue={user?.email} className="mt-1.5 rounded-xl" /></div>
                     <Separator />
                     <div>

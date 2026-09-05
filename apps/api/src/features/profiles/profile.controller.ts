@@ -655,6 +655,15 @@ export const updateMyProfile = async (req: Request, res: Response) => {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
   }
 
+  // Users commonly paste domains or handles without a scheme. Store a
+  // clickable URL so profile links work consistently everywhere.
+  for (const field of ["website", "facebook", "linkedin", "twitter", "instagram"]) {
+    const value = updates[field];
+    if (typeof value === "string" && value.trim() && !/^https?:\/\//i.test(value.trim())) {
+      updates[field] = `https://${value.trim()}`;
+    }
+  }
+
   await db.update(usersTable).set(updates).where(eq(usersTable.id, viewerId));
   await invalidateUserCache(viewerId);
   const user = await getUserWithCounts(viewerId, null);

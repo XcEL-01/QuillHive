@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getStoredToken, mediaUrl } from '@/lib/api';
+import { apiUrl, getStoredToken, mediaUrl } from '@/lib/api';
 import { useI18n, useT, SUPPORTED_LANGS } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { CreatorModeToggle } from '@/components/settings/CreatorModeToggle';
@@ -57,7 +57,7 @@ async function uploadFile(file: File, token: string | null): Promise<string> {
     reader.onload = async () => {
       try {
         const base64 = (reader.result as string).split(',')[1];
-        const res = await fetch('/api/upload', {
+        const res = await fetch(apiUrl('/api/upload'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
           body: JSON.stringify({ filename: file.name, mimeType: file.type, dataBase64: base64, category: 'profile' }),
@@ -439,6 +439,7 @@ export default function Settings() {
     try {
       const url = await uploadFile(file, token);
       setProfileForm(f => ({ ...f, avatarUrl: url }));
+      updateProfile({ data: { ...profileForm, avatarUrl: url } as any });
       toast({ title: t('settings.avatarUploaded') });
     } catch { toast({ title: t('settings.uploadFailed'), variant: 'destructive' }); }
     finally { setIsUploadingAvatar(false); }
@@ -453,6 +454,7 @@ export default function Settings() {
     try {
       const url = await uploadFile(file, token);
       setProfileForm(f => ({ ...f, coverUrl: url }));
+      updateProfile({ data: { ...profileForm, coverUrl: url } as any });
       toast({ title: t('settings.coverPhotoUploaded') });
     } catch { toast({ title: t('settings.uploadFailed'), variant: 'destructive' }); }
     finally { setIsUploadingCover(false); }
@@ -1500,7 +1502,7 @@ function InvitesSection() {
   };
 
   const copyLink = async (code: string) => {
-    const url = `${window.location.origin}/auth?invite=${code}`;
+    const url = `${window.location.origin}/register?invite=${code}`;
     try { await navigator.clipboard.writeText(url); toast({ title: t('settings.inviteLinkCopied') }); }
     catch { toast({ title: t('settings.copyFailed'), variant: 'destructive' }); }
   };
@@ -1736,8 +1738,9 @@ function ApiKeysSection() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/me/api-keys', {
+      const res = await fetch(apiUrl('/api/me/api-keys'), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       });
       const data = await res.json();
       const list: ApiKeyRow[] = Array.isArray(data?.data) ? data.data : Array.isArray(data?.apiKeys) ? data.apiKeys : Array.isArray(data) ? data : [];
@@ -1750,8 +1753,7 @@ function ApiKeysSection() {
   };
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token]);
 
   const create = async () => {
     if (!newKeyName.trim()) {
@@ -1760,9 +1762,10 @@ function ApiKeysSection() {
     }
     setCreating(true);
     try {
-      const res = await fetch('/api/me/api-keys', {
+      const res = await fetch(apiUrl('/api/me/api-keys'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        credentials: 'include',
         body: JSON.stringify({ name: newKeyName.trim() }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -1782,9 +1785,10 @@ function ApiKeysSection() {
   const revoke = async (id: number) => {
     if (!confirm(t('settings.revokeKeyConfirm'))) return;
     try {
-      const res = await fetch(`/api/me/api-keys/${id}`, {
+      const res = await fetch(apiUrl(`/api/me/api-keys/${id}`), {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed');
       await load();

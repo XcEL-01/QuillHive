@@ -122,9 +122,10 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
 
   const verifyPayment = useCallback(async (txRef: string, transactionId: string) => {
     try {
+      const authToken = getStoredToken();
       const res = await fetch(
         `/api/boost/verify-payment?tx_ref=${encodeURIComponent(txRef)}&transaction_id=${encodeURIComponent(transactionId)}`,
-        { credentials: "include", headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        { credentials: "include", headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
       );
       const data = await res.json() as { ok?: boolean; boostEndsAt?: string; error?: string };
       if (data.ok) {
@@ -148,10 +149,11 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
 
     try {
       await loadFlutterwaveScript();
+      const authToken = getStoredToken();
 
       const initRes = await fetch("/api/boost/init-payment", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { "Content-Type": "application/json", ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         credentials: "include",
         body: JSON.stringify({ postId, plan: selectedPlan }),
       });

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Link, useLocation } from "wouter";
 import {
-  Home, Compass, PenLine, MessageCircle, User as UserIcon, ArrowLeft,
+  Compass, PenLine, MessageCircle, User as UserIcon, ArrowLeft,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
   BarChart3, BookOpen, Users, MoreHorizontal, FileText, Zap, Handshake,
   Bookmark, Archive, Star, Sparkles, Layers, Link2,
@@ -36,7 +36,9 @@ interface AppLayoutProps {
   publicPage?: boolean;
 }
 
-const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/notifications", "/groups"];
+// Keep the compact footer focused on the home feeds and the two high-frequency
+// social destinations. Professional/tools pages live under More.
+const MOBILE_PRIMARY = ["/", "__create__", "/notifications", "/groups"];
 const MOBILE_MORE = ["/motion", "/workspace", "/workspace?tab=collaborate", "/saved", "/dashboard", "/support", "/library"];
 
 // Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
@@ -141,8 +143,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   };
 
   const NAV_ITEMS = [
-    { href: "/", icon: Home, label: "Home", exact: true },
-    { href: "/explore", icon: Compass, label: "Discover" },
+    { href: "/", icon: Compass, label: "Explore", exact: true },
     { href: "/notifications", icon: Bell, label: "Alerts", showBadge: "notif" as const },
     { href: "__create__", icon: PenLine, label: "Create", primary: true },
     ...(motionEnabled ? [{ href: "/motion", icon: Film, label: "Studio" }] : []),

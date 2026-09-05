@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
 import { postsTable, usersTable } from "@workspace/db/schema";
-import { and, eq, gt, desc } from "drizzle-orm";
+import { and, eq, gt, lt, desc } from "drizzle-orm";
 import { getViewerId } from "../../lib/auth-types";
 import { logger } from "../../lib/logger";
 
@@ -127,7 +127,7 @@ export async function expireHighlights(): Promise<void> {
       .where(
         and(
           eq(postsTable.isHighlight, true),
-          gt(postsTable.expiresAt as never, new Date(0)),
+          lt(postsTable.expiresAt as never, now),
         ),
       )
       .returning({ id: postsTable.id, expiresAt: postsTable.expiresAt });

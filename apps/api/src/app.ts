@@ -74,8 +74,11 @@ app.use(cors({
 }));
 app.use(rateLimit({ windowMs: 60_000, max: 300 }));
 app.use(
+  // Profile/post media is uploaded as base64 JSON by the existing clients.
+  // Keep the request bounded, but large enough for the documented 50 MB file
+  // limit after base64 expansion.
   express.json({
-    limit: "1mb",
+    limit: "70mb",
     verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
       if (req.url?.includes("/boost/webhook")) {
         (req as express.Request & { rawBody?: Buffer }).rawBody = buf;

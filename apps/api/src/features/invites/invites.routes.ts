@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import crypto from "crypto";
 import { db } from "@workspace/db";
 import { inviteCodesTable } from "@workspace/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../../middleware/admin";
 
 interface AuthedReq extends Request {
@@ -20,7 +20,6 @@ invitesRouter.post("/generate", requireAuth, async (req: Request, res: Response)
       and(
         eq(inviteCodesTable.createdBy, userId),
         eq(inviteCodesTable.isActive, true),
-        isNull(inviteCodesTable.usedBy),
       ),
     );
   if (existing.length >= 10) {
@@ -55,7 +54,6 @@ invitesRouter.get("/validate/:code", async (req: Request, res: Response) => {
       and(
         eq(inviteCodesTable.code, code),
         eq(inviteCodesTable.isActive, true),
-        isNull(inviteCodesTable.usedBy),
       ),
     );
   if (!invite) {
@@ -70,12 +68,16 @@ export async function consumeInvite(code: string, newUserId: number): Promise<nu
   const [invite] = await db
     .select()
     .from(inviteCodesTable)
-    .where(and(eq(inviteCodesTable.code, upper), eq(inviteCodesTable.isActive, true), isNull(inviteCodesTable.usedBy)));
+    .where(and(eq(inviteCodesTable.code, upper), eq(inviteCodesTable.isActive, true)));
   if (!invite) return null;
-  await db
-    .update(inviteCodesTable)
-    .set({ usedBy: newUserId, usedAt: new Date() })
-    .where(eq(inviteCodesTable.id, invite.id));
+  // Invite URLs are permanent while active. Keep the first redemption for
+  // history, but do not invalidate the code so it can bring in more users.
+  if (!invite.usedBy) {
+    await db
+      .update(inviteCodesTable)
+      .set({ usedBy: newUserId, usedAt: new Date() })
+      .where(eq(inviteCodesTable.id, invite.id));
+  }
 
   // Non-blocking: tiered referral reward notifications
   void (async () => {

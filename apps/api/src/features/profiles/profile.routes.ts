@@ -54,7 +54,7 @@ const profileSchema = z.object({
 
 const creatorSchema = z.object({
   skills: z.array(z.string().min(1).max(60)).max(20).optional(),
-  links: z.array(z.object({ label: z.string().min(1).max(50), url: z.string().url() })).max(10).optional(),
+  links: z.array(z.object({ label: z.string().min(1).max(50), url: z.string().min(1).max(500) })).max(10).optional(),
   isAvailableForHire: z.boolean().optional(),
 });
 

@@ -60,13 +60,16 @@ export default function Notifications() {
       const res = await fetch(apiUrl('/api/notifications/read-all'), {
         method: 'PATCH',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       });
       if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-        queryClient.setQueryData(['/api/notifications'], (current: any[] | undefined) =>
+        queryClient.setQueriesData({ queryKey: ['/api/notifications'] }, (current: any[] | undefined) =>
           Array.isArray(current) ? current.map(item => ({ ...item, isRead: true })) : current,
         );
+        await queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
         toast({ title: t('notifications.markedAllRead') });
+      } else {
+        throw new Error('Could not mark notifications as read');
       }
     } catch {
       markRead();
@@ -184,8 +187,9 @@ export default function Notifications() {
                       void fetch(apiUrl(`/api/notifications/${notif.id}/read`), {
                         method: 'PATCH',
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        credentials: 'include',
                       });
-                      queryClient.setQueryData(['/api/notifications'], (current: any[] | undefined) =>
+                      queryClient.setQueriesData({ queryKey: ['/api/notifications'] }, (current: any[] | undefined) =>
                         Array.isArray(current)
                           ? current.map(item => item.id === notif.id ? { ...item, isRead: true } : item)
                           : current,

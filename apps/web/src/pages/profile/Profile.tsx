@@ -358,7 +358,9 @@ export default function Profile() {
       const skills = creatorForm.skills.split(',').map(s => s.trim()).filter(Boolean);
       const links = creatorForm.links.split('\n').map(l => {
         const [label, url] = l.split('|');
-        return label && url ? { label: label.trim(), url: url.trim() } : null;
+        if (!label || !url) return null;
+        const cleanUrl = url.trim();
+        return { label: label.trim(), url: /^https?:\/\//i.test(cleanUrl) ? cleanUrl : `https://${cleanUrl}` };
       }).filter(Boolean) as { label: string; url: string }[];
 
       const res = await fetch('/api/users/me/creator', {

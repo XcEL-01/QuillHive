@@ -390,6 +390,11 @@ export async function createPost(
       groupId: data.groupId || null,
       seriesId: data.seriesId || null,
       scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
+      // A spark is also a 24-hour status. The highlights tray reads these
+      // fields, so a newly posted spark appears immediately and expires
+      // without needing a second "publish as story" action.
+      isHighlight: isSpark,
+      expiresAt: isSpark ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null,
       contentWarning: data.contentWarning ? sanitizePlain(data.contentWarning).slice(0, 80) : null,
       contentTags: JSON.stringify(cwTags),
       aiTextScore: score,

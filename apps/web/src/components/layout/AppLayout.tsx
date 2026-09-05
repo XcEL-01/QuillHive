@@ -38,8 +38,8 @@ interface AppLayoutProps {
 
 // Keep the compact footer focused on the home feeds and the two high-frequency
 // social destinations. Professional/tools pages live under More.
-const MOBILE_PRIMARY = ["/", "__create__", "/notifications", "/groups"];
-const MOBILE_MORE = ["/motion", "/workspace", "/workspace?tab=collaborate", "/saved", "/dashboard", "/support", "/library"];
+const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/notifications"];
+const MOBILE_MORE = ["/workspace", "/library", "/motion"];
 
 // Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
 // inside the component loses the browsing trail whenever the route changes.

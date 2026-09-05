@@ -47,12 +47,18 @@ export default function Notifications() {
 
   const { mutate: markRead, isPending } = useMarkNotificationsRead({
     mutation: {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/notifications'] })
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        void queryClient.invalidateQueries({ queryKey: ['unread-count'] });
+        void queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
+      }
     }
   });
 
   useSocketEvent<any>('notification:new', useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    queryClient.invalidateQueries({ queryKey: ['unread-count'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
   }, [queryClient]));
 
   const handleMarkAllRead = async () => {
@@ -67,6 +73,8 @@ export default function Notifications() {
           Array.isArray(current) ? current.map(item => ({ ...item, isRead: true })) : current,
         );
         await queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        await queryClient.invalidateQueries({ queryKey: ['unread-count'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
         toast({ title: t('notifications.markedAllRead') });
       } else {
         throw new Error('Could not mark notifications as read');
@@ -84,6 +92,8 @@ export default function Notifications() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
     } catch {
       toast({ title: t('notifications.deleteFailed'), variant: 'destructive' });
     } finally {
@@ -188,7 +198,12 @@ export default function Notifications() {
                         method: 'PATCH',
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
                         credentials: 'include',
-                      });
+                      }).then(res => {
+                        if (!res.ok) throw new Error('Could not mark notification as read');
+                        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+                        queryClient.invalidateQueries({ queryKey: ['unread-count'] });
+                        queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
+                      }).catch(() => {});
                       queryClient.setQueriesData({ queryKey: ['/api/notifications'] }, (current: any[] | undefined) =>
                         Array.isArray(current)
                           ? current.map(item => item.id === notif.id ? { ...item, isRead: true } : item)

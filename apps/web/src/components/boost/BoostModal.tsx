@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, Zap, TrendingUp, Star, Check, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
-import { getStoredToken } from "@/lib/api";
+import { apiUrl, getStoredToken } from "@/lib/api";
 
 type FlwResult = { status: string; transaction_id: string; tx_ref: string };
 interface FlwConfig {
@@ -110,7 +110,6 @@ function loadFlutterwaveScript(): Promise<void> {
 
 export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan }: BoostModalProps) {
   const { user } = useAuthStore();
-  const token = getStoredToken();
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>(defaultPlan ?? "growth");
   const [step, setStep] = useState<Step>("select");
   const [errorMsg, setErrorMsg] = useState("");
@@ -122,10 +121,10 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
 
   const verifyPayment = useCallback(async (txRef: string, transactionId: string) => {
     try {
-      const authToken = getStoredToken();
+      const token = getStoredToken();
       const res = await fetch(
-        `/api/boost/verify-payment?tx_ref=${encodeURIComponent(txRef)}&transaction_id=${encodeURIComponent(transactionId)}`,
-        { credentials: "include", headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
+        apiUrl(`/api/boost/verify-payment?tx_ref=${encodeURIComponent(txRef)}&transaction_id=${encodeURIComponent(transactionId)}`),
+        { credentials: "include", headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
       const data = await res.json() as { ok?: boolean; boostEndsAt?: string; error?: string };
       if (data.ok) {
@@ -149,11 +148,11 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
 
     try {
       await loadFlutterwaveScript();
-      const authToken = getStoredToken();
+      const token = getStoredToken();
 
-      const initRes = await fetch("/api/boost/init-payment", {
+      const initRes = await fetch(apiUrl("/api/boost/init-payment"), {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         credentials: "include",
         body: JSON.stringify({ postId, plan: selectedPlan }),
       });

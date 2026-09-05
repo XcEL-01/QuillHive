@@ -24,6 +24,7 @@ interface LocalMessage {
   conversationId?: number;
   sender?: {
     id?: number;
+    username?: string;
     displayName?: string;
     avatarUrl?: string;
   };
@@ -307,22 +308,23 @@ export default function Messages() {
                   )}
                   {localMessages.map((msg) => {
                     const isMine = msg.senderId === currentUser?.id;
+                    const sender = msg.sender;
                     return (
                       <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} max-w-[80%] ${isMine ? 'ml-auto' : 'mr-auto'}`}>
-                        {!isMine && (
-                          {msg.sender?.username ? (
-                            <Link href={`/profile/${msg.sender.username}`} className="shrink-0 mr-2 self-end rounded-full focus-visible:ring-2 focus-visible:ring-ring">
+                        {!isMine && sender && (
+                          sender.username ? (
+                            <Link href={`/profile/${sender.username}`} className="shrink-0 mr-2 self-end rounded-full focus-visible:ring-2 focus-visible:ring-ring">
                               <Avatar className="w-7 h-7 border border-border/50">
-                                <AvatarImage src={msg.sender.avatarUrl || ''} />
-                                <AvatarFallback className="text-[10px]">{msg.sender.displayName?.substring(0, 2)}</AvatarFallback>
+                                <AvatarImage src={sender.avatarUrl || ''} />
+                                <AvatarFallback className="text-[10px]">{sender.displayName?.substring(0, 2)}</AvatarFallback>
                               </Avatar>
                             </Link>
                           ) : (
                             <Avatar className="w-7 h-7 border border-border/50 shrink-0 mr-2 self-end">
-                              <AvatarImage src={msg.sender?.avatarUrl || ''} />
-                              <AvatarFallback className="text-[10px]">{msg.sender?.displayName?.substring(0, 2)}</AvatarFallback>
+                              <AvatarImage src={sender.avatarUrl || ''} />
+                              <AvatarFallback className="text-[10px]">{sender.displayName?.substring(0, 2)}</AvatarFallback>
                             </Avatar>
-                          )}
+                          )
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm ${isMine ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted/60 text-foreground border border-border/50 rounded-tl-sm'}`}>
                           <p className="whitespace-pre-wrap">{msg.content}</p>

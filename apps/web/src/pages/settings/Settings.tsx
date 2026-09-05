@@ -90,6 +90,7 @@ export default function Settings() {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
+    username: user?.username || '',
     displayName: user?.displayName || '',
     bio: user?.bio || '',
     headline: (user as any)?.headline || '',
@@ -680,7 +681,7 @@ export default function Settings() {
                   <div><h2 className="text-xl font-semibold mb-1">{t('settings.accountSectionTitle')}</h2><p className="text-sm text-muted-foreground">{t('settings.accountSectionDesc')}</p></div>
                   <Separator />
                   <div className="space-y-4">
-                    <div><Label>{t('settings.username')}</Label><Input defaultValue={user?.username} className="mt-1.5 rounded-xl" readOnly /><p className="text-xs text-muted-foreground mt-1.5">{t('settings.usernameLocked')}</p></div>
+                    <div><Label>{t('settings.username')}</Label><Input value={profileForm.username} onChange={e => setProfileForm(f => ({ ...f, username: e.target.value }))} className="mt-1.5 rounded-xl" /><p className="text-xs text-muted-foreground mt-1.5">Use 3–32 letters, numbers, or underscores.</p></div>
                     <div><Label>{t('settings.email')}</Label><Input defaultValue={user?.email} className="mt-1.5 rounded-xl" /></div>
                     <Separator />
                     <div>

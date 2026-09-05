@@ -549,8 +549,7 @@ export default function Home() {
         {/* Topics Grid (Topics mode) */}
         {token && <SparkComposer />}
 
-        {(
-          <motion.div
+        <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
@@ -566,8 +565,7 @@ export default function Home() {
                 {t('home.write', 'Write')}
               </span>
             </Link>
-          </motion.div>
-        )}
+        </motion.div>
 
         <div className="space-y-6">
           {isDisplayLoading && (
@@ -633,8 +631,7 @@ export default function Home() {
             </div>
           </div>
         </aside>
-        </div>
-
+      </div>
       </div>
     </AppLayout>
   );

@@ -32,6 +32,7 @@ const verifyEmailSchema = z.object({
 });
 
 const profileSchema = z.object({
+  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/).optional(),
   displayName: z.string().min(1).max(120).optional(),
   bio: z.string().max(1000).nullable().optional(),
   headline: z.string().max(200).nullable().optional(),

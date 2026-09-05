@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useLikePost, useDeletePost, type Post } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
+import { apiUrl, mediaUrl } from '@/lib/api';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { clsx } from 'clsx';
 import { safeHtml } from '@/lib/sanitize';
-import { apiUrl, getStoredToken } from '@/lib/api';
+import { getStoredToken } from '@/lib/api';
 import { useI18n, useT } from '@/lib/i18n';
 import { CreatorLevelBadge } from '@/components/trust/CreatorLevelBadge';
 import { PollBlock } from '@/components/post/PollBlock';
@@ -461,7 +462,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
     if (!currentUser || !token) { toast({ title: 'Sign in to boost', variant: 'destructive' }); return; }
     setIsBoosting(true);
     try {
-      const res = await fetch('/api/boost/init-payment', {
+      const res = await fetch(apiUrl('/api/boost/init-payment'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ postId: post.id, plan: boostPlan }),
@@ -511,7 +512,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
         callback: async (result) => {
           if (result.status === 'successful') {
             const vRes = await fetch(
-              `/api/boost/verify-payment?tx_ref=${encodeURIComponent(result.tx_ref)}&transaction_id=${encodeURIComponent(result.transaction_id)}`,
+              apiUrl(`/api/boost/verify-payment?tx_ref=${encodeURIComponent(result.tx_ref)}&transaction_id=${encodeURIComponent(result.transaction_id)}`),
               { headers: { Authorization: `Bearer ${token}` } }
             );
             const vData = await vRes.json() as { ok?: boolean; message?: string; error?: string };

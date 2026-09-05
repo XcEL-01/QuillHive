@@ -29,14 +29,15 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { useFeature } from "@/lib/features";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { RouteProgress } from "./RouteProgress";
+import { mediaUrl } from "@/lib/api";
 
 interface AppLayoutProps {
   children: React.ReactNode;
   publicPage?: boolean;
 }
 
-const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/workspace?tab=collaborate"];
-const MOBILE_MORE = ["/notifications", "/motion", "/workspace", "/saved", "/dashboard", "/support", "/library"];
+const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/notifications", "/groups"];
+const MOBILE_MORE = ["/motion", "/workspace", "/workspace?tab=collaborate", "/saved", "/dashboard", "/support", "/library"];
 
 // Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
 // inside the component loses the browsing trail whenever the route changes.
@@ -151,7 +152,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
     { href: "/library", icon: BookOpen, label: "Library" },
   ];
 
-  const avatarUrl = user?.avatarUrl ?? "";
+  const avatarUrl = mediaUrl(user?.avatarUrl);
 
   const SidebarNavItem = ({ item }: { item: (typeof NAV_ITEMS)[0] }) => {
     const Icon = item.icon;

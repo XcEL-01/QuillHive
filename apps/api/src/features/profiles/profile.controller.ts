@@ -629,8 +629,23 @@ export const updateMyProfile = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
 
+  if (req.body.username !== undefined) {
+    const username = String(req.body.username).trim();
+    if (RESERVED_USERNAMES.has(username.toLowerCase())) {
+      return res.status(400).json({ error: "This username is reserved and cannot be used." });
+    }
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, username));
+    if (existing && existing.id !== viewerId) {
+      return res.status(409).json({ error: "Username already taken" });
+    }
+    req.body.username = username;
+  }
+
   const fields = [
-    "displayName", "bio", "headline", "avatarUrl", "coverUrl", "website", "location",
+    "username", "displayName", "bio", "headline", "avatarUrl", "coverUrl", "website", "location",
     "country", "facebook", "linkedin", "twitter", "instagram",
     "profileVisibility", "showEmail", "showWebsite", "showLocation",
     "identityType",

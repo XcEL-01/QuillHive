@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGetUserByUsername, useFollowUser } from '@workspace/api-client-react';
 import { useAuthStore } from '@/store/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -179,6 +180,7 @@ export default function Profile() {
   const [, publicParams] = useRoute('/u/:username');
   const [, navigate] = useLocation();
   const { user: currentUser } = useAuthStore();
+  const queryClient = useQueryClient();
   const username = profileParams?.username || publicParams?.username || currentUser?.username || '';
   const { toast } = useToast();
   const t = useT();
@@ -232,8 +234,18 @@ export default function Profile() {
       });
       if (!profileRes.ok) throw new Error('Profile update failed');
 
+      queryClient.setQueryData(['/api/users/' + username], (previous: ExtendedProfileData | undefined) => (
+        previous
+          ? { ...previous, user: { ...previous.user, [field]: url } }
+          : previous
+      ));
+      const authUser = useAuthStore.getState().user;
+      if (authUser && isMe) {
+        useAuthStore.setState({ user: { ...authUser, [field]: url } });
+      }
+
       toast({ title: `${type === 'avatar' ? 'Profile' : 'Cover'} photo updated` });
-      await refetch();
+      void refetch();
     } catch {
       toast({ title: 'Upload failed. Please try again.', variant: 'destructive' });
     } finally {

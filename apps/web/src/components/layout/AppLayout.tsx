@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import {
   Compass, PenLine, MessageCircle, User as UserIcon, ArrowLeft,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
-  BarChart3, BookOpen, Users, MoreHorizontal, FileText, Zap, Handshake,
+  BarChart3, BookOpen, Users, MoreHorizontal, Handshake,
   Bookmark, Archive, Star, Sparkles, Layers, Link2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
@@ -309,21 +309,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href={`/profile/${user.username}`} className="cursor-pointer w-full flex items-center gap-2">
                       <UserIcon className="w-4 h-4" /> My Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/profile/${user.username}?tab=posts`} className="cursor-pointer w-full flex items-center gap-2">
-                      <FileText className="w-4 h-4" /> My Posts
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/profile/${user.username}?tab=sparks`} className="cursor-pointer w-full flex items-center gap-2">
-                      <Zap className="w-4 h-4" /> My Sparks
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/profile/${user.username}?tab=motion`} className="cursor-pointer w-full flex items-center gap-2">
-                      <Film className="w-4 h-4" /> My Motions
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

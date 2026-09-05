@@ -97,6 +97,7 @@ interface EducationEntry {
 
 interface ProfilePost {
   id: number;
+  authorId?: number;
   type: string;
   title?: string | null;
   content?: string | null;
@@ -107,6 +108,23 @@ interface ProfilePost {
   commentsCount?: number;
   isLiked?: boolean;
   isPublished?: boolean;
+  attachments?: unknown;
+}
+
+function hasVideoAttachment(post: ProfilePost) {
+  if (post.type === 'video') return true;
+  const attachments = typeof post.attachments === 'string'
+    ? (() => { try { return JSON.parse(post.attachments as string); } catch { return []; } })()
+    : post.attachments;
+  if (!Array.isArray(attachments)) return false;
+  return attachments.some((attachment) => {
+    if (typeof attachment === 'string') return /\.(mp4|mov|webm|m4v|ogv)(?:$|\?)/i.test(attachment);
+    if (!attachment || typeof attachment !== 'object') return false;
+    const item = attachment as { type?: string; mimeType?: string; url?: string };
+    return item.type === 'video'
+      || item.mimeType?.startsWith('video/')
+      || !!item.url && /\.(mp4|mov|webm|m4v|ogv)(?:$|\?)/i.test(item.url);
+  });
 }
 
 interface ExtendedProfileData {
@@ -263,6 +281,8 @@ export default function Profile() {
   const [portfolioForm, setPortfolioForm] = useState({ title: '', description: '', mediaUrl: '', category: 'general', visibility: 'public' });
   const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
   const [viewItem, setViewItem] = useState<PortfolioItem | null>(null);
+  const [profileContentPosts, setProfileContentPosts] = useState<ProfilePost[]>([]);
+  const [profileContentLoading, setProfileContentLoading] = useState(false);
 
   // Creator profile state
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile>({ skills: [], links: [], verified: false, isAvailableForHire: false, availableFor: [] });
@@ -314,6 +334,15 @@ export default function Profile() {
     }
     if (data?.user?.id) {
       fetchPortfolio(data.user.id);
+      setProfileContentLoading(true);
+      fetch(`/api/users/${encodeURIComponent(data.user.username)}/posts?limit=100`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+        .then(r => r.ok ? r.json() : { posts: [] })
+        .then(d => {
+          const posts = Array.isArray(d?.posts) ? d.posts : [];
+          setProfileContentPosts(posts.filter((post: ProfilePost) => post.authorId === data.user.id));
+        })
+        .catch(() => setProfileContentPosts([]))
+        .finally(() => setProfileContentLoading(false));
       fetch(`/api/trust/${data.user.id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d) setProfileTrust({ tier: d.tier, uti: Math.round(d.uti ?? 0), creatorLevel: d.creatorLevel }); })
@@ -468,6 +497,8 @@ export default function Profile() {
   const { user, recentPosts, workHistory } = data;
   const educationHistory: EducationEntry[] = data.educationHistory ?? [];
   const artworkPosts = recentPosts.filter(p => p.type === 'artwork');
+  const sparkPosts = profileContentPosts.filter(post => post.type === 'spark');
+  const motionPosts = profileContentPosts.filter(hasVideoAttachment);
 
   return (
     <AppLayout>
@@ -914,6 +945,8 @@ export default function Profile() {
           <TabsList className="w-full justify-start border-b border-border rounded-none bg-transparent p-0 mb-8 h-auto gap-8 overflow-x-auto hide-scrollbar">
             {[
               { value: 'posts', label: t('profile.recentPosts', 'Recent Posts') },
+              { value: 'sparks', label: 'Sparks' },
+              { value: 'motion', label: 'Motion' },
               { value: 'portfolio', label: t('profile.portfolio', 'Portfolio') },
               { value: 'gallery', label: t('profile.gallery', 'Gallery') },
               { value: 'experience', label: t('profile.experience', 'Experience') },
@@ -936,6 +969,34 @@ export default function Profile() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {recentPosts.map((post) => <PostCard key={post.id} post={post as import('@workspace/api-client-react').Post & { authorTrustTier?: string; authorCreatorLevel?: string | null; authorHireEnabled?: boolean }} />)}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="sparks" className="space-y-6 focus-visible:outline-none">
+            {profileContentLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+              </div>
+            ) : sparkPosts.length === 0 ? (
+              <p className="text-muted-foreground text-center py-10 bg-muted/20 rounded-2xl">This person has no Sparks yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {sparkPosts.map(post => <PostCard key={post.id} post={post as import('@workspace/api-client-react').Post & { authorTrustTier?: string; authorCreatorLevel?: string | null; authorHireEnabled?: boolean }} />)}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="motion" className="space-y-6 focus-visible:outline-none">
+            {profileContentLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+              </div>
+            ) : motionPosts.length === 0 ? (
+              <p className="text-muted-foreground text-center py-10 bg-muted/20 rounded-2xl">This person has no Motion content yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {motionPosts.map(post => <PostCard key={post.id} post={post as import('@workspace/api-client-react').Post & { authorTrustTier?: string; authorCreatorLevel?: string | null; authorHireEnabled?: boolean }} />)}
               </div>
             )}
           </TabsContent>

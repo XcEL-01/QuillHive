@@ -441,7 +441,7 @@ export default function Home() {
     return 'explore';
   })();
   const [feedSource, setFeedSource] = useState<FeedSource>(initialSource);
-  const [feedAlgorithm, setFeedAlgorithm] = useState<FeedAlgorithm>('algorithmic');
+  const feedAlgorithm: FeedAlgorithm = 'algorithmic';
   const [feedPosts, setFeedPosts] = useState<import('@workspace/api-client-react').Post[] | null>(null);
   const [feedLoading, setFeedLoading] = useState(false);
 
@@ -465,11 +465,6 @@ export default function Home() {
     } finally {
       setFeedLoading(false);
     }
-  };
-
-  const handleAlgorithmChange = (val: FeedAlgorithm) => {
-    setFeedAlgorithm(val);
-    if (feedSource === 'explore') fetchAlgorithmicFeed(val);
   };
 
   const fetchSparksFeed = async () => {
@@ -505,7 +500,7 @@ export default function Home() {
   const handleSourceChange = (val: FeedSource) => {
     setFeedSource(val);
     setFeedPosts(null);
-    if (val === 'explore') fetchAlgorithmicFeed(feedAlgorithm);
+    if (val === 'explore') fetchAlgorithmicFeed('algorithmic');
     if (val === 'sparks') fetchSparksFeed();
   };
 
@@ -531,7 +526,7 @@ export default function Home() {
               <StreakChip />
             </h1>
             <Tabs value={feedSource} onValueChange={(v) => handleSourceChange(v as FeedSource)}>
-              <TabsList className="flex gap-0.5 bg-muted/50 p-1 rounded-xl overflow-x-auto max-w-[340px] scrollbar-hide">
+              <TabsList className="flex gap-0.5 bg-muted/50 p-1 rounded-xl">
                 <TabsTrigger value="explore" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-explore">{t('home.tabs.explore')}</TabsTrigger>
                 <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-following">{t('home.tabs.following')}</TabsTrigger>
                 <TabsTrigger value="sparks" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-sparks">⚡ {t('home.tabs.sparks')}</TabsTrigger>

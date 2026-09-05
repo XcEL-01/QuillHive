@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useGetConversations, useGetMessages, useSendMessage, getGetMessagesQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Link } from 'wouter';
 import { useAuthStore } from '@/store/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -196,24 +197,45 @@ export default function Messages() {
               const isActive = activeConvId === conv.id;
 
               return (
-                <button
+                <div
                   key={conv.id}
                   onClick={() => handleSelectConv(conv.id)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleSelectConv(conv.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   className={`w-full text-left p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors border-b border-border/30 ${isActive ? 'bg-muted/80 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'}`}
                 >
-                  <Avatar className="w-12 h-12 border border-border/50">
-                    {conv.isGroup ? (
+                  {conv.isGroup ? (
+                    <Avatar className="w-12 h-12 border border-border/50">
                       <AvatarFallback className="bg-primary/20 text-primary"><Users className="w-5 h-5" /></AvatarFallback>
-                    ) : (
-                      <>
-                        <AvatarImage src={partner?.avatarUrl || ''} />
-                        <AvatarFallback>{partner?.displayName?.substring(0, 2)}</AvatarFallback>
-                      </>
-                    )}
-                  </Avatar>
+                    </Avatar>
+                  ) : partner?.username ? (
+                    <Link href={`/profile/${partner.username}`} onClick={event => event.stopPropagation()} className="shrink-0 rounded-full focus-visible:ring-2 focus-visible:ring-ring">
+                      <Avatar className="w-12 h-12 border border-border/50">
+                        <AvatarImage src={partner.avatarUrl || ''} />
+                        <AvatarFallback>{partner.displayName?.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    </Link>
+                  ) : (
+                    <Avatar className="w-12 h-12 border border-border/50">
+                      <AvatarImage src={partner?.avatarUrl || ''} />
+                      <AvatarFallback>{partner?.displayName?.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                  )}
                   <div className="flex-1 overflow-hidden">
                     <div className="flex justify-between items-center mb-1">
-                      <h4 className="font-semibold text-sm truncate">{conv.isGroup ? conv.groupName : partner?.displayName}</h4>
+                      {conv.isGroup || !partner?.username ? (
+                        <h4 className="font-semibold text-sm truncate">{conv.isGroup ? conv.groupName : partner?.displayName}</h4>
+                      ) : (
+                        <Link href={`/profile/${partner.username}`} onClick={event => event.stopPropagation()} className="font-semibold text-sm truncate hover:text-primary transition-colors">
+                          {partner.displayName}
+                        </Link>
+                      )}
                       {conv.lastMessage && (
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">
                           {formatDistanceToNow(new Date(conv.lastMessage.createdAt), { addSuffix: true })}
@@ -229,7 +251,7 @@ export default function Messages() {
                       {conv.unreadCount}
                     </span>
                   )}
-                </button>
+                </div>
               );
             })}
           </ScrollArea>
@@ -244,20 +266,31 @@ export default function Messages() {
                 <button className="md:hidden p-2 -ml-2 text-muted-foreground" onClick={() => setActiveConvId(null)}>
                   ←
                 </button>
-                <Avatar className="w-9 h-9">
-                  {activeConv?.isGroup ? (
+                {activeConv?.isGroup ? (
+                  <Avatar className="w-9 h-9">
                     <AvatarFallback className="bg-primary/20 text-primary"><Users className="w-4 h-4" /></AvatarFallback>
-                  ) : (
-                    <>
-                      <AvatarImage src={otherUser?.avatarUrl || ''} />
-                      <AvatarFallback>{otherUser?.displayName?.substring(0, 2)}</AvatarFallback>
-                    </>
-                  )}
-                </Avatar>
+                  </Avatar>
+                ) : otherUser?.username ? (
+                  <Link href={`/profile/${otherUser.username}`} className="shrink-0 rounded-full focus-visible:ring-2 focus-visible:ring-ring">
+                    <Avatar className="w-9 h-9">
+                      <AvatarImage src={otherUser.avatarUrl || ''} />
+                      <AvatarFallback>{otherUser.displayName?.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                  </Link>
+                ) : (
+                  <Avatar className="w-9 h-9">
+                    <AvatarImage src={otherUser?.avatarUrl || ''} />
+                    <AvatarFallback>{otherUser?.displayName?.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                )}
                 <div>
-                  <h3 className="font-semibold text-foreground">
-                    {activeConv?.isGroup ? activeConv?.groupName : otherUser?.displayName}
-                  </h3>
+                  {activeConv?.isGroup || !otherUser?.username ? (
+                    <h3 className="font-semibold text-foreground">{activeConv?.isGroup ? activeConv?.groupName : otherUser?.displayName}</h3>
+                  ) : (
+                    <Link href={`/profile/${otherUser.username}`} className="font-semibold text-foreground hover:text-primary transition-colors">
+                      {otherUser.displayName}
+                    </Link>
+                  )}
                   {typingUsers.size > 0 ? (
                     <p className="text-xs text-primary animate-pulse">{t('messages.typing')}</p>
                   ) : (
@@ -277,10 +310,19 @@ export default function Messages() {
                     return (
                       <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} max-w-[80%] ${isMine ? 'ml-auto' : 'mr-auto'}`}>
                         {!isMine && (
-                          <Avatar className="w-7 h-7 border border-border/50 shrink-0 mr-2 self-end">
-                            <AvatarImage src={msg.sender?.avatarUrl || ''} />
-                            <AvatarFallback className="text-[10px]">{msg.sender?.displayName?.substring(0, 2)}</AvatarFallback>
-                          </Avatar>
+                          {msg.sender?.username ? (
+                            <Link href={`/profile/${msg.sender.username}`} className="shrink-0 mr-2 self-end rounded-full focus-visible:ring-2 focus-visible:ring-ring">
+                              <Avatar className="w-7 h-7 border border-border/50">
+                                <AvatarImage src={msg.sender.avatarUrl || ''} />
+                                <AvatarFallback className="text-[10px]">{msg.sender.displayName?.substring(0, 2)}</AvatarFallback>
+                              </Avatar>
+                            </Link>
+                          ) : (
+                            <Avatar className="w-7 h-7 border border-border/50 shrink-0 mr-2 self-end">
+                              <AvatarImage src={msg.sender?.avatarUrl || ''} />
+                              <AvatarFallback className="text-[10px]">{msg.sender?.displayName?.substring(0, 2)}</AvatarFallback>
+                            </Avatar>
+                          )}
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm ${isMine ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted/60 text-foreground border border-border/50 rounded-tl-sm'}`}>
                           <p className="whitespace-pre-wrap">{msg.content}</p>

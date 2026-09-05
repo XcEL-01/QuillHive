@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import crypto from "crypto";
 import { db } from "@workspace/db";
 import { inviteCodesTable } from "@workspace/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull, or } from "drizzle-orm";
 import { requireAuth } from "../../middleware/admin";
 
 interface AuthedReq extends Request {
@@ -13,25 +13,33 @@ export const invitesRouter: IRouter = Router();
 
 invitesRouter.post("/generate", requireAuth, async (req: Request, res: Response) => {
   const userId = (req as AuthedReq).currentUser.id;
-  const existing = await db
+
+  const [existingPermanent] = await db
     .select()
     .from(inviteCodesTable)
     .where(
       and(
         eq(inviteCodesTable.createdBy, userId),
-        eq(inviteCodesTable.isActive, true),
+        isNull(inviteCodesTable.expiresAt),
       ),
     );
-  if (existing.length >= 10) {
-    res.status(429).json({ error: "Invite limit reached (max 10 active codes)" });
+
+  const origin = process.env["APP_URL"] || `${req.protocol}://${req.get("host")}`;
+
+  if (existingPermanent) {
+    res.json({
+      invite: existingPermanent,
+      shareUrl: `${origin}/register?invite=${existingPermanent.code}`,
+    });
     return;
   }
+
   const code = crypto.randomBytes(6).toString("hex").toUpperCase();
   const [invite] = await db
     .insert(inviteCodesTable)
     .values({ code, createdBy: userId, expiresAt: null })
     .returning();
-  const origin = process.env["APP_URL"] || `${req.protocol}://${req.get("host")}`;
+
   res.json({ invite, shareUrl: `${origin}/register?invite=${code}` });
 });
 
@@ -54,6 +62,10 @@ invitesRouter.get("/validate/:code", async (req: Request, res: Response) => {
       and(
         eq(inviteCodesTable.code, code),
         eq(inviteCodesTable.isActive, true),
+        or(
+          isNull(inviteCodesTable.usedBy),
+          isNull(inviteCodesTable.expiresAt),
+        ),
       ),
     );
   if (!invite) {
@@ -70,9 +82,8 @@ export async function consumeInvite(code: string, newUserId: number): Promise<nu
     .from(inviteCodesTable)
     .where(and(eq(inviteCodesTable.code, upper), eq(inviteCodesTable.isActive, true)));
   if (!invite) return null;
-  // Invite URLs are permanent while active. Keep the first redemption for
-  // history, but do not invalidate the code so it can bring in more users.
-  if (!invite.usedBy) {
+
+  if (invite.expiresAt !== null) {
     await db
       .update(inviteCodesTable)
       .set({ usedBy: newUserId, usedAt: new Date() })

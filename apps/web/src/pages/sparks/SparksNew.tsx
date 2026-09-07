@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/auth';
 import { getStoredToken } from '@/lib/api';
-import { Loader2, Zap, Image as ImageIcon, X, Wand2 } from 'lucide-react';
+import { Loader2, Zap, Wand2 } from 'lucide-react';
+import { AttachmentPicker, type Attachment } from '@/components/post/AttachmentPicker';
 
 const MAX_CHARS = 280;
 
@@ -15,7 +16,7 @@ export default function SparksNew() {
   const { toast } = useToast();
 
   const [content, setContent] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [makingPunchier, setMakingPunchier] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -24,20 +25,20 @@ export default function SparksNew() {
   const counterColor = remaining <= 10 ? 'text-destructive' : remaining <= 40 ? 'text-amber-500' : 'text-muted-foreground';
 
   const handlePublish = async () => {
-    if (!content.trim()) return;
+    if (!content.trim() && attachments.length === 0) return;
     setPublishing(true);
     try {
       const token = getStoredToken();
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ content: content.trim(), type: 'spark', imageUrl: imageUrl || undefined, isPublished: true }),
+        body: JSON.stringify({ content: content.trim() || ' ', type: 'spark', attachments, isPublished: true }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error ?? 'Failed to publish');
       }
-      toast({ title: '⚡ Spark published!', description: 'Your spark is live.' });
+      toast({ title: 'Spark posted', description: 'It will be visible for 24 hours.' });
       navigate('/');
     } catch (e) {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
@@ -98,25 +99,10 @@ export default function SparksNew() {
             </div>
           </div>
 
-          {imageUrl && (
-            <div className="relative mx-4 mb-3">
-              <img src={imageUrl} alt="" className="w-full rounded-xl object-cover max-h-52" onError={() => setImageUrl('')} />
-              <button onClick={() => setImageUrl('')} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
           {/* Toolbar */}
           <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/50">
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => { const url = prompt('Image URL:'); if (url) setImageUrl(url); }}
-                className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
-                title="Add image"
-              >
-                <ImageIcon className="w-4 h-4" />
-              </button>
+              <AttachmentPicker attachments={attachments} onChange={setAttachments} max={6} compact label="Media" />
               <button
                 onClick={handleMakePunchier}
                 disabled={!content.trim() || makingPunchier}
@@ -132,7 +118,7 @@ export default function SparksNew() {
               <Button
                 size="sm"
                 onClick={handlePublish}
-                disabled={!content.trim() || publishing || content.length > MAX_CHARS}
+                disabled={(!content.trim() && attachments.length === 0) || publishing || content.length > MAX_CHARS}
                 className="rounded-xl h-8 bg-amber-500 hover:bg-amber-600 text-white px-5"
               >
                 {publishing ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Publishing</> : '⚡ Spark'}

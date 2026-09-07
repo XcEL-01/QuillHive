@@ -92,13 +92,15 @@ async function generateImageVariants(originalPath: string, mimeType: string): Pr
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const allowedMimeTypes = new Set([
+const allowedDocumentMimeTypes = new Set([
   "image/jpeg", "image/png", "image/gif", "image/webp",
-  "video/mp4", "video/webm",
-  "audio/mpeg", "audio/mp4", "audio/webm",
   "application/pdf", "text/plain",
   "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
+
+function isAllowedUploadMimeType(mimeType: string): boolean {
+  return mimeType.startsWith("image/") || mimeType.startsWith("video/") || mimeType.startsWith("audio/") || allowedDocumentMimeTypes.has(mimeType);
+}
 
 const uploadSchema = z.object({
   filename: z.string().min(1).max(180),
@@ -119,7 +121,7 @@ export const uploadRouter = Router();
 
 uploadRouter.post("/", requireAuth, validateBody(uploadSchema), async (req: any, res) => {
   const { filename, mimeType, dataBase64, category = "general" } = req.body;
-  if (!allowedMimeTypes.has(mimeType)) return res.status(400).json({ error: "File type is not allowed." });
+  if (!isAllowedUploadMimeType(mimeType)) return res.status(400).json({ error: "File type is not allowed." });
   const buffer = Buffer.from(dataBase64, "base64");
   if (buffer.byteLength > MAX_FILE_SIZE) return res.status(413).json({ error: "File exceeds the 50MB limit." });
 

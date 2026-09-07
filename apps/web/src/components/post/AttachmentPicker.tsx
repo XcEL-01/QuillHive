@@ -12,14 +12,16 @@ export interface Attachment {
 }
 
 const MAX_SIZE = 50 * 1024 * 1024;
-const ACCEPTED = [
+const ACCEPTED_DOCUMENTS = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-  'video/mp4', 'video/webm',
-  'audio/mpeg', 'audio/mp4', 'audio/webm',
   'application/pdf', 'text/plain',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
+
+function isAcceptedMimeType(mimeType: string): boolean {
+  return mimeType.startsWith('image/') || mimeType.startsWith('video/') || mimeType.startsWith('audio/') || ACCEPTED_DOCUMENTS.includes(mimeType);
+}
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -65,7 +67,7 @@ export function AttachmentPicker({ attachments, onChange, max = 10, label = 'Att
     const next: Attachment[] = [...attachments];
     try {
       for (const file of Array.from(files)) {
-        if (!ACCEPTED.includes(file.type)) {
+        if (!isAcceptedMimeType(file.type)) {
           toast({ title: 'Unsupported file', description: `${file.name} (${file.type || 'unknown type'}) is not allowed.`, variant: 'destructive' });
           continue;
         }
@@ -120,7 +122,7 @@ export function AttachmentPicker({ attachments, onChange, max = 10, label = 'Att
         ref={inputRef}
         type="file"
         multiple
-        accept={ACCEPTED.join(',')}
+        accept="image/*,video/*,audio/*,application/pdf,text/plain,.doc,.docx"
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />

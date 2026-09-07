@@ -497,10 +497,13 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    if (feedSource === 'explore') fetchAlgorithmicFeed('algorithmic');
+  }, [feedSource, token]);
+
   const handleSourceChange = (val: FeedSource) => {
     setFeedSource(val);
     setFeedPosts(null);
-    if (val === 'explore') fetchAlgorithmicFeed('algorithmic');
     if (val === 'sparks') fetchSparksFeed();
   };
 
@@ -534,11 +537,6 @@ export default function Home() {
             </Tabs>
           </div>
 
-          {feedSource === 'explore' && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Discover what is resonating across the hive.</span>
-            </div>
-          )}
         </div>
 
         {/* Topics Grid (Topics mode) */}

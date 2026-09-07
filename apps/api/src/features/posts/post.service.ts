@@ -133,6 +133,7 @@ export async function listPosts(
       .from(postsTable)
       .where(and(
         eq(postsTable.isPublished, true),
+        ne(postsTable.type, "spark"),
         inArray(postsTable.authorId, followingFiltered),
         or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
       ))
@@ -149,6 +150,7 @@ export async function listPosts(
 
   const conds = [
     eq(postsTable.isPublished, true),
+    ne(postsTable.type, "spark"),
     or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
   ];
   if (type) conds.push(eq(postsTable.type, type));

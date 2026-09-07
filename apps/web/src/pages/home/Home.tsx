@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { PenTool, Zap, Clock, Flame, UserPlus, BookOpen, Check, TrendingUp, Rocket, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PenTool, UserPlus, BookOpen, Check, TrendingUp, Rocket, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuthStore } from '@/store/auth';
 import { useSocketConnection } from '@/hooks/useSocket';
@@ -17,7 +17,8 @@ import { getStoredToken } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
 import { StreakChip } from '@/components/profile/StreakWidget';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { StoriesRow } from '@/components/sparks/StoriesRow';
+import { StoryViewer } from '@/components/sparks/StoryViewer';
 
 interface ChecklistItem {
   id: string;
@@ -26,7 +27,7 @@ interface ChecklistItem {
   href?: string;
 }
 
-type FeedSource = 'explore' | 'following' | 'sparks';
+type FeedSource = 'explore' | 'following';
 type FeedAlgorithm = 'algorithmic' | 'chronological';
 
 interface SuggestedCreator {
@@ -57,115 +58,6 @@ interface TopicItem {
   postCount?: number;
   description?: string | null;
   emoji?: string | null;
-}
-
-interface HighlightItem {
-  id: number;
-  title?: string | null;
-  excerpt?: string | null;
-  content?: string | null;
-  imageUrl?: string | null;
-  expiresAt: string;
-  author: {
-    username?: string | null;
-    displayName?: string | null;
-    avatarUrl?: string | null;
-  };
-}
-
-function StoryTray() {
-  const [stories, setStories] = useState<HighlightItem[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const t = useT();
-
-  useEffect(() => {
-    fetch('/api/highlights')
-      .then((res) => res.ok ? res.json() : [])
-      .then((data) => setStories(Array.isArray(data) ? data : []))
-      .catch(() => setStories([]));
-  }, []);
-
-  if (stories.length === 0) return null;
-
-  const selected = selectedIndex === null ? null : stories[selectedIndex];
-  const move = (direction: -1 | 1) => {
-    if (selectedIndex === null) return;
-    const next = selectedIndex + direction;
-    if (next < 0 || next >= stories.length) return;
-    setSelectedIndex(next);
-  };
-
-  return (
-    <>
-      <section className="mb-6 rounded-2xl border border-border/60 bg-card p-4 shadow-sm" aria-label={t('home.stories', 'Stories')}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="font-semibold text-sm">{t('home.stories', 'Stories')}</h2>
-            <p className="text-xs text-muted-foreground">{t('home.storiesHint', 'Quick updates that disappear after 24 hours')}</p>
-          </div>
-          <Link href="/sparks" className="text-xs font-medium text-primary hover:underline">{t('home.viewAll', 'View all')}</Link>
-        </div>
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
-          {stories.map((story, index) => (
-            <button
-              key={story.id}
-              type="button"
-              onClick={() => setSelectedIndex(index)}
-              className="flex w-16 shrink-0 flex-col items-center gap-1.5 group"
-              aria-label={`${t('home.viewStory', 'View story from')} ${story.author.displayName || story.author.username || ''}`}
-            >
-              <span className="rounded-full bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500 p-[2px] group-hover:scale-105 transition-transform">
-                <Avatar className="h-14 w-14 border-2 border-card">
-                  <AvatarImage src={story.author.avatarUrl || ''} alt="" />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                    {(story.author.displayName || story.author.username || '?').slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </span>
-              <span className="w-full truncate text-center text-[11px] text-muted-foreground">
-                {story.author.displayName || story.author.username || t('common.member', 'Member')}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelectedIndex(null)}>
-        <DialogContent className="max-w-md overflow-hidden rounded-3xl border-0 bg-slate-950 p-0 text-white shadow-2xl">
-          {selected && (
-            <div className="relative min-h-[520px]">
-              <div className="absolute inset-x-4 top-4 z-10 flex gap-1">
-                {stories.map((story) => <span key={story.id} className={`h-1 flex-1 rounded-full ${story.id === selected.id ? 'bg-white' : 'bg-white/30'}`} />)}
-              </div>
-              {selected.imageUrl && <img src={selected.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90" />
-              <div className="relative flex min-h-[520px] flex-col justify-between p-6 pt-10">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border-2 border-white/70">
-                    <AvatarImage src={selected.author.avatarUrl || ''} alt="" />
-                    <AvatarFallback className="bg-white/20 text-white">{(selected.author.displayName || '?').slice(0, 2)}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <Link href={`/profile/${selected.author.username}`} onClick={() => setSelectedIndex(null)} className="font-semibold hover:underline">
-                      {selected.author.displayName || selected.author.username}
-                    </Link>
-                    <p className="text-xs text-white/60">{t('home.storyExpires', 'Expires in 24 hours')}</p>
-                  </div>
-                  <button type="button" onClick={() => setSelectedIndex(null)} className="ml-auto rounded-full p-2 hover:bg-white/15" aria-label={t('common.close', 'Close')}><X className="h-5 w-5" /></button>
-                </div>
-                <div>
-                  {selected.title && <h3 className="mb-2 font-serif text-2xl font-bold">{selected.title}</h3>}
-                  <p className="whitespace-pre-wrap text-base leading-relaxed">{selected.content || selected.excerpt || ''}</p>
-                </div>
-              </div>
-              {selectedIndex !== 0 && <button type="button" onClick={() => move(-1)} className="absolute left-3 top-1/2 rounded-full bg-black/30 p-2 hover:bg-black/60" aria-label={t('common.previous', 'Previous')}><ChevronLeft className="h-5 w-5" /></button>}
-              {selectedIndex !== stories.length - 1 && <button type="button" onClick={() => move(1)} className="absolute right-3 top-1/2 rounded-full bg-black/30 p-2 hover:bg-black/60" aria-label={t('common.next', 'Next')}><ChevronRight className="h-5 w-5" /></button>}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
 }
 
 function GettingStartedChecklist() {
@@ -436,7 +328,7 @@ export default function Home() {
     try {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab === 'sparks' || tab === 'following' || tab === 'explore') return tab;
+      if (tab === 'following' || tab === 'explore') return tab;
     } catch { /* ignore */ }
     return 'explore';
   })();
@@ -444,6 +336,7 @@ export default function Home() {
   const feedAlgorithm: FeedAlgorithm = 'algorithmic';
   const [feedPosts, setFeedPosts] = useState<import('@workspace/api-client-react').Post[] | null>(null);
   const [feedLoading, setFeedLoading] = useState(false);
+  const [activeStoryGroup, setActiveStoryGroup] = useState<any>(null);
 
   useSocketConnection();
 
@@ -467,36 +360,6 @@ export default function Home() {
     }
   };
 
-  const fetchSparksFeed = async () => {
-    setFeedLoading(true);
-    try {
-      const res = await fetch(`/api/posts?type=spark&limit=20`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const json = await res.json();
-      setFeedPosts(json.posts || []);
-    } catch {
-      setFeedPosts(null);
-    } finally {
-      setFeedLoading(false);
-    }
-  };
-
-  const fetchRisingFeed = async () => {
-    setFeedLoading(true);
-    try {
-      const res = await fetch(`/api/posts?limit=20&sort=trending`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const json = await res.json();
-      setFeedPosts(json.posts || []);
-    } catch {
-      setFeedPosts(null);
-    } finally {
-      setFeedLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (feedSource === 'explore') fetchAlgorithmicFeed('algorithmic');
   }, [feedSource, token]);
@@ -504,25 +367,19 @@ export default function Home() {
   const handleSourceChange = (val: FeedSource) => {
     setFeedSource(val);
     setFeedPosts(null);
-    if (val === 'sparks') fetchSparksFeed();
   };
 
   const displayPosts =
-    feedSource === 'explore' || feedSource === 'sparks'
-      ? (feedPosts ?? data?.posts ?? [])
-      : (data?.posts ?? []);
+    feedSource === 'explore' ? (feedPosts ?? data?.posts ?? []) : (data?.posts ?? []);
   const isDisplayLoading =
-    feedSource === 'explore' || feedSource === 'sparks'
-      ? (feedLoading || (feedPosts === null && isLoading))
-      : isLoading;
+    feedSource === 'explore' ? (feedLoading || (feedPosts === null && isLoading)) : isLoading;
 
   return (
+    <>
     <AppLayout>
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="min-w-0 max-w-2xl">
-        <StoryTray />
-
         <div className="flex flex-col gap-4 mb-6 pt-4">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-serif font-bold text-foreground flex items-center gap-3">
@@ -532,12 +389,15 @@ export default function Home() {
               <TabsList className="flex gap-0.5 bg-muted/50 p-1 rounded-xl">
                 <TabsTrigger value="explore" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-explore">{t('home.tabs.explore')}</TabsTrigger>
                 <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-following">{t('home.tabs.following')}</TabsTrigger>
-                <TabsTrigger value="sparks" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs shrink-0 px-2.5" data-testid="tab-sparks">⚡ {t('home.tabs.sparks')}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
         </div>
+
+        {(feedSource === 'explore' || feedSource === 'following') && (
+          <StoriesRow onOpenViewer={setActiveStoryGroup} />
+        )}
 
         {/* Topics Grid (Topics mode) */}
         {token && <SparkComposer />}
@@ -594,8 +454,6 @@ export default function Home() {
               <p className="text-muted-foreground max-w-xs mx-auto text-sm mb-5">
                 {feedSource === 'following'
                   ? "Your quill is your voice. Your hive is where it grows. Follow people whose voices you value and start building your hive."
-                  : feedSource === 'sparks'
-                  ? "No sparks yet - share a quick thought and get discovered by the community."
                   : 'The first posts here get the most visibility. Start your growth journey now.'}
               </p>
               <Link href={feedSource === 'following' ? '/explore' : '/write'}>
@@ -627,5 +485,9 @@ export default function Home() {
       </div>
       </div>
     </AppLayout>
+    {activeStoryGroup && (
+      <StoryViewer group={activeStoryGroup} onClose={() => setActiveStoryGroup(null)} />
+    )}
+    </>
   );
 }

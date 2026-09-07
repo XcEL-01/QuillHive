@@ -7,7 +7,7 @@ import {
   postSharesTable, repostsTable, savedPostsTable,
   commentLikesTable, userTrustScoresTable, usersTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, isNull, gte, gt, or } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, isNull, gte, gt, or, ne } from "drizzle-orm";
 import { enrichPost } from "../profiles/profile.service";
 import { recordPostView } from "../analytics/analytics.service";
 import { updateUserTrustScoreSafe } from "../trust/trust.service";
@@ -428,6 +428,7 @@ export const getFeed = async (req: Request, res: Response) => {
     .where(and(
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
+      ne(postsTable.type, "spark"),
       or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ))
     .orderBy(desc(postsTable.createdAt))
@@ -781,6 +782,7 @@ export const getTrending = async (req: Request, res: Response) => {
     .where(and(
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
+      ne(postsTable.type, "spark"),
       or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ))
     .orderBy(desc(postsTable.createdAt))

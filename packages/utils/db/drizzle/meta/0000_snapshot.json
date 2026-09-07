@@ -1265,6 +1265,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "viewed_by": {
+          "name": "viewed_by",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
         "is_highlight": {
           "name": "is_highlight",
           "type": "boolean",

@@ -1,4 +1,5 @@
 import { pgTable, text, serial, timestamp, integer, boolean, real, jsonb, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { usersTable } from "./users";
@@ -22,6 +23,7 @@ export const postsTable = pgTable("posts", {
   isPublished: boolean("is_published").notNull().default(true),
   scheduledAt: timestamp("scheduled_at"),
   expiresAt: timestamp("expires_at"),
+  viewedBy: jsonb("viewed_by").default(sql`'[]'::jsonb`),
   isHighlight: boolean("is_highlight").notNull().default(false),
   contentWarning: text("content_warning"),
   contentTags: text("content_tags").notNull().default("[]"),

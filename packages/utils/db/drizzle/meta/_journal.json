@@ -8,6 +8,13 @@
       "when": 1776995875496,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788771600000,
+      "tag": "0001_add_spark_view_tracking",
+      "breakpoints": true
     }
   ]
 }

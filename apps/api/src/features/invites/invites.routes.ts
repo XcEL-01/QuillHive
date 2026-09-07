@@ -94,21 +94,32 @@ export async function consumeInvite(code: string, newUserId: number): Promise<nu
   void (async () => {
     try {
       const { notify } = await import("../notifications/notification.service");
-      const { usersTable } = await import("@workspace/db/schema");
-      const { eq: eqOp, isNotNull, count: countFn } = await import("drizzle-orm");
+      const { usersTable, userTrustScoresTable } = await import("@workspace/db/schema");
+      const { eq: eqOp, count: countFn, avg: avgFn } = await import("drizzle-orm");
       const [newUser] = await db
         .select({ username: usersTable.username, displayName: usersTable.displayName })
         .from(usersTable)
         .where(eqOp(usersTable.id, newUserId));
       const name = newUser?.displayName || newUser?.username || "Someone";
 
-      // Count total successful referrals for the inviter
-      const { and: andOp } = await import("drizzle-orm");
-      const [{ total }] = await db
-        .select({ total: countFn() })
-        .from(inviteCodesTable)
-        .where(andOp(eqOp(inviteCodesTable.createdBy, invite.createdBy), isNotNull(inviteCodesTable.usedBy)));
-      const referralCount = Number(total) || 1;
+      // Count users linked to this inviter and include their trust in the reward.
+      const [{ total, averageTrust }] = await db
+        .select({ total: countFn(), averageTrust: avgFn(userTrustScoresTable.uti) })
+        .from(usersTable)
+        .leftJoin(userTrustScoresTable, eqOp(userTrustScoresTable.userId, usersTable.id))
+        .where(eqOp(usersTable.referredBy, invite.createdBy));
+      const referralCount = Number(total) + 1;
+
+      const { isFeatureEnabled } = await import("../../lib/featureFlags");
+      const rewardsOn = await isFeatureEnabled("referral_rewards_enabled");
+      if (rewardsOn) {
+        const { addReputationEvent } = await import("../trust/reputation.service");
+        const { updateUserTrustScore } = await import("../trust/trust.service");
+        const averageTrustScore = Number(averageTrust) || 0;
+        const bonus = Math.min(10, Math.max(1, referralCount + averageTrustScore / 20));
+        await addReputationEvent(invite.createdBy, "milestone", "referral_reward", bonus);
+        await updateUserTrustScore(invite.createdBy);
+      }
 
       const MILESTONES: Record<number, string> = {
         1:  `🎉 ${name} just joined using your invite! Your first referral reward is on its way.`,

@@ -14,7 +14,7 @@ import {
   postTrustScoresTable,
   topicFollowsTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, notInArray, gt, gte } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, notInArray, gt, gte, isNull, or, ne } from "drizzle-orm";
 import { getUserWithCounts, enrichPost } from "../profiles/profile.service";
 import { emitToUser } from "../../lib/socket";
 import { sanitizeRichText, sanitizePlain } from "../../lib/sanitize";
@@ -131,7 +131,11 @@ export async function listPosts(
     const posts = await db
       .select()
       .from(postsTable)
-      .where(and(eq(postsTable.isPublished, true), inArray(postsTable.authorId, followingFiltered)))
+      .where(and(
+        eq(postsTable.isPublished, true),
+        inArray(postsTable.authorId, followingFiltered),
+        or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      ))
       .orderBy(desc(postsTable.createdAt))
       .limit(limit)
       .offset((page - 1) * limit);
@@ -143,7 +147,10 @@ export async function listPosts(
     return { posts: enriched, total: enriched.length, page, limit };
   }
 
-  const conds = [eq(postsTable.isPublished, true)];
+  const conds = [
+    eq(postsTable.isPublished, true),
+    or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+  ];
   if (type) conds.push(eq(postsTable.type, type));
   if (blockedIds.length > 0) conds.push(notInArray(postsTable.authorId, blockedIds));
 
@@ -445,7 +452,10 @@ export async function createPost(
 }
 
 export async function getPostById(id: number, viewerId: number | null) {
-  const [post] = await db.select().from(postsTable).where(eq(postsTable.id, id));
+  const [post] = await db.select().from(postsTable).where(and(
+    eq(postsTable.id, id),
+    or(ne(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+  ));
   if (!post) return null;
   return enrichPost(post, viewerId);
 }

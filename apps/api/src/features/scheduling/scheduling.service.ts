@@ -80,6 +80,25 @@ export async function expireBoostCampaigns(): Promise<void> {
   }
 }
 
+export async function expireOldSparks(): Promise<void> {
+  try {
+    const { postsTable } = await import("@workspace/db/schema");
+    const { and, eq, lt } = await import("drizzle-orm");
+    const now = new Date();
+    const result = await db
+      .update(postsTable)
+      .set({ isDeleted: true, deletedAt: now })
+      .where(and(
+        eq(postsTable.type, "spark"),
+        eq(postsTable.isDeleted, false),
+        lt(postsTable.expiresAt, now),
+      ));
+    logger.info({ count: result.rowCount ?? 0 }, "Expired sparks soft-deleted");
+  } catch (err) {
+    logger.error({ err }, "Error expiring sparks");
+  }
+}
+
 export async function sendWeeklyDigests(): Promise<void> {
   try {
     const users = await db
@@ -108,6 +127,7 @@ let lastWeeklyDigest = 0;
 let lastDormantNudge = 0;
 let lastChallengeReminder = 0;
 let lastProfileViewNotif = 0;
+let lastSparkExpiry = 0;
 
 async function sendEngagementNudges(): Promise<void> {
   try {
@@ -736,6 +756,10 @@ export function startScheduling(): void {
     publishDuePosts();
     expireBoostCampaigns().catch(() => {});
     const now = Date.now();
+    if (now - lastSparkExpiry > 60 * 60 * 1000) {
+      lastSparkExpiry = now;
+      expireOldSparks().catch(() => {});
+    }
     if (now - lastEngagementNudge > 24 * 60 * 60 * 1000) {
       lastEngagementNudge = now;
       sendEngagementNudges().catch(() => {});

@@ -7,7 +7,7 @@ import {
   postSharesTable, repostsTable, savedPostsTable,
   commentLikesTable, userTrustScoresTable, usersTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, isNull, gte } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, isNull, gte, gt, or } from "drizzle-orm";
 import { enrichPost } from "../profiles/profile.service";
 import { recordPostView } from "../analytics/analytics.service";
 import { updateUserTrustScoreSafe } from "../trust/trust.service";
@@ -153,7 +153,12 @@ export const listPosts = async (req: Request, res: Response) => {
     const posts = await db
       .select()
       .from(postsTable)
-      .where(and(eq(postsTable.authorId, viewerId), eq(postsTable.isPublished, true)))
+      .where(and(
+        eq(postsTable.authorId, viewerId),
+        eq(postsTable.isPublished, true),
+        eq(postsTable.isDeleted, false),
+        or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      ))
       .orderBy(desc(postsTable.createdAt))
       .limit(Math.min(limit, 50));
     return res.json({ posts });
@@ -161,6 +166,91 @@ export const listPosts = async (req: Request, res: Response) => {
 
   const result = await PostService.listPosts(viewerId, { type, feed, page, limit });
   return res.json(result);
+};
+
+export const listActiveSparks = async (req: Request, res: Response) => {
+  const viewerId = (req as any).currentUser.id as number;
+  const following = await db
+    .select({ userId: followsTable.followingId })
+    .from(followsTable)
+    .where(eq(followsTable.followerId, viewerId));
+  const authorIds = [...new Set([viewerId, ...following.map(row => row.userId)])];
+  const now = new Date();
+
+  const rows = await db
+    .select({
+      id: postsTable.id,
+      authorId: usersTable.id,
+      authorUsername: usersTable.username,
+      authorDisplayName: usersTable.displayName,
+      authorAvatarUrl: usersTable.avatarUrl,
+      content: postsTable.content,
+      mediaUrl: postsTable.imageUrl,
+      createdAt: postsTable.createdAt,
+      expiresAt: postsTable.expiresAt,
+      viewedBy: postsTable.viewedBy,
+    })
+    .from(postsTable)
+    .innerJoin(usersTable, eq(usersTable.id, postsTable.authorId))
+    .where(and(
+      eq(postsTable.type, "spark"),
+      eq(postsTable.isPublished, true),
+      eq(postsTable.isDeleted, false),
+      inArray(postsTable.authorId, authorIds),
+      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, now)),
+    ))
+    .orderBy(desc(postsTable.createdAt));
+
+  const stories = new Map<number, {
+    authorId: number;
+    authorUsername: string;
+    authorDisplayName: string;
+    authorAvatarUrl: string | null;
+    sparks: Array<{ id: number; content: string; mediaUrl: string | null; createdAt: Date; expiresAt: Date | null; viewed: boolean }>;
+    hasUnviewed: boolean;
+  }>();
+
+  for (const row of rows) {
+    const viewedBy = Array.isArray(row.viewedBy) ? row.viewedBy : [];
+    const viewed = viewedBy.includes(viewerId);
+    const story = stories.get(row.authorId) ?? {
+      authorId: row.authorId,
+      authorUsername: row.authorUsername,
+      authorDisplayName: row.authorDisplayName,
+      authorAvatarUrl: row.authorAvatarUrl,
+      sparks: [],
+      hasUnviewed: false,
+    };
+    story.sparks.push({ id: row.id, content: row.content, mediaUrl: row.mediaUrl, createdAt: row.createdAt, expiresAt: row.expiresAt, viewed });
+    story.hasUnviewed ||= !viewed;
+    stories.set(row.authorId, story);
+  }
+
+  return res.json({ stories: [...stories.values()] });
+};
+
+export const viewSpark = async (req: Request, res: Response) => {
+  const viewerId = (req as any).currentUser.id as number;
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid spark id" });
+
+  const now = new Date();
+  const updated = await db
+    .update(postsTable)
+    .set({ viewedBy: sql`coalesce(${postsTable.viewedBy}, '[]'::jsonb) || jsonb_build_array(${viewerId})` })
+    .where(and(
+      eq(postsTable.id, id),
+      eq(postsTable.type, "spark"),
+      eq(postsTable.isDeleted, false),
+      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, now)),
+      sql`not (coalesce(${postsTable.viewedBy}, '[]'::jsonb) @> jsonb_build_array(${viewerId}))`,
+    ));
+
+  if ((updated as { rowCount?: number }).rowCount === 0) {
+    const [spark] = await db.select({ id: postsTable.id }).from(postsTable).where(and(eq(postsTable.id, id), eq(postsTable.type, "spark")));
+    if (!spark) return res.status(404).json({ error: "Spark not found" });
+  }
+  return res.json({ success: true });
 };
 
 export const createPost = async (req: Request, res: Response) => {
@@ -335,7 +425,11 @@ export const getFeed = async (req: Request, res: Response) => {
   const posts = await db
     .select()
     .from(postsTable)
-    .where(and(eq(postsTable.isPublished, true), eq(postsTable.isDeleted, false)))
+    .where(and(
+      eq(postsTable.isPublished, true),
+      eq(postsTable.isDeleted, false),
+      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+    ))
     .orderBy(desc(postsTable.createdAt))
     .limit(limit * 3)
     .offset(offset);
@@ -684,7 +778,11 @@ export const getTrending = async (req: Request, res: Response) => {
   const posts = await db
     .select()
     .from(postsTable)
-    .where(and(eq(postsTable.isPublished, true), eq(postsTable.isDeleted, false)))
+    .where(and(
+      eq(postsTable.isPublished, true),
+      eq(postsTable.isDeleted, false),
+      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+    ))
     .orderBy(desc(postsTable.createdAt))
     .limit(200);
 
@@ -744,6 +842,7 @@ export const getMotion = async (req: Request, res: Response) => {
   const baseConds = [
     eq(postsTable.isPublished, true),
     eq(postsTable.isDeleted, false),
+    or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     sql`(${postsTable.type} = 'video' OR ${postsTable.attachments} ILIKE '%"mimeType":"video/%' OR ${postsTable.attachments} ~* '\\.(mp4|mov|webm|m4v|ogv)"')`,
   ];
 

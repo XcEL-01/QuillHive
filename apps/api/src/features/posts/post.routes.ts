@@ -3,7 +3,7 @@ import { z } from "zod";
 import * as PostController from "./post.controller";
 import { preventSpam } from "../../middleware/abuseProtection";
 import { validateBody, validateParams, validateQuery } from "../../middleware/validate";
-import { optionalAuth } from "../../middleware/admin";
+import { optionalAuth, requireAuth } from "../../middleware/admin";
 
 const idParamsSchema = z.object({ id: z.coerce.number().int().positive() });
 const listPostsQuerySchema = z.object({
@@ -72,6 +72,10 @@ postsRouter.post("/:id/repost", validateParams(idParamsSchema), PostController.r
 postsRouter.get("/:id/reposts", validateParams(idParamsSchema), PostController.getReposts);
 postsRouter.post("/:id/save", validateParams(idParamsSchema), PostController.savePost);
 postsRouter.delete("/:id/save", validateParams(idParamsSchema), PostController.unsavePost);
+
+export const sparksRouter = Router();
+sparksRouter.get("/active", requireAuth, PostController.listActiveSparks);
+sparksRouter.post("/:id/view", requireAuth, validateParams(idParamsSchema), PostController.viewSpark);
 
 const abClickParamsSchema = z.object({
   id: z.coerce.number().int().positive(),

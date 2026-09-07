@@ -14,7 +14,7 @@ import adminRouter from "./admin";
 
 // ─── Feature-based routes ─────────────────────────────────────────────────────
 import { authRouter, usersRouter } from "../features/profiles/profile.routes";
-import { postsRouter, feedRouter, commentsRouter } from "../features/posts/post.routes";
+import { postsRouter, feedRouter, commentsRouter, sparksRouter } from "../features/posts/post.routes";
 import { messagesRouter } from "../features/messaging/messaging.routes";
 import { galleryRouter } from "../features/gallery/gallery.routes";
 import { collaborationRouter } from "../features/collaboration/collaboration.routes";
@@ -70,6 +70,7 @@ router.use(healthRouter);
 router.use("/auth", authRouter);
 router.use("/users", usersRouter);
 router.use("/posts", postsRouter);
+router.use("/sparks", sparksRouter);
 router.use("/comments", commentsRouter);
 router.use("/messages", messagesRouter);
 router.use("/gallery", galleryRouter);

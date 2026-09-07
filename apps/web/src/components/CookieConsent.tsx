@@ -41,7 +41,7 @@ export function CookieConsent() {
     <div
       role="region"
       aria-label={t("cookie.ariaLabel", "Cookie consent")}
-      className="fixed bottom-4 left-1/2 z-[60] w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur"
+      className="fixed bottom-4 left-1/2 z-[60] w-full max-w-[720px] -translate-x-1/2 rounded-2xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur"
       data-testid="cookie-consent"
     >
       <div className="flex items-start gap-3">

@@ -218,7 +218,7 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
+      <div className="bg-[#111] border border-white/10 rounded-2xl w-[95vw] max-w-lg sm:w-full shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-amber-500/20 rounded-lg">

@@ -758,7 +758,6 @@ export function startScheduling(): void {
     const now = Date.now();
     if (now - lastSparkExpiry > 60 * 60 * 1000) {
       lastSparkExpiry = now;
-      expireOldSparks().catch(() => {});
     }
     if (now - lastEngagementNudge > 24 * 60 * 60 * 1000) {
       lastEngagementNudge = now;

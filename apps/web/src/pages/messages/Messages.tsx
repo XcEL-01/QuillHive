@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Users, Search, MessageCircle, PenSquare } from 'lucide-react';
+import { Send, Users, Search, MessageCircle, PenSquare, Check, CheckCheck } from 'lucide-react';
 import NewConversationModal from '@/components/messages/NewConversationModal';
 import { formatDistanceToNow } from 'date-fns';
 import { useSocketEvent, useJoinConversation } from '@/hooks/useSocket';
@@ -21,6 +21,8 @@ interface LocalMessage {
   senderId: number;
   content: string;
   createdAt: string;
+  deliveredAt?: string | null;
+  seenAt?: string | null;
   conversationId?: number;
   sender?: {
     id?: number;
@@ -71,6 +73,33 @@ export default function Messages() {
     });
     queryClient.invalidateQueries({ queryKey: ['/api/messages/conversations'] });
   }, [activeConvId, queryClient]));
+
+  useEffect(() => {
+    if (!activeConvId || !currentUser?.id) return;
+
+    const markSeen = async () => {
+      try {
+        await fetch(`/api/messages/conversations/${activeConvId}/seen`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') ?? ''}` },
+        });
+      } catch (error) {
+        console.error('Failed to mark messages as seen', error);
+      }
+    };
+
+    void markSeen();
+  }, [activeConvId, currentUser?.id]);
+
+  useSocketEvent<{ conversationId: number; seenAt: string; messageIds?: number[] }>('messages:seen', useCallback((data) => {
+    if (!activeConvId || data.conversationId !== activeConvId) return;
+
+    setLocalMessages(prev => prev.map(msg => {
+      if (msg.senderId !== currentUser?.id) return msg;
+      if (data.messageIds && !data.messageIds.includes(msg.id)) return msg;
+      return { ...msg, seenAt: data.seenAt };
+    }));
+  }, [activeConvId, currentUser?.id]));
 
   useSocketEvent<{ conversationId: number; userId: number }>('typing:start', useCallback((data) => {
     if (data.conversationId === activeConvId && data.userId !== currentUser?.id) {
@@ -309,6 +338,12 @@ export default function Messages() {
                   {localMessages.map((msg) => {
                     const isMine = msg.senderId === currentUser?.id;
                     const sender = msg.sender;
+                    const messageSeenAt = msg.seenAt ? new Date(msg.seenAt) : null;
+                    const latestSeenMessage = localMessages
+                      .filter(m => m.senderId === currentUser?.id && m.seenAt)
+                      .sort((a, b) => new Date(b.seenAt ?? 0).getTime() - new Date(a.seenAt ?? 0).getTime())[0];
+                    const showSeenLabel = isMine && msg.id === latestSeenMessage?.id && !!messageSeenAt;
+
                     return (
                       <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} max-w-[80%] ${isMine ? 'ml-auto' : 'mr-auto'}`}>
                         {!isMine && sender && (
@@ -328,9 +363,31 @@ export default function Messages() {
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm ${isMine ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted/60 text-foreground border border-border/50 rounded-tl-sm'}`}>
                           <p className="whitespace-pre-wrap">{msg.content}</p>
-                          <p className="text-[10px] mt-1 text-right opacity-70">
-                            {formatDistanceToNow(new Date(msg.createdAt))}
-                          </p>
+                          <div className="mt-1 flex items-center justify-end gap-1.5 text-[10px] opacity-80">
+                            <span>{formatDistanceToNow(new Date(msg.createdAt))}</span>
+                            {isMine && (
+                              <div className="inline-flex items-center gap-0.5" title={msg.seenAt ? `Seen ${new Date(msg.seenAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : msg.deliveredAt ? 'Delivered' : 'Sent'}>
+                                {msg.seenAt ? (
+                                  <>
+                                    <CheckCheck className="h-3.5 w-3.5 fill-current text-primary-foreground/95" />
+                                    <CheckCheck className="h-3.5 w-3.5 fill-current text-primary-foreground/95 -ml-1.5" />
+                                  </>
+                                ) : msg.deliveredAt ? (
+                                  <>
+                                    <Check className="h-3.5 w-3.5 text-primary-foreground/80" />
+                                    <Check className="h-3.5 w-3.5 text-primary-foreground/80 -ml-1.5" />
+                                  </>
+                                ) : (
+                                  <Check className="h-3.5 w-3.5 text-primary-foreground/60" />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          {showSeenLabel && messageSeenAt && (
+                            <div className="mt-1 text-[10px] text-primary-foreground/80 text-right">
+                              Seen {formatDistanceToNow(messageSeenAt, { addSuffix: true })}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

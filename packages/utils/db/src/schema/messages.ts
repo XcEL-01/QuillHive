@@ -25,6 +25,8 @@ export const messagesTable = pgTable("messages", {
   senderId: integer("sender_id").notNull().references(() => usersTable.id),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  deliveredAt: timestamp("delivered_at"),
+  seenAt: timestamp("seen_at"),
 });
 
 export const insertConversationSchema = createInsertSchema(conversationsTable).omit({ id: true, createdAt: true, updatedAt: true });

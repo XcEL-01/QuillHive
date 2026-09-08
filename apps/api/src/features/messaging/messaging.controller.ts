@@ -73,3 +73,17 @@ export const sendMessage = async (req: Request, res: Response) => {
   const message = await MessagingService.sendMessage(viewerId, { conversationId, recipientId, content });
   return res.status(201).json(message);
 };
+
+export const markConversationSeen = async (req: Request, res: Response) => {
+  const viewerId = getViewerId(req) ?? (req as any).currentUser?.id;
+  if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
+  const convId = Number(req.params.conversationId);
+
+  try {
+    const result = await MessagingService.markConversationSeen(convId, viewerId);
+    return res.json(result);
+  } catch (e: any) {
+    if (e.message === "Forbidden") return res.status(403).json({ error: "Forbidden" });
+    throw e;
+  }
+};

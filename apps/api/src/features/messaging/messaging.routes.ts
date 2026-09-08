@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import * as MessagingController from "./messaging.controller";
 import { preventSpam } from "../../middleware/abuseProtection";
+import { requireAuth } from "../../middleware/admin";
 import { validateBody, validateParams } from "../../middleware/validate";
 
 const conversationParamsSchema = z.object({ conversationId: z.coerce.number().int().positive() });
@@ -17,4 +18,5 @@ messagesRouter.get("/unread-count", MessagingController.getUnreadCount);
 messagesRouter.get("/conversations", MessagingController.getConversations);
 messagesRouter.post("/start", preventSpam("conversation-start", { max: 10, windowMs: 60_000, contentField: "userId" }), validateBody(startConversationSchema), MessagingController.startConversation);
 messagesRouter.get("/conversations/:conversationId", validateParams(conversationParamsSchema), MessagingController.getConversationMessages);
+messagesRouter.post("/conversations/:conversationId/seen", requireAuth, validateParams(conversationParamsSchema), MessagingController.markConversationSeen);
 messagesRouter.post("/send", preventSpam("messages", { max: 20, windowMs: 60_000 }), validateBody(sendMessageSchema), MessagingController.sendMessage);

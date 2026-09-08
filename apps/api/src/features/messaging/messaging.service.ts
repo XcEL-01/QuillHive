@@ -4,7 +4,7 @@ import {
   conversationParticipantsTable,
   messagesTable,
 } from "@workspace/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, ne, isNull } from "drizzle-orm";
 import { getUserWithCounts } from "../profiles/profile.service";
 import { emitToConversation, emitToUser } from "../../lib/socket";
 
@@ -137,6 +137,64 @@ export async function getUnreadMessageCount(userId: number): Promise<number> {
   return rows.reduce((sum, r) => sum + (Number(r.unreadCount) || 0), 0);
 }
 
+export async function markConversationSeen(convId: number, viewerId: number) {
+  const participation = await db
+    .select()
+    .from(conversationParticipantsTable)
+    .where(
+      and(
+        eq(conversationParticipantsTable.conversationId, convId),
+        eq(conversationParticipantsTable.userId, viewerId)
+      )
+    );
+
+  if (participation.length === 0) throw new Error("Forbidden");
+
+  const now = new Date();
+
+  const updatedMessages = await db
+    .update(messagesTable)
+    .set({ seenAt: now })
+    .where(
+      and(
+        eq(messagesTable.conversationId, convId),
+        ne(messagesTable.senderId, viewerId),
+        isNull(messagesTable.seenAt)
+      )
+    )
+    .returning({ id: messagesTable.id, senderId: messagesTable.senderId, seenAt: messagesTable.seenAt });
+
+  await db
+    .update(conversationParticipantsTable)
+    .set({ unreadCount: 0 })
+    .where(
+      and(
+        eq(conversationParticipantsTable.conversationId, convId),
+        eq(conversationParticipantsTable.userId, viewerId)
+      )
+    );
+
+  const otherParticipants = await db
+    .select({ userId: conversationParticipantsTable.userId })
+    .from(conversationParticipantsTable)
+    .where(
+      and(
+        eq(conversationParticipantsTable.conversationId, convId),
+        ne(conversationParticipantsTable.userId, viewerId)
+      )
+    );
+
+  for (const p of otherParticipants) {
+    emitToUser(p.userId, "messages:seen", {
+      conversationId: convId,
+      seenAt: now.toISOString(),
+      messageIds: updatedMessages.map(m => m.id),
+    });
+  }
+
+  return { conversationId: convId, seenAt: now.toISOString(), updatedCount: updatedMessages.length };
+}
+
 export async function sendMessage(
   viewerId: number,
   data: { conversationId?: number; recipientId?: number; content: string }
@@ -170,7 +228,12 @@ export async function sendMessage(
 
   const [message] = await db
     .insert(messagesTable)
-    .values({ conversationId: convId!, senderId: viewerId, content: data.content })
+    .values({
+      conversationId: convId!,
+      senderId: viewerId,
+      content: data.content,
+      deliveredAt: new Date(),
+    })
     .returning();
 
   await db

@@ -133,9 +133,8 @@ export async function listPosts(
       .from(postsTable)
       .where(and(
         eq(postsTable.isPublished, true),
-        ne(postsTable.type, "spark"),
         inArray(postsTable.authorId, followingFiltered),
-        or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+        or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
       ))
       .orderBy(desc(postsTable.createdAt))
       .limit(limit)
@@ -150,8 +149,7 @@ export async function listPosts(
 
   const conds = [
     eq(postsTable.isPublished, true),
-    ne(postsTable.type, "spark"),
-    or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+    or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
   ];
   if (type) conds.push(eq(postsTable.type, type));
   if (blockedIds.length > 0) conds.push(notInArray(postsTable.authorId, blockedIds));
@@ -399,11 +397,9 @@ export async function createPost(
       groupId: data.groupId || null,
       seriesId: data.seriesId || null,
       scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
-      // A spark is also a 24-hour status. The highlights tray reads these
-      // fields, so a newly posted spark appears immediately and expires
-      // without needing a second "publish as story" action.
+      // Keep Sparks in the existing highlights tray while treating them as permanent posts.
       isHighlight: isSpark,
-      expiresAt: isSpark ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null,
+      expiresAt: null,
       contentWarning: data.contentWarning ? sanitizePlain(data.contentWarning).slice(0, 80) : null,
       contentTags: JSON.stringify(cwTags),
       aiTextScore: score,

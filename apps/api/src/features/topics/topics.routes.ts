@@ -7,7 +7,7 @@ import {
   postsTable,
   DEFAULT_TOPICS,
 } from "@workspace/db/schema";
-import { eq, desc, and, sql, gt, isNull, or, ne } from "drizzle-orm";
+import { eq, desc, and, sql, gt, isNull, or } from "drizzle-orm";
 import { getSessionUserId } from "../../lib/auth";
 import { enrichPost } from "../posts/post.service";
 
@@ -96,8 +96,7 @@ topicsRouter.get("/:slug", async (req, res) => {
         sql`${postsTable.id} = ANY(ARRAY[${sql.join(postIds.map(id => sql`${id}`), sql`, `)}])`,
         eq(postsTable.isPublished, true),
         eq(postsTable.isDeleted, false),
-        ne(postsTable.type, "spark"),
-        or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+        or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
       ));
     posts = await Promise.all(rawPosts.map(p => enrichPost(p, viewerId)));
   }
@@ -169,8 +168,7 @@ topicFeedRouter.get("/feed/topic/:slug", async (req, res) => {
       sql`${postsTable.id} = ANY(ARRAY[${sql.join(postIds.map(id => sql`${id}`), sql`, `)}])`,
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
-      ne(postsTable.type, "spark"),
-      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ));
 
   const posts = await Promise.all(rawPosts.map(p => enrichPost(p, viewerId)));

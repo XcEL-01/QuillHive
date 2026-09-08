@@ -7,7 +7,7 @@ import {
   postSharesTable, repostsTable, savedPostsTable,
   commentLikesTable, userTrustScoresTable, usersTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, isNull, gte, gt, or, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, isNull, gte, gt, or } from "drizzle-orm";
 import { enrichPost } from "../profiles/profile.service";
 import { recordPostView } from "../analytics/analytics.service";
 import { updateUserTrustScoreSafe } from "../trust/trust.service";
@@ -157,7 +157,7 @@ export const listPosts = async (req: Request, res: Response) => {
         eq(postsTable.authorId, viewerId),
         eq(postsTable.isPublished, true),
         eq(postsTable.isDeleted, false),
-        or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+        or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
       ))
       .orderBy(desc(postsTable.createdAt))
       .limit(Math.min(limit, 50));
@@ -175,8 +175,6 @@ export const listActiveSparks = async (req: Request, res: Response) => {
     .from(followsTable)
     .where(eq(followsTable.followerId, viewerId));
   const authorIds = [...new Set([viewerId, ...following.map(row => row.userId)])];
-  const now = new Date();
-
   const rows = await db
     .select({
       id: postsTable.id,
@@ -197,7 +195,6 @@ export const listActiveSparks = async (req: Request, res: Response) => {
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
       inArray(postsTable.authorId, authorIds),
-      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, now)),
     ))
     .orderBy(desc(postsTable.createdAt));
 
@@ -234,7 +231,6 @@ export const viewSpark = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid spark id" });
 
-  const now = new Date();
   const updated = await db
     .update(postsTable)
     .set({ viewedBy: sql`coalesce(${postsTable.viewedBy}, '[]'::jsonb) || jsonb_build_array(${viewerId})` })
@@ -242,7 +238,6 @@ export const viewSpark = async (req: Request, res: Response) => {
       eq(postsTable.id, id),
       eq(postsTable.type, "spark"),
       eq(postsTable.isDeleted, false),
-      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, now)),
       sql`not (coalesce(${postsTable.viewedBy}, '[]'::jsonb) @> jsonb_build_array(${viewerId}))`,
     ));
 
@@ -428,8 +423,7 @@ export const getFeed = async (req: Request, res: Response) => {
     .where(and(
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
-      ne(postsTable.type, "spark"),
-      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ))
     .orderBy(desc(postsTable.createdAt))
     .limit(limit * 3)
@@ -782,8 +776,7 @@ export const getTrending = async (req: Request, res: Response) => {
     .where(and(
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
-      ne(postsTable.type, "spark"),
-      or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ))
     .orderBy(desc(postsTable.createdAt))
     .limit(200);
@@ -844,7 +837,7 @@ export const getMotion = async (req: Request, res: Response) => {
   const baseConds = [
     eq(postsTable.isPublished, true),
     eq(postsTable.isDeleted, false),
-    or(isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+    or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     sql`(${postsTable.type} = 'video' OR ${postsTable.attachments} ILIKE '%"mimeType":"video/%' OR ${postsTable.attachments} ~* '\\.(mp4|mov|webm|m4v|ogv)"')`,
   ];
 

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
 import { postsTable, usersTable } from "@workspace/db/schema";
-import { and, eq, gt, lt, desc } from "drizzle-orm";
+import { and, desc, eq, gt, lt, ne, or } from "drizzle-orm";
 import { getViewerId } from "../../lib/auth-types";
 import { logger } from "../../lib/logger";
 
@@ -40,7 +40,7 @@ highlightsRouter.get("/", async (_req, res) => {
         eq(postsTable.isHighlight, true),
         eq(postsTable.isDeleted, false),
         eq(postsTable.isPublished, true),
-        gt(postsTable.expiresAt, now),
+        or(eq(postsTable.type, "spark"), gt(postsTable.expiresAt, now)),
       ),
     )
     .orderBy(desc(postsTable.createdAt))
@@ -127,6 +127,7 @@ export async function expireHighlights(): Promise<void> {
       .where(
         and(
           eq(postsTable.isHighlight, true),
+          ne(postsTable.type, "spark"),
           lt(postsTable.expiresAt as never, now),
         ),
       )

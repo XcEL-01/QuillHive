@@ -4,6 +4,11 @@ import type { AdminProps } from "./types";
 import { useAdminFetch } from "../hooks/useAdminFetch";
 
 const FLAG_METADATA: Record<string, { label: string; description: string; category: "Core" | "Future" }> = {
+  service_checkout_enabled: {
+    label: "Creator Service Checkout",
+    description: "Allow buyers to pay for fixed-price creator services through Flutterwave and credit creator earnings.",
+    category: "Core",
+  },
   referral_rewards_enabled: {
     label: "Referral Rewards",
     description: "Award trust score bonuses to users based on how many valid people they've referred and those referrals' own trust scores. Off by default - enable when ready.",

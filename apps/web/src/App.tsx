@@ -74,6 +74,7 @@ const ChainView = lazy(() => import("@/pages/chains/ChainView"));
 const ChainMine = lazy(() => import("@/pages/chains/ChainMine"));
 const ChainAnalytics = lazy(() => import("@/pages/chains/ChainAnalytics"));
 const CarouselGenerator = lazy(() => import("@/pages/carousel/CarouselGenerator"));
+const PaymentComplete = lazy(() => import("@/pages/payments/PaymentComplete"));
 
 const PUBLIC_ROUTES = [
   "/about",
@@ -362,6 +363,9 @@ function Router() {
       </Route>
       <Route path="/income">
         <AuthGuard><FeatureRoute flag="income_tracker_enabled"><IncomePage /></FeatureRoute></AuthGuard>
+      </Route>
+      <Route path="/payments/complete">
+        <AuthGuard><PaymentComplete /></AuthGuard>
       </Route>
       <Route path="/analytics">
         <AuthGuard><CreatorAnalytics /></AuthGuard>

@@ -1,0 +1,50 @@
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { getStoredToken } from '@/lib/api';
+
+export default function PaymentComplete() {
+  const [location] = useLocation();
+  const [state, setState] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('Confirming your payment...');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] ?? '');
+    const transactionId = params.get('transaction_id');
+    const txRef = params.get('tx_ref');
+    if (!transactionId || !txRef) {
+      setState('error');
+      setMessage('The payment reference is missing. If you were charged, contact support with your receipt.');
+      return;
+    }
+
+    fetch(`/api/payments/service/verify?transactionId=${encodeURIComponent(transactionId)}&txRef=${encodeURIComponent(txRef)}`, {
+      headers: getStoredToken() ? { Authorization: `Bearer ${getStoredToken()}` } : {},
+    })
+      .then(async response => {
+        const data = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(data.error ?? 'Payment verification failed');
+        setState('success');
+        setMessage('Payment confirmed. The creator has been credited and can begin your service.');
+      })
+      .catch(error => {
+        setState('error');
+        setMessage(error instanceof Error ? error.message : 'Payment verification failed.');
+      });
+  }, [location]);
+
+  return (
+    <AppLayout>
+      <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-5">
+        {state === 'loading' && <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />}
+        {state === 'success' && <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500" />}
+        {state === 'error' && <XCircle className="w-12 h-12 mx-auto text-destructive" />}
+        <h1 className="text-2xl font-serif font-bold">{state === 'success' ? 'Payment complete' : state === 'error' ? 'Payment needs attention' : 'Confirming payment'}</h1>
+        <p className="text-sm text-muted-foreground">{message}</p>
+        {state !== 'loading' && <Link href="/workspace?tab=talent"><Button className="rounded-xl">Return to opportunities</Button></Link>}
+      </div>
+    </AppLayout>
+  );
+}

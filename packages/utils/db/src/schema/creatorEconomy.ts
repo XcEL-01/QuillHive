@@ -112,6 +112,25 @@ export const creatorEarningsTable = pgTable("creator_earnings", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const creatorPaymentTransactionsTable = pgTable("creator_payment_transactions", {
+  id: serial("id").primaryKey(),
+  buyerId: integer("buyer_id").notNull().references(() => usersTable.id),
+  creatorId: integer("creator_id").notNull().references(() => usersTable.id),
+  serviceListingId: integer("service_listing_id").notNull().references(() => serviceListingsTable.id),
+  commissionRequestId: integer("commission_request_id").references(() => commissionRequestsTable.id),
+  amount: real("amount").notNull(),
+  currency: text("currency").notNull().default("USD"),
+  txRef: text("tx_ref").notNull().unique(),
+  transactionId: text("transaction_id").unique(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  paidAt: timestamp("paid_at"),
+}, (t) => ({
+  idxBuyer: index("idx_creator_payment_buyer").on(t.buyerId),
+  idxCreator: index("idx_creator_payment_creator").on(t.creatorId),
+  idxStatus: index("idx_creator_payment_status").on(t.status),
+}));
+
 export const skillEndorsementsTable = pgTable("skill_endorsements", {
   id: serial("id").primaryKey(),
   fromUserId: integer("from_user_id").notNull().references(() => usersTable.id),
@@ -147,5 +166,6 @@ export type CreatorTip = typeof creatorTipsTable.$inferSelect;
 export type ServiceListing = typeof serviceListingsTable.$inferSelect;
 export type CommissionRequest = typeof commissionRequestsTable.$inferSelect;
 export type CreatorEarnings = typeof creatorEarningsTable.$inferSelect;
+export type CreatorPaymentTransaction = typeof creatorPaymentTransactionsTable.$inferSelect;
 export type SkillEndorsement = typeof skillEndorsementsTable.$inferSelect;
 export type CreatorAvailability = typeof creatorAvailabilityTable.$inferSelect;

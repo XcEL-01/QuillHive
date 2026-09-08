@@ -7,10 +7,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'wouter';
 import { getStoredToken } from '@/lib/api';
+import { useFeatureFlags } from '@/lib/features';
 import { useToast } from '@/hooks/use-toast';
 import { getInitials } from '@/lib/utils';
 import {
-  Search, Award, Clock, DollarSign, Briefcase, Globe, Zap, ChevronRight, Users2,
+  Search, Award, Clock, DollarSign, Briefcase, Globe, Zap, ChevronRight, Users2, CreditCard,
 } from 'lucide-react';
 
 interface SkillBadge { skill: string; endorsements: number }
@@ -37,7 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
   open_to_opportunities: 'Collaboration Ready',
 };
 
-function CreatorCard({ creator }: { creator: Creator }) {
+function CreatorCard({ creator, checkoutEnabled, onCheckout }: { creator: Creator; checkoutEnabled: boolean; onCheckout: (listing: Listing) => void }) {
   const { user, availability, skills, totalEndorsements, listings, affinityScore } = creator;
   const topSkills = skills.slice(0, 3);
   const listing = listings[0] ?? null;
@@ -137,11 +138,17 @@ function CreatorCard({ creator }: { creator: Creator }) {
             View Profile <ChevronRight className="w-3 h-3" />
           </Button>
         </Link>
-        <Link href={`/workspace?tab=collaborate&to=${user.username}&type=commission`}>
-          <Button size="sm" className="gap-1 text-xs h-8">
-            <Briefcase className="w-3 h-3" /> Hire
+        {checkoutEnabled && listing?.pricingModel === 'fixed' && listing.priceFrom ? (
+          <Button size="sm" className="gap-1 text-xs h-8" onClick={() => onCheckout(listing)}>
+            <CreditCard className="w-3 h-3" /> Pay
           </Button>
-        </Link>
+        ) : (
+          <Link href={`/workspace?tab=collaborate&to=${user.username}&type=commission`}>
+            <Button size="sm" className="gap-1 text-xs h-8">
+              <Briefcase className="w-3 h-3" /> Hire
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -168,6 +175,8 @@ function CreatorCardSkeleton() {
 export function TalentPanel() {
   const { toast } = useToast();
   const token = getStoredToken();
+  const featureFlags = useFeatureFlags();
+  const checkoutEnabled = featureFlags.service_checkout_enabled === true;
 
   const [creators, setCreators] = useState<Creator[]>([]);
   const [total, setTotal] = useState(0);
@@ -177,6 +186,24 @@ export function TalentPanel() {
 
   const [skillFilter, setSkillFilter] = useState('');
   const [availableForFilter, setAvailableForFilter] = useState('all');
+  const [checkoutListingId, setCheckoutListingId] = useState<number | null>(null);
+
+  const handleCheckout = async (listing: Listing) => {
+    setCheckoutListingId(listing.id);
+    try {
+      const res = await fetch('/api/payments/service/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ serviceListingId: listing.id, redirectUrl: `${window.location.origin}/payments/complete` }),
+      });
+      const data = await res.json() as { link?: string; error?: string };
+      if (!res.ok || !data.link) throw new Error(data.error ?? 'Could not start checkout');
+      window.location.assign(data.link);
+    } catch (error) {
+      toast({ title: 'Checkout unavailable', description: error instanceof Error ? error.message : 'Please try again.', variant: 'destructive' });
+      setCheckoutListingId(null);
+    }
+  };
 
   const fetchCreators = useCallback(async (reset = false) => {
     setLoading(true);
@@ -248,7 +275,7 @@ export function TalentPanel() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {loading && creators.length === 0
           ? Array.from({ length: 4 }).map((_, i) => <CreatorCardSkeleton key={i} />)
-          : creators.map(c => <CreatorCard key={c.user.id} creator={c} />)
+          : creators.map(c => <CreatorCard key={c.user.id} creator={c} checkoutEnabled={checkoutEnabled && checkoutListingId === null} onCheckout={handleCheckout} />)
         }
       </div>
 

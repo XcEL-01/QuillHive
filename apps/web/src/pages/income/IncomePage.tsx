@@ -40,7 +40,10 @@ export default function IncomePage() {
     setLoading(true);
     try {
       const res = await fetch('/api/income', { headers: authHeaders });
-      if (res.ok) setEntries(await res.json());
+      if (res.ok) {
+        const data = await res.json() as { logs?: IncomeEntry[] } | IncomeEntry[];
+        setEntries(Array.isArray(data) ? data : data.logs ?? []);
+      }
     } catch {
     } finally {
       setLoading(false);
@@ -66,7 +69,7 @@ export default function IncomePage() {
           currency: form.currency,
           source: form.source,
           description: form.description || undefined,
-          earnedAt: form.earnedAt ? new Date(form.earnedAt).toISOString() : undefined,
+          date: new Date(form.earnedAt || new Date().toISOString()).toISOString(),
         }),
       });
       if (res.ok) {

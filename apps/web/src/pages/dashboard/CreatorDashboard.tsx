@@ -203,7 +203,7 @@ export default function CreatorDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-serif font-bold text-foreground">{t("dashboard.title", "Your Dashboard")}</h1>
-              <p className="text-muted-foreground text-sm mt-1">{t("home.tagline", "Build your portfolio.")} {t("home.taglineHighlight", "Grow your audience.")} {t("home.taglineEnd", "Get opportunities.")}</p>
+              <p className="text-muted-foreground text-sm mt-1">{t("home.tagline", "Build proof of work.")} {t("home.taglineHighlight", "Earn trust through consistency.")} {t("home.taglineEnd", "Get discovered for opportunities.")}</p>
             </div>
             <Badge variant="secondary" className="rounded-xl px-3 py-1.5 text-xs font-medium gap-1.5">
               <TrendingUp className="w-3.5 h-3.5" /> QuillHive Member
@@ -608,6 +608,7 @@ export default function CreatorDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <p className="text-xs text-muted-foreground">A living signal of the quality and consistency behind your work. Stronger trust makes your profile more credible when opportunity seekers find you.</p>
                     <div className="flex items-center gap-4">
                       <div className="text-center">
                         <p className="text-4xl font-bold text-foreground">{Math.round(trust.uti)}</p>

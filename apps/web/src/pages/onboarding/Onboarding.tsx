@@ -223,9 +223,9 @@ export default function Onboarding() {
   const getGoalCta = (goals: string[]): GoalCta => {
     if (goals.includes('earn_opportunities') || goals.includes('build_portfolio')) {
       return {
-        label: 'Set up your creator profile',
-        href: '/profile',
-        description: 'Add your skills and availability to attract opportunities',
+        label: 'Open your opportunity workspace',
+        href: '/workspace',
+        description: 'Turn your skills and growing body of work into a profile people can hire',
       };
     }
     if (goals.includes('grow_audience') || goals.includes('get_discovered') || goals.includes('build_brand')) {
@@ -299,25 +299,25 @@ export default function Onboarding() {
               </div>
               <div>
                 <h1 className="text-4xl font-serif font-bold text-foreground mb-3">Welcome to QuillHive</h1>
-                <p className="text-foreground/80 text-lg font-medium leading-snug">
-                  Tell us about yourself so we can personalise your experience.
+                  <p className="text-foreground/80 text-lg font-medium leading-snug">
+                  Build the kind of creative track record that gets you discovered, trusted, and hired.
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-3 text-left">
                 <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-center gap-2">
                   <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-primary" /></div>
-                  <p className="text-xs font-semibold text-center text-foreground">Grow your audience</p>
+                  <p className="text-xs font-semibold text-center text-foreground">Grow an audience that knows your work</p>
                 </div>
                 <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-4 flex flex-col items-center gap-2">
                   <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center"><Eye className="w-5 h-5 text-violet-500" /></div>
-                  <p className="text-xs font-semibold text-center text-foreground">Get discovered</p>
+                  <p className="text-xs font-semibold text-center text-foreground">Get discovered for your skills</p>
                 </div>
                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 flex flex-col items-center gap-2">
                   <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center"><Trophy className="w-5 h-5 text-amber-500" /></div>
-                  <p className="text-xs font-semibold text-center text-foreground">Earn opportunities</p>
+                  <p className="text-xs font-semibold text-center text-foreground">Turn proof into paid work</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">Takes under 2 minutes.</p>
+              <p className="text-sm text-muted-foreground">In under 2 minutes, you'll start building your public proof of work.</p>
               <Button size="lg" className="rounded-2xl px-8 bg-gradient-to-r from-primary to-violet-500 border-0 text-white shadow-lg" onClick={() => setStep(1)}>
                 Start Growing <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -435,7 +435,7 @@ export default function Onboarding() {
             <motion.div key="skills" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-5">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-foreground mb-1">What are your skills?</h2>
-                <p className="text-muted-foreground text-sm">Tag your expertise so the right people find you. Pick up to 12.</p>
+                <p className="text-muted-foreground text-sm">Tag your expertise so clients and collaborators can find the right proof of work. Pick up to 12.</p>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {SKILL_CATEGORIES.map((cat, idx) => {
@@ -499,7 +499,7 @@ export default function Onboarding() {
             <motion.div key="profile" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-foreground mb-1">Tell your story</h2>
-                <p className="text-muted-foreground text-sm">Optional - you can always update this later in settings.</p>
+                <p className="text-muted-foreground text-sm">This is the first line of the profile people will use to decide whether to reach out.</p>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
@@ -538,8 +538,8 @@ export default function Onboarding() {
           {currentStepName === 'follow' && (
             <motion.div key="follow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
               <div>
-                <h2 className="text-2xl font-serif font-bold text-foreground mb-1">Follow a few people</h2>
-                <p className="text-muted-foreground text-sm">The more you follow, the more you get discovered. Start your growth loop now.</p>
+                <h2 className="text-2xl font-serif font-bold text-foreground mb-1">Build your opportunity network</h2>
+                <p className="text-muted-foreground text-sm">Follow creators, clients, and collaborators whose work matches your direction. Your consistent work becomes your resume here.</p>
               </div>
               <div className="space-y-3">
                 {suggestedCreators.length === 0 && (
@@ -569,7 +569,7 @@ export default function Onboarding() {
               </div>
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 flex items-center gap-3">
                 <Zap className="w-4 h-4 text-primary flex-shrink-0" />
-                <p className="text-xs text-foreground/80">Your first post in the next 24h gets an automatic visibility boost. Post something as soon as you arrive!</p>
+                <p className="text-xs text-foreground/80">Your first post in the next 24h gets an automatic visibility boost. Start your proof of work while your profile is fresh.</p>
               </div>
               {(() => {
                 const goalCta = getGoalCta(selectedGoals);

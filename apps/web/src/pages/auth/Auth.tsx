@@ -344,10 +344,10 @@ export default function Auth() {
             <h1 className="text-4xl font-serif font-bold text-white tracking-tight">QuillHive</h1>
           </div>
           <p className="text-sm text-muted-foreground text-center italic">
-            "Your quill is your voice. Your hive is where it grows."
+            "Your work is your proof. Your hive is where it gets discovered."
           </p>
           <p className="text-xs text-muted-foreground text-center mt-1">
-            Grow, get discovered, and find real opportunities - for everyone.
+            Build a visible creative track record and get found for real paid opportunities.
           </p>
           <div className="flex items-center gap-6 mt-8">
             {[

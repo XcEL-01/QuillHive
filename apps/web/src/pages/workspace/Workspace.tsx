@@ -18,7 +18,7 @@ export default function Workspace() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">Workspace</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Find work, hire talent, and collaborate on projects.
+            Turn your body of work, Trust Score, and availability into your next paid opportunity.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export default function Workspace() {
           <TabsList className="w-full grid grid-cols-3 mb-6">
             <TabsTrigger value="work" className="gap-1.5">
               <Briefcase className="w-4 h-4" />
-              <span className="hidden sm:inline">Find Work</span>
+              <span className="hidden sm:inline">Find Opportunities</span>
               <span className="sm:hidden">Work</span>
             </TabsTrigger>
             <TabsTrigger value="talent" className="gap-1.5">

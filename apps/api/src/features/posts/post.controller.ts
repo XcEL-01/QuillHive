@@ -256,11 +256,11 @@ export const createPost = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
 
-  const { title, titleA, titleB, content, excerpt, type, imageUrl, attachments, tags, isPublished, groupId, seriesId, scheduledAt } = req.body;
+  const { title, titleA, titleB, content, excerpt, type, imageUrl, attachments, tags, isPublished, groupId, seriesId, quotedPostId, scheduledAt } = req.body;
   if (!content || !type) return res.status(400).json({ error: "Content and type are required" });
 
   try {
-    const post = await PostService.createPost(viewerId, { title, titleA, titleB, content, excerpt, type, imageUrl, attachments, tags, isPublished, groupId, seriesId, scheduledAt });
+    const post = await PostService.createPost(viewerId, { title, titleA, titleB, content, excerpt, type, imageUrl, attachments, tags, isPublished, groupId, seriesId, quotedPostId, scheduledAt });
     refreshTrustForUsers(viewerId);
     void deleteCachePattern(`feed:*`);
     void deleteCachePattern(`trending:*`); memDeletePattern("trending:");

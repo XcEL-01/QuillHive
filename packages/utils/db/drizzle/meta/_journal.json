@@ -22,6 +22,13 @@
       "when": 1757310400000,
       "tag": "0002_message_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788871600000,
+      "tag": "0003_add_quoted_post",
+      "breakpoints": true
     }
   ]
 }

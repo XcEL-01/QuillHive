@@ -34,6 +34,7 @@ const postBodySchema = z.object({
   isPublished: z.boolean().optional(),
   groupId: z.number().int().positive().optional(),
   seriesId: z.number().int().positive().optional(),
+  quotedPostId: z.number().int().positive().optional(),
   scheduledAt: z.string().optional(),
   attachments: z.array(z.any()).max(10).optional(),
 });

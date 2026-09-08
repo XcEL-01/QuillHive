@@ -82,6 +82,13 @@ export default function Write() {
     const match = /[?&]challenge=(\d+)/.exec(search);
     return match ? Number.parseInt(match[1], 10) : null;
   })();
+  const quoteId = (() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const match = /[?&]quote=(\d+)/.exec(search);
+    return match ? Number.parseInt(match[1], 10) : null;
+  })();
+  const [quoteTargetId, setQuoteTargetId] = useState<number | null>(quoteId);
+  const [quotedPost, setQuotedPost] = useState<any>(null);
   const [challengeCtx, setChallengeCtx] = useState<ChallengeContext | null>(null);
   const [originalityWarning, setOriginalityWarning] = useState<string | null>(null);
   const [originalityChecking, setOriginalityChecking] = useState(false);
@@ -101,6 +108,14 @@ export default function Write() {
   const [enableAB, setEnableAB] = useState(false);
   const [titleA, setTitleA] = useState('');
   const [titleB, setTitleB] = useState('');
+
+  useEffect(() => {
+    if (!quoteId || !token) return;
+    fetch(`/api/posts/${quoteId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.ok ? res.json() : null)
+      .then((post) => setQuotedPost(post))
+      .catch(() => setQuotedPost(null));
+  }, [quoteId, token]);
 
   const [boostCtaPostId, setBoostCtaPostId] = useState<number | null>(null);
   const [serverDraftId, setServerDraftId] = useState<number | null>(null);
@@ -390,6 +405,7 @@ export default function Write() {
       isPublished: enableSchedule ? false : isPublished,
       scheduledAt: enableSchedule && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       seriesId: seriesId ? Number(seriesId) : undefined,
+      quotedPostId: quoteTargetId || undefined,
     };
     createPost({
       data: payload,
@@ -544,6 +560,19 @@ export default function Write() {
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto px-4 md:px-0 pb-20">
+
+        {quotedPost && (
+          <div className="mb-5 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground">Quoting {quotedPost.author?.displayName || 'this post'}</span>
+              <button type="button" onClick={() => { setQuotedPost(null); setQuoteTargetId(null); }} className="text-muted-foreground hover:text-foreground" aria-label="Remove quote">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-3">{quotedPost.excerpt || quotedPost.content}</p>
+            {quotedPost.imageUrl && <img src={quotedPost.imageUrl} alt="" className="mt-3 h-24 w-36 rounded-lg object-cover" />}
+          </div>
+        )}
 
         {hasDraft && !draftRestored && (
           <div className="mb-4 p-4 rounded-xl border border-amber-300/40 bg-amber-50 dark:bg-amber-950/20 flex items-center justify-between gap-3">

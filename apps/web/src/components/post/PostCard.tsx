@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, Flag, Copy, Edit, Trash2, Check, Repeat2, ShieldCheck, AlertTriangle, Languages, HelpCircle, Code2, Clock, Zap, History, Pin, Rocket, Loader2, TrendingUp, BadgeCheck, Eye, Megaphone, Star, Lightbulb, Trophy, Sparkles, Bell, Users, ExternalLink } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, Flag, Copy, Edit, Trash2, Check, Repeat2, ShieldCheck, AlertTriangle, Languages, HelpCircle, Code2, Clock, Zap, History, Pin, Rocket, Loader2, TrendingUp, BadgeCheck, Eye, Megaphone, Star, Lightbulb, Trophy, Sparkles, Bell, Users, ExternalLink, Quote as QuoteIcon } from 'lucide-react';
 import { EditHistoryModal } from './EditHistoryModal';
 import { TrustIndicator, type TrustTier } from './TrustIndicator';
 import { AttachmentList } from './AttachmentList';
@@ -62,6 +62,14 @@ type EnrichedPost = Post & {
   challengeRewardText?: string | null;
   featuredCreatorId?: number | null;
   authorHireEnabled?: boolean;
+  quotedPost?: {
+    id: number;
+    content: string;
+    excerpt?: string | null;
+    title?: string | null;
+    imageUrl?: string | null;
+    author?: { displayName: string; username: string; avatarUrl?: string | null } | null;
+  } | null;
 };
 
 function OfficialBadge({ isOfficial }: { isOfficial?: boolean }) {
@@ -413,6 +421,14 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       toast({ title: 'Link copied!', description: 'Post link copied to clipboard.' });
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleQuote = () => {
+    if (!currentUser) {
+      toast({ title: 'Sign in to quote posts', variant: 'destructive' });
+      return;
+    }
+    setLocation(`/write?quote=${post.id}`);
   };
 
   const handleRepost = async () => {
@@ -821,6 +837,24 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
           {parsedAttachments.length > 0 && (
             <AttachmentList attachments={parsedAttachments} />
           )}
+          {post.quotedPost && (
+            <Link
+              href={`/post/${post.quotedPost.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-3 block rounded-xl border border-border/70 bg-muted/20 p-3 hover:border-primary/40 transition-colors"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={post.quotedPost.author?.avatarUrl || ''} />
+                  <AvatarFallback className="text-[10px]">{post.quotedPost.author?.displayName?.slice(0, 2)}</AvatarFallback>
+                </Avatar>
+                <span className="text-xs font-semibold">{post.quotedPost.author?.displayName || 'Original post'}</span>
+                {post.quotedPost.author?.username && <span className="text-xs text-muted-foreground">@{post.quotedPost.author.username}</span>}
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-3">{post.quotedPost.excerpt || post.quotedPost.content}</p>
+              {post.quotedPost.imageUrl && <img src={post.quotedPost.imageUrl} alt="" className="mt-2 h-20 w-28 rounded-lg object-cover" />}
+            </Link>
+          )}
         </Link>
 
         {post.hasPoll && (
@@ -987,6 +1021,15 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Quote */}
+          <button
+            onClick={handleQuote}
+            title="Quote"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+          >
+            <QuoteIcon className="w-4 h-4" />
+          </button>
 
           {/* Save / Bookmark */}
           <button

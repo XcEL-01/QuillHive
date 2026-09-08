@@ -18,6 +18,7 @@ import { eq, and, desc, inArray, sql, notInArray, gt, gte, isNull, or, ne } from
 import { getUserWithCounts, enrichPost } from "../profiles/profile.service";
 import { emitToUser } from "../../lib/socket";
 import { sanitizeRichText, sanitizePlain } from "../../lib/sanitize";
+import { notify } from "../notifications/notification.service";
 
 async function getBlockedUserIds(viewerId: number | null): Promise<number[]> {
   if (!viewerId) return [];
@@ -340,6 +341,7 @@ export async function createPost(
     isPublished?: boolean;
     groupId?: number;
     seriesId?: number;
+    quotedPostId?: number;
     scheduledAt?: string;
     contentWarning?: string | null;
     contentTags?: string[];
@@ -357,6 +359,17 @@ export async function createPost(
     : [];
   const { aiTextScore } = await import("../safety/aiText.service");
   const score = data.isOfficialPost ? 0 : aiTextScore(cleanContent);
+
+  let quotedPost: { id: number; authorId: number } | undefined;
+  if (data.quotedPostId) {
+    const [quotedPostRow] = await db
+      .select({ id: postsTable.id, authorId: postsTable.authorId })
+      .from(postsTable)
+      .where(and(eq(postsTable.id, data.quotedPostId), eq(postsTable.isDeleted, false)))
+      .limit(1);
+    quotedPost = quotedPostRow;
+    if (!quotedPost) throw new Error("Quoted post not found");
+  }
 
   // Originality check (only for published long-form posts, never for official posts).
   // Throws a typed error caught by the controller and surfaced as 409.
@@ -396,6 +409,7 @@ export async function createPost(
       isPublished: data.isPublished ?? true,
       groupId: data.groupId || null,
       seriesId: data.seriesId || null,
+      quotedPostId: quotedPost?.id ?? null,
       scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
       // Keep Sparks in the existing highlights tray while treating them as permanent posts.
       isHighlight: isSpark,
@@ -423,6 +437,19 @@ export async function createPost(
   import("../mentions/mentions.routes")
     .then((m) => m.processMentions(post.id, cleanContent, authorId))
     .catch(() => {});
+
+  if (quotedPost && quotedPost.authorId !== authorId) {
+    const actor = await getUserWithCounts(authorId, null);
+    void notify({
+      userId: quotedPost.authorId,
+      actorId: authorId,
+      type: "quote",
+      title: `${actor?.displayName || actor?.username || "Someone"} quoted your post`,
+      message: `${actor?.displayName || actor?.username || "Someone"} quoted your post`,
+      postId: post.id,
+      url: `/post/${post.id}`,
+    });
+  }
 
   // Fire-and-forget: extract hashtags from title + content and upsert into topicsTable
   (async () => {

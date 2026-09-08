@@ -12,6 +12,7 @@ export type NotificationType =
   | "reply"
   | "follow"
   | "mention"
+  | "quote"
   | "poll_vote"
   | "appreciation"
   | "share"
@@ -52,6 +53,7 @@ interface NotifyOpts {
 
 const PRIORITY_MAP: Record<NotificationType, { priority: string; category: string }> = {
   mention: { priority: "high", category: "mention" },
+  quote: { priority: "normal", category: "social" },
   reply: { priority: "high", category: "social" },
   comment: { priority: "normal", category: "social" },
   comment_like: { priority: "low", category: "social" },

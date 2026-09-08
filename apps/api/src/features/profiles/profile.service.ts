@@ -112,6 +112,28 @@ export async function enrichPost(post: any, viewerId: number | null) {
 
   const authorWithCounts = await getUserWithCounts(post.authorId, viewerId);
 
+  let quotedPost: Record<string, unknown> | null = null;
+  if (post.quotedPostId) {
+    const [quoted] = await db
+      .select({
+        id: postsTable.id,
+        authorId: postsTable.authorId,
+        content: postsTable.content,
+        excerpt: postsTable.excerpt,
+        title: postsTable.title,
+        imageUrl: postsTable.imageUrl,
+      })
+      .from(postsTable)
+      .where(eq(postsTable.id, post.quotedPostId))
+      .limit(1);
+    if (quoted) {
+      quotedPost = {
+        ...quoted,
+        author: await getUserWithCounts(quoted.authorId, viewerId),
+      };
+    }
+  }
+
   // Edit history count (best-effort)
   let editedCount = 0;
   try {
@@ -204,6 +226,7 @@ export async function enrichPost(post: any, viewerId: number | null) {
     ...post,
     tags: JSON.parse(post.tags || "[]"),
     author: authorWithCounts,
+    quotedPost,
     authorIsOfficial: (authorWithCounts as any)?.isOfficialAccount ?? false,
     authorCreatorLevel,
     authorHireEnabled: (authorWithCounts as any)?.hireMeEnabled ?? false,

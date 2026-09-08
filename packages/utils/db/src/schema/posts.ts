@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, real, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, real, jsonb, index, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -49,6 +49,7 @@ export const postsTable = pgTable("posts", {
   challengeEndsAt: timestamp("challenge_ends_at"),
   challengeRewardText: text("challenge_reward_text"),
   featuredCreatorId: integer("featured_creator_id"),
+  quotedPostId: integer("quoted_post_id").references((): AnyPgColumn => postsTable.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => ({

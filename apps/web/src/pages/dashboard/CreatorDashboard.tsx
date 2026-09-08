@@ -248,7 +248,7 @@ export default function CreatorDashboard() {
             </div>
 
             <Link href="/profile-viewers" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-              See who&apos;s been checking you out <ArrowUpRight className="w-4 h-4" />
+              See who&apos;s been checking you out → <ArrowUpRight className="w-4 h-4" />
             </Link>
 
             {/* Growth Intelligence Section */}

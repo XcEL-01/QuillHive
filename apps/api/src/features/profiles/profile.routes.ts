@@ -5,6 +5,7 @@ import * as Recovery from "./auth-recovery.controller";
 import { preventSpam } from "../../middleware/abuseProtection";
 import { validateBody } from "../../middleware/validate";
 import { rateLimit } from "../../middleware/rateLimit";
+import { requireAuth } from "../../middleware/admin";
 
 // Production: 30 login attempts / 15 min, 30 registrations / hr.
 // Development/preview: 6× headroom (applied inside rateLimit middleware).
@@ -108,6 +109,7 @@ usersRouter.patch("/me/settings", validateBody(z.object({
 usersRouter.patch("/me/creator", validateBody(creatorSchema), ProfileController.updateMyCreatorProfile);
 
 usersRouter.get("/me/profile-strength", ProfileController.getProfileStrength);
+usersRouter.get("/me/profile-viewers", requireAuth, ProfileController.getProfileViewers);
 usersRouter.get("/me/work-history", ProfileController.getMyWorkHistory);
 usersRouter.post("/me/work-history", validateBody(workHistorySchema), ProfileController.addWorkHistory);
 usersRouter.patch("/me/work-history/:id", validateBody(workHistorySchema.partial()), ProfileController.updateWorkHistory);

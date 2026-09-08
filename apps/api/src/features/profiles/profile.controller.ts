@@ -471,6 +471,39 @@ export const getUserByUsername = async (req: Request, res: Response) => {
   });
 };
 
+export const getProfileViewers = async (req: Request, res: Response) => {
+  const viewerId = (req as any).currentUser.id as number;
+  const result = await db.execute(sql`
+    SELECT
+      u.id,
+      u.username,
+      u.display_name AS "displayName",
+      u.avatar_url AS "avatarUrl",
+      pv.viewed_at AS "viewedAt",
+      EXISTS (
+        SELECT 1
+        FROM follows f
+        WHERE f.follower_id = ${viewerId}
+          AND f.following_id = pv.viewer_user_id
+      ) AS "isFollowing"
+    FROM profile_views pv
+    INNER JOIN users u ON u.id = pv.viewer_user_id
+    WHERE pv.profile_user_id = ${viewerId}
+      AND pv.viewer_user_id IS NOT NULL
+      AND pv.id IN (
+        SELECT DISTINCT ON (viewer_user_id) id
+        FROM profile_views
+        WHERE profile_user_id = ${viewerId}
+          AND viewer_user_id IS NOT NULL
+        ORDER BY viewer_user_id, viewed_at DESC, id DESC
+      )
+    ORDER BY pv.viewed_at DESC, pv.id DESC
+    LIMIT 20
+  `);
+
+  return res.json(result.rows);
+};
+
 export const getUserPosts = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   const { username } = req.params;

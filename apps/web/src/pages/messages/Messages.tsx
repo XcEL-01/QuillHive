@@ -38,6 +38,7 @@ export default function Messages() {
   const t = useT();
   const queryClient = useQueryClient();
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
+  const [conversationFilter, setConversationFilter] = useState<'all' | 'unread'>('all');
   const [isNewConvOpen, setIsNewConvOpen] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
@@ -47,6 +48,9 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations, isLoading: isConvsLoading } = useGetConversations();
+  const visibleConversations = conversations?.filter((conversation) => (
+    conversationFilter === 'all' || conversation.unreadCount > 0
+  ));
 
   const { data: messages, isLoading: isMsgsLoading } = useGetMessages(activeConvId ?? 0, {
     query: { enabled: !!activeConvId, queryKey: getGetMessagesQueryKey(activeConvId ?? 0) }
@@ -194,6 +198,20 @@ export default function Messages() {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder={t('messages.searchPlaceholder')} className="pl-9 bg-background rounded-xl border-border/60" />
             </div>
+            <div className="flex gap-1 mt-3" role="tablist" aria-label="Conversation filter">
+              {(['all', 'unread'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  role="tab"
+                  aria-selected={conversationFilter === filter}
+                  onClick={() => setConversationFilter(filter)}
+                  className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${conversationFilter === filter ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'}`}
+                >
+                  {filter === 'all' ? 'All' : 'Unread'}
+                </button>
+              ))}
+            </div>
           </div>
 
           <ScrollArea className="flex-1">
@@ -221,7 +239,12 @@ export default function Messages() {
                   {t('messages.newConversation', 'New Conversation')}
                 </Button>
               </div>
-            ) : conversations.map((conv) => {
+            ) : visibleConversations?.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center text-muted-foreground">
+                <MessageCircle className="w-8 h-8 mb-3 opacity-40" />
+                <p className="font-medium text-sm">No unread conversations</p>
+              </div>
+            ) : visibleConversations?.map((conv) => {
               const typedConv = conv as { id: number; isGroup?: boolean; groupName?: string; lastMessageContent?: string; lastMessageAt?: string; participants: Array<{ id: number; displayName?: string; avatarUrl?: string | null; username?: string }> };
               const partner = typedConv.participants.find((p) => p.id !== currentUser?.id);
               const isActive = activeConvId === conv.id;

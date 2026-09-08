@@ -74,7 +74,7 @@ postsRouter.post("/:id/save", validateParams(idParamsSchema), PostController.sav
 postsRouter.delete("/:id/save", validateParams(idParamsSchema), PostController.unsavePost);
 
 export const sparksRouter = Router();
-sparksRouter.get("/active", requireAuth, PostController.listActiveSparks);
+sparksRouter.get("/active", requireAuth, PostController.listRecentSparks);
 sparksRouter.post("/:id/view", requireAuth, validateParams(idParamsSchema), PostController.viewSpark);
 
 const abClickParamsSchema = z.object({

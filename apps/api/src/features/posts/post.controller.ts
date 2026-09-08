@@ -168,8 +168,9 @@ export const listPosts = async (req: Request, res: Response) => {
   return res.json(result);
 };
 
-export const listActiveSparks = async (req: Request, res: Response) => {
+export const listRecentSparks = async (req: Request, res: Response) => {
   const viewerId = (req as any).currentUser.id as number;
+  const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const following = await db
     .select({ userId: followsTable.followingId })
     .from(followsTable)
@@ -195,6 +196,7 @@ export const listActiveSparks = async (req: Request, res: Response) => {
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
       inArray(postsTable.authorId, authorIds),
+      gte(postsTable.createdAt, recentCutoff),
     ))
     .orderBy(desc(postsTable.createdAt));
 
@@ -208,6 +210,8 @@ export const listActiveSparks = async (req: Request, res: Response) => {
   }>();
 
   for (const row of rows) {
+    if (stories.has(row.authorId)) continue;
+
     const viewedBy = Array.isArray(row.viewedBy) ? row.viewedBy : [];
     const viewed = viewedBy.includes(viewerId);
     const story = stories.get(row.authorId) ?? {

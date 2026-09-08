@@ -38,7 +38,7 @@ export default function SparksNew() {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error ?? 'Failed to publish');
       }
-      toast({ title: 'Spark posted', description: 'It will be visible for 24 hours.' });
+      toast({ title: 'Spark posted' });
       navigate('/');
     } catch (e) {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });

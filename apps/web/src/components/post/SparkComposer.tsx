@@ -23,7 +23,7 @@ const FEELINGS = [
   { id: 'love', emoji: '❤️', label: 'Love' },
 ];
 
-export function SparkComposer({ onPosted }: { onPosted?: () => void }) {
+export function SparkComposer({ onPosted, prompt, placeholder }: { onPosted?: () => void; prompt?: string; placeholder?: string }) {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -107,12 +107,13 @@ export function SparkComposer({ onPosted }: { onPosted?: () => void }) {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
+          {prompt && <p className="text-sm font-semibold text-foreground mb-1">{prompt}</p>}
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onFocus={() => setExpanded(true)}
-            placeholder={t('spark.placeholder', "What's on your mind? Share a quick spark...")}
+            placeholder={placeholder ?? t('spark.placeholder', "What's on your mind? Share a quick spark...")}
             rows={1}
             className="w-full resize-none bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground py-2"
             maxLength={SPARK_MAX + 50}

@@ -321,9 +321,33 @@ function TopicsPanel() {
   );
 }
 
+function DailySparkPrompt({ userId }: { userId: number }) {
+  const storageKey = `qh_daily_spark_${userId}`;
+  const [completed, setCompleted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(storageKey) === new Date().toISOString().slice(0, 10);
+  });
+
+  if (completed) return null;
+
+  return (
+    <div className="mb-6">
+      <SparkComposer
+        prompt="What's one thing you learned today?"
+        placeholder="A lesson, a surprise, or a question worth keeping..."
+        onPosted={() => {
+          localStorage.setItem(storageKey, new Date().toISOString().slice(0, 10));
+          setCompleted(true);
+        }}
+      />
+      <p className="text-[11px] text-muted-foreground -mt-4 mb-2 px-4">30 seconds is enough. Your answer becomes part of your permanent body of work.</p>
+    </div>
+  );
+}
+
 export default function Home() {
   const t = useT();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const initialSource: FeedSource = (() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -394,6 +418,8 @@ export default function Home() {
           </div>
 
         </div>
+
+        {token && user && <DailySparkPrompt userId={user.id} />}
 
         {(feedSource === 'explore' || feedSource === 'following') && (
           <StoriesRow onOpenViewer={setActiveStoryGroup} />

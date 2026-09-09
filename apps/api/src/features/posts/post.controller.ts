@@ -626,7 +626,11 @@ export const getMySavedPosts = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
   const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 20;
+  const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(savedPostsTable)
+    .where(eq(savedPostsTable.userId, viewerId));
 
   const savedRows = await db
     .select({ postId: savedPostsTable.postId })
@@ -637,15 +641,19 @@ export const getMySavedPosts = async (req: Request, res: Response) => {
     .offset((page - 1) * limit);
 
   const postIds = savedRows.map(r => r.postId);
-  if (postIds.length === 0) return res.json({ posts: [], total: 0, page, limit });
+  if (postIds.length === 0) return res.json({ posts: [], total, page, limit, hasMore: false });
 
   const posts = await db
     .select()
     .from(postsTable)
     .where(and(inArray(postsTable.id, postIds), eq(postsTable.isDeleted, false)));
 
-  const enriched = await Promise.all(posts.map(p => enrichPost(p, viewerId)));
-  return res.json({ posts: enriched, total: enriched.length, page, limit });
+  const postsById = new Map(posts.map(post => [post.id, post]));
+  const enriched = await Promise.all(postIds.flatMap(postId => {
+    const post = postsById.get(postId);
+    return post ? [enrichPost(post, viewerId)] : [];
+  }));
+  return res.json({ posts: enriched, total, page, limit, hasMore: page * limit < total });
 };
 
 export const replyToComment = async (req: Request, res: Response) => {

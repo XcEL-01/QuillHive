@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, real, jsonb, index, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, real, jsonb, index, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -125,6 +125,7 @@ export const savedPostsTable = pgTable("saved_posts", {
 }, (t) => ({
   idxSavedPostsUserId: index("idx_saved_posts_user_id").on(t.userId),
   idxSavedPostsPostId: index("idx_saved_posts_post_id").on(t.postId),
+  uniqueSavedPost: uniqueIndex("saved_posts_user_post_unique").on(t.userId, t.postId),
 }));
 
 export const insertPostSchema = createInsertSchema(postsTable).omit({ id: true, createdAt: true, updatedAt: true });

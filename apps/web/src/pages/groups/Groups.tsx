@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRoute } from 'wouter';
 import { 
   useGetGroups, useGetGroup, useJoinGroup, useCreateGroup, useGetGroupPosts 
@@ -16,12 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Plus, Users, Hash, Loader2, ArrowLeft, BadgeCheck, Megaphone } from 'lucide-react';
+import { Search, Plus, Users, Hash, Loader2, ArrowLeft, BadgeCheck, Megaphone, Settings, Trash2 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useT } from '@/lib/i18n';
 
 import { GroupMembersList } from '@/components/groups/GroupMembersList';
 import { PinnedPosts } from '@/components/groups/PinnedPosts';
+import { useAuthStore } from '@/store/auth';
 
 interface GroupView {
   id: number;
@@ -34,6 +35,9 @@ interface GroupView {
   postsCount: number;
   isVerified?: boolean;
   isPromoted?: boolean;
+  privacy?: string;
+  rules?: string | null;
+  memberRole?: 'admin' | 'moderator' | 'member' | null;
 }
 
 function GroupDetail({ id }: { id: number }) {
@@ -42,10 +46,37 @@ function GroupDetail({ id }: { id: number }) {
 
   const { data: group, isLoading: groupLoading, refetch } = useGetGroup(id);
   const { data: postsData, isLoading: postsLoading } = useGetGroupPosts(id, {});
+  const { token } = useAuthStore();
+  const [myRole, setMyRole] = useState<GroupView['memberRole']>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState({ name: '', description: '', privacy: 'open', rules: '', coverUrl: '' });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!group) return;
+    const current = group as GroupView;
+    setMyRole(current.memberRole ?? null);
+    setSettings({ name: current.name, description: current.description ?? '', privacy: current.privacy ?? 'open', rules: current.rules ?? '', coverUrl: current.coverUrl ?? '' });
+  }, [group]);
 
   const { mutate: toggleJoin, isPending: isJoining } = useJoinGroup({
     mutation: { onSuccess: () => refetch() }
   });
+
+  const removePost = async (postId: number) => {
+    if (!token) return;
+    const res = await fetch(`/api/groups/${id}/posts/${postId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { toast({ title: 'Post removed' }); void queryClient.invalidateQueries({ queryKey: ['/api/groups', id, 'posts'] }); }
+  };
+
+  const saveSettings = async () => {
+    if (!token) return;
+    const res = await fetch(`/api/groups/${id}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(settings) });
+    if (!res.ok) return toast({ title: 'Could not update group settings', variant: 'destructive' });
+    toast({ title: 'Group settings updated' });
+    setSettingsOpen(false);
+    void refetch();
+  };
 
   if (groupLoading) return (
     <AppLayout>
@@ -120,7 +151,20 @@ function GroupDetail({ id }: { id: number }) {
             <TabsTrigger value="members" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">{t('groups.membersTab', 'Members')}</TabsTrigger>
           </TabsList>
           <TabsContent value="posts" className="space-y-5">
-            <PinnedPosts groupId={id} myRole={null} />
+            <PinnedPosts groupId={id} myRole={myRole ?? null} />
+            {myRole === 'admin' && (
+              <div className="mb-5">
+                <Button variant="outline" onClick={() => setSettingsOpen(value => !value)} className="rounded-xl gap-2"><Settings className="w-4 h-4" /> Group settings</Button>
+                {settingsOpen && <div className="mt-3 rounded-2xl border border-border bg-card p-4 space-y-3">
+                  <Input value={settings.name} onChange={e => setSettings(s => ({ ...s, name: e.target.value }))} placeholder="Group name" />
+                  <Textarea value={settings.description} onChange={e => setSettings(s => ({ ...s, description: e.target.value }))} placeholder="Description" />
+                  <Select value={settings.privacy} onValueChange={privacy => setSettings(s => ({ ...s, privacy }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="open">Open group</SelectItem><SelectItem value="private">Private group</SelectItem></SelectContent></Select>
+                  <Textarea value={settings.rules} onChange={e => setSettings(s => ({ ...s, rules: e.target.value }))} placeholder="Group rules" />
+                  <Input value={settings.coverUrl} onChange={e => setSettings(s => ({ ...s, coverUrl: e.target.value }))} placeholder="Cover image URL" />
+                  <Button onClick={() => void saveSettings()} className="rounded-xl">Save settings</Button>
+                </div>}
+              </div>
+            )}
             {postsLoading && Array.from({ length: 2 }).map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))}
@@ -131,7 +175,12 @@ function GroupDetail({ id }: { id: number }) {
                 <p className="text-sm mt-1">{t('groups.beFirstPost', 'Be the first to post in this group')}</p>
               </div>
             )}
-            {postsData?.posts.map(post => <PostCard key={post.id} post={post} />)}
+            {postsData?.posts.map(post => (
+              <div key={post.id} className="relative">
+                <PostCard post={post} />
+                {(myRole === 'admin' || myRole === 'moderator') && <button type="button" title="Remove post" onClick={() => void removePost(post.id)} className="absolute right-3 top-3 rounded-lg border border-border bg-background/90 p-2 text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></button>}
+              </div>
+            ))}
           </TabsContent>
           <TabsContent value="members">
             <GroupMembersList groupId={id} />

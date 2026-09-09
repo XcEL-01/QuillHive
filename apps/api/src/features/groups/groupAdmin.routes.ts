@@ -3,6 +3,8 @@ import { db } from "@workspace/db";
 import {
   groupsTable,
   groupMembersTable,
+  groupJoinRequestsTable,
+  groupBansTable,
   groupPinnedPostsTable,
   postsTable,
 } from "@workspace/db/schema";
@@ -111,6 +113,9 @@ groupAdminRouter.patch("/:id/members/:userId", requireAuth, async (req, res: Res
   }
   const actorRole = await getActorRole(groupId, actorId);
   if (actorRole !== "admin") return res.status(403).json({ error: "Only group admins can change roles" });
+  const [group] = await db.select({ creatorId: groupsTable.creatorId }).from(groupsTable).where(eq(groupsTable.id, groupId));
+  if (!group) return res.status(404).json({ error: "Group not found" });
+  if (group.creatorId === targetUserId) return res.status(400).json({ error: "The group creator must remain an admin" });
   const [updated] = await db
     .update(groupMembersTable)
     .set({ role })
@@ -118,6 +123,89 @@ groupAdminRouter.patch("/:id/members/:userId", requireAuth, async (req, res: Res
     .returning();
   if (!updated) return res.status(404).json({ error: "Member not found" });
   return res.json({ ok: true, member: updated });
+});
+
+groupAdminRouter.patch("/:id/settings", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  if (!Number.isFinite(groupId)) return res.status(400).json({ error: "Invalid id" });
+  if (await getActorRole(groupId, actorId) !== "admin") return res.status(403).json({ error: "Only group admins can update settings" });
+  const { name, description, privacy, rules, coverUrl, avatarUrl, category } = req.body ?? {};
+  if (privacy !== undefined && !["open", "private"].includes(privacy)) return res.status(400).json({ error: "Invalid privacy" });
+  const updates: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries({ name, description, privacy, rules, coverUrl, avatarUrl, category })) {
+    if (value !== undefined) updates[key] = value || null;
+  }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: "No settings provided" });
+  const [updated] = await db.update(groupsTable).set(updates).where(eq(groupsTable.id, groupId)).returning();
+  return updated ? res.json({ group: updated }) : res.status(404).json({ error: "Group not found" });
+});
+
+groupAdminRouter.get("/:id/join-requests", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  if (await getActorRole(groupId, actorId) !== "admin") return res.status(403).json({ error: "Only group admins can view join requests" });
+  const requests = await db.select().from(groupJoinRequestsTable)
+    .where(and(eq(groupJoinRequestsTable.groupId, groupId), eq(groupJoinRequestsTable.status, "pending")))
+    .orderBy(desc(groupJoinRequestsTable.createdAt));
+  return res.json({ requests });
+});
+
+groupAdminRouter.patch("/:id/join-requests/:requestId", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  const requestId = Number(req.params.requestId);
+  if (await getActorRole(groupId, actorId) !== "admin") return res.status(403).json({ error: "Only group admins can review join requests" });
+  const decision = req.body?.decision as string;
+  if (!["approve", "reject"].includes(decision)) return res.status(400).json({ error: "Decision must be approve or reject" });
+  const [request] = await db.select().from(groupJoinRequestsTable)
+    .where(and(eq(groupJoinRequestsTable.id, requestId), eq(groupJoinRequestsTable.groupId, groupId), eq(groupJoinRequestsTable.status, "pending")));
+  if (!request) return res.status(404).json({ error: "Join request not found" });
+  const status = decision === "approve" ? "approved" : "rejected";
+  await db.update(groupJoinRequestsTable).set({ status, reviewedBy: actorId, reviewedAt: new Date() }).where(eq(groupJoinRequestsTable.id, requestId));
+  if (decision === "approve") await db.insert(groupMembersTable).values({ groupId, userId: request.userId, role: "member" }).onConflictDoNothing();
+  return res.json({ ok: true, status });
+});
+
+groupAdminRouter.delete("/:id/members/:userId", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  const targetUserId = Number(req.params.userId);
+  if (await getActorRole(groupId, actorId) !== "admin") return res.status(403).json({ error: "Only group admins can remove members" });
+  const [group] = await db.select({ creatorId: groupsTable.creatorId }).from(groupsTable).where(eq(groupsTable.id, groupId));
+  if (group?.creatorId === targetUserId) return res.status(400).json({ error: "The group creator cannot be removed" });
+  await db.delete(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, targetUserId)));
+  return res.json({ ok: true });
+});
+
+groupAdminRouter.post("/:id/bans", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  const targetUserId = Number(req.body?.userId);
+  if (await getActorRole(groupId, actorId) !== "admin") return res.status(403).json({ error: "Only group admins can ban members" });
+  if (!Number.isFinite(targetUserId)) return res.status(400).json({ error: "Invalid user id" });
+  const [group] = await db.select({ creatorId: groupsTable.creatorId }).from(groupsTable).where(eq(groupsTable.id, groupId));
+  if (group?.creatorId === targetUserId) return res.status(400).json({ error: "The group creator cannot be banned" });
+  await db.insert(groupBansTable).values({ groupId, userId: targetUserId, bannedBy: actorId, reason: req.body?.reason || null }).onConflictDoNothing();
+  await db.delete(groupMembersTable).where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, targetUserId)));
+  return res.json({ ok: true });
+});
+
+groupAdminRouter.delete("/:id/bans/:userId", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  if (await getActorRole(groupId, actorId) !== "admin") return res.status(403).json({ error: "Only group admins can unban members" });
+  await db.delete(groupBansTable).where(and(eq(groupBansTable.groupId, groupId), eq(groupBansTable.userId, Number(req.params.userId))));
+  return res.json({ ok: true });
+});
+
+groupAdminRouter.delete("/:id/posts/:postId", requireAuth, async (req, res: Response) => {
+  const actorId = (req as AuthedRequest).currentUser.id;
+  const groupId = Number(req.params.id);
+  if (!canModerate(await getActorRole(groupId, actorId))) return res.status(403).json({ error: "Only group moderators can remove posts" });
+  const [post] = await db.update(postsTable).set({ isDeleted: true, deletedAt: new Date() })
+    .where(and(eq(postsTable.id, Number(req.params.postId)), eq(postsTable.groupId, groupId))).returning({ id: postsTable.id });
+  return post ? res.json({ ok: true }) : res.status(404).json({ error: "Post not found" });
 });
 
 groupAdminRouter.get("/:id/my-role", requireAuth, async (req, res: Response) => {

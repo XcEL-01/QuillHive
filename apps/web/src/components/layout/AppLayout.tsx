@@ -39,7 +39,7 @@ interface AppLayoutProps {
 // Keep the compact footer focused on the home feeds and the two high-frequency
 // social destinations. Professional/tools pages live under More.
 const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/notifications"];
-const MOBILE_MORE = ["/workspace", "/library", "/motion"];
+const MOBILE_MORE = ["/workspace", "/library", "/saved", "/motion"];
 
 // Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
 // inside the component loses the browsing trail whenever the route changes.
@@ -151,6 +151,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
     { href: "/workspace", icon: Briefcase, label: "Workspace" },
     { href: "/workspace?tab=collaborate", icon: Handshake, label: "Exchange" },
     { href: "/library", icon: BookOpen, label: "Library" },
+    { href: "/saved", icon: Bookmark, label: "Saved" },
   ];
 
   const avatarUrl = mediaUrl(user?.avatarUrl);

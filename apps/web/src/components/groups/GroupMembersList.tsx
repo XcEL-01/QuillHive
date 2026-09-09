@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Shield, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Loader2, Shield, ShieldCheck, User as UserIcon, UserMinus, Ban, Check, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthStore } from "@/store/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [myRole, setMyRole] = useState<GroupRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState<Array<{ id: number; userId: number; createdAt: string }>>([]);
 
   useEffect(() => {
     (async () => {
@@ -49,6 +50,13 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
     })();
   }, [groupId, token]);
 
+  useEffect(() => {
+    if (myRole !== "admin" || !token) return;
+    void fetch(`/api/groups/${groupId}/join-requests`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() as Promise<{ requests?: typeof requests }> : { requests: [] })
+      .then(data => setRequests(data.requests ?? []));
+  }, [groupId, myRole, token]);
+
   const updateRole = async (userId: number, role: GroupRole) => {
     if (!token) return;
     try {
@@ -65,6 +73,31 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
     }
   };
 
+  const removeMember = async (userId: number, ban = false) => {
+    if (!token) return;
+    const endpoint = ban ? `/api/groups/${groupId}/bans` : `/api/groups/${groupId}/members/${userId}`;
+    const res = await fetch(endpoint, {
+      method: ban ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      ...(ban ? { body: JSON.stringify({ userId }) } : {}),
+    });
+    if (!res.ok) return toast({ title: "Could not update member", variant: "destructive" });
+    setMembers(prev => prev.filter(member => member.userId !== userId));
+    toast({ title: ban ? "Member banned" : "Member removed" });
+  };
+
+  const reviewRequest = async (requestId: number, decision: "approve" | "reject") => {
+    if (!token) return;
+    const res = await fetch(`/api/groups/${groupId}/join-requests/${requestId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ decision }),
+    });
+    if (!res.ok) return toast({ title: "Could not review request", variant: "destructive" });
+    setRequests(prev => prev.filter(request => request.id !== requestId));
+    if (decision === "approve") window.location.reload();
+  };
+
   if (loading) {
     return (
       <div className="bg-card border border-border/60 rounded-2xl p-6 text-center">
@@ -76,7 +109,31 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
   const canManage = myRole === "admin";
 
   return (
-    <div className="bg-card border border-border/60 rounded-2xl divide-y divide-border" data-testid="group-members-list">
+    <div className="space-y-6" data-testid="group-members-list">
+      {myRole === "admin" && requests.length > 0 && (
+        <section className="bg-card border border-border/60 rounded-2xl p-4 space-y-3">
+          <h3 className="font-semibold">Join requests</h3>
+          {requests.map(request => (
+            <div key={request.id} className="flex items-center justify-between gap-3 text-sm">
+              <span>User #{request.userId}</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => void reviewRequest(request.id, "approve")} className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-primary-foreground"><Check className="w-3.5 h-3.5" />Approve</button>
+                <button type="button" onClick={() => void reviewRequest(request.id, "reject")} className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5"><X className="w-3.5 h-3.5" />Reject</button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+      <section className="bg-card border border-border/60 rounded-2xl divide-y divide-border">
+      <div className="px-4 py-3 text-sm font-semibold">Admins &amp; Moderators</div>
+      {members.filter(m => m.role !== "member").map(m => (
+        <div key={`staff-${m.id}`} className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3"><ShieldCheck className="w-4 h-4 text-primary" /><span className="text-sm">User #{m.userId}</span><span className="text-xs text-muted-foreground capitalize">{m.role}</span></div>
+        </div>
+      ))}
+      </section>
+      <section className="bg-card border border-border/60 rounded-2xl divide-y divide-border">
+      <div className="px-4 py-3 text-sm font-semibold">All members</div>
       {members.length === 0 ? (
         <p className="text-muted-foreground text-center py-6 text-sm">No members yet.</p>
       ) : members.map(m => (
@@ -91,17 +148,18 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
             </div>
           </div>
           {canManage && (
-            <Select value={m.role} onValueChange={(v) => updateRole(m.userId, v as GroupRole)}>
-              <SelectTrigger className="w-32 h-8 text-xs" data-testid={`select-role-${m.userId}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map(r => <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select value={m.role} onValueChange={(v) => updateRole(m.userId, v as GroupRole)}>
+                <SelectTrigger className="w-32 h-8 text-xs" data-testid={`select-role-${m.userId}`}><SelectValue /></SelectTrigger>
+                <SelectContent>{ROLES.map(r => <SelectItem key={r} value={r} className="text-xs capitalize">{r}</SelectItem>)}</SelectContent>
+              </Select>
+              <button type="button" title="Remove member" onClick={() => void removeMember(m.userId)} className="p-2 rounded-lg hover:bg-muted"><UserMinus className="w-4 h-4" /></button>
+              <button type="button" title="Ban member" onClick={() => void removeMember(m.userId, true)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10"><Ban className="w-4 h-4" /></button>
+            </div>
           )}
         </div>
       ))}
+      </section>
     </div>
   );
 }

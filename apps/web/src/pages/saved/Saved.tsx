@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PostCard } from '@/components/post/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bookmark, Inbox } from 'lucide-react';
+import { Bookmark, Inbox, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getStoredToken } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 
@@ -10,18 +10,24 @@ export default function Saved() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const token = getStoredToken();
   const t = useT();
 
   useEffect(() => {
     const fetchSaved = async () => {
       try {
-        const res = await fetch('/api/users/me/saved', {
+        const res = await fetch(`/api/users/me/saved?page=${page}&limit=20`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Could not load saved posts');
-        setPosts(data.posts || []);
+        const nextPosts = Array.isArray(data.posts) ? data.posts : [];
+        setPosts(nextPosts);
+        setTotal(Number(data.total) || 0);
+        setHasMore(Boolean(data.hasMore));
       } catch {
         setPosts([]);
         setError('Could not load saved posts. Please try again.');
@@ -33,7 +39,7 @@ export default function Saved() {
     const refreshSaved = () => void fetchSaved();
     window.addEventListener('quillhive:saved-changed', refreshSaved);
     return () => window.removeEventListener('quillhive:saved-changed', refreshSaved);
-  }, []);
+  }, [page]);
 
   return (
     <AppLayout>
@@ -44,7 +50,7 @@ export default function Saved() {
           </div>
           <div>
             <h1 className="text-2xl font-serif font-bold text-foreground">{t('saved.title')}</h1>
-            <p className="text-sm text-muted-foreground">{t('saved.subtitle')}</p>
+            <p className="text-sm text-muted-foreground">{t('saved.subtitle')} {total > 0 ? `· ${total}` : ''}</p>
           </div>
         </div>
 
@@ -82,6 +88,28 @@ export default function Saved() {
             <PostCard key={post.id} post={post} />
           ))}
         </div>
+
+        {!loading && posts.length > 0 && (page > 1 || hasMore) && (
+          <div className="flex items-center justify-center gap-3 pb-8">
+            <button
+              type="button"
+              onClick={() => setPage(value => Math.max(1, value - 1))}
+              disabled={page === 1}
+              className="inline-flex items-center gap-1 rounded-xl border border-border px-3 py-2 text-sm disabled:opacity-40"
+            >
+              <ChevronLeft className="w-4 h-4" /> Previous
+            </button>
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            <button
+              type="button"
+              onClick={() => setPage(value => value + 1)}
+              disabled={!hasMore}
+              className="inline-flex items-center gap-1 rounded-xl border border-border px-3 py-2 text-sm disabled:opacity-40"
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

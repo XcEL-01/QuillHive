@@ -41,9 +41,9 @@ interface AuthedReq extends Request {
 export const boostRouter: Router = Router();
 
 const BOOST_PLANS = {
-  starter:   { label: "Starter Boost",  durationHours: 24,  amountUsd: 5  },
-  growth:    { label: "Growth Boost",   durationHours: 72,  amountUsd: 15 },
-  spotlight: { label: "Spotlight",      durationHours: 168, amountUsd: 30 },
+  starter:   { label: "Starter Boost",  durationHours: 24,  amountUsd: 5,  reachMultiplier: 3.5, placementPriority: 10 },
+  growth:    { label: "Growth Boost",   durationHours: 72,  amountUsd: 15, reachMultiplier: 3.5, placementPriority: 20 },
+  spotlight: { label: "Spotlight",      durationHours: 168, amountUsd: 30, reachMultiplier: 3.5, placementPriority: 30 },
 } as const;
 type PlanKey = keyof typeof BOOST_PLANS;
 
@@ -54,7 +54,7 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
 
   const userId = (req as AuthedReq).currentUser.id;
   const user = (req as AuthedReq).currentUser;
-  const { postId, plan } = req.body as { postId?: number; plan?: string };
+  const { postId, plan, targeting } = req.body as { postId?: number; plan?: string; targeting?: Record<string, unknown> };
 
   if (!postId || !plan || !(plan in BOOST_PLANS)) {
     return res.status(400).json({ error: "postId and a valid plan (starter/growth/spotlight) are required" });
@@ -83,7 +83,7 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
   if (existing.length > 0) {
     await db
       .update(boostRequestsTable)
-      .set({ flwTxRef: txRef } as any)
+      .set({ flwTxRef: txRef, reachMultiplier: planInfo.reachMultiplier, placementPriority: planInfo.placementPriority, targeting: targeting ?? null })
       .where(eq(boostRequestsTable.id, existing[0].id));
   } else {
     await db
@@ -93,6 +93,9 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
         postId,
         plan,
         durationHours: planInfo.durationHours,
+        reachMultiplier: planInfo.reachMultiplier,
+        placementPriority: planInfo.placementPriority,
+        targeting: targeting ?? null,
         status: "pending_payment",
         flwTxRef: txRef,
       } as any);
@@ -110,6 +113,9 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
     publicKey: flwPublicKey,
     planLabel: planInfo.label,
     planDuration: `${planInfo.durationHours}h visibility boost`,
+    reachMultiplier: planInfo.reachMultiplier,
+    placementPriority: planInfo.placementPriority,
+    targeting: targeting ?? null,
     customerEmail: freshUser?.email ?? (user as { email?: string }).email ?? "",
     customerName: freshUser?.displayName ?? (user as { displayName?: string }).displayName ?? "Creator",
   });

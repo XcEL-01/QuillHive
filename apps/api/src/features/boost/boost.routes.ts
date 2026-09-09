@@ -83,7 +83,14 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
   if (existing.length > 0) {
     await db
       .update(boostRequestsTable)
-      .set({ flwTxRef: txRef, reachMultiplier: planInfo.reachMultiplier, placementPriority: planInfo.placementPriority, targeting: targeting ?? null })
+      .set({
+        plan,
+        durationHours: planInfo.durationHours,
+        flwTxRef: txRef,
+        reachMultiplier: planInfo.reachMultiplier,
+        placementPriority: planInfo.placementPriority,
+        targeting: targeting ?? null,
+      })
       .where(eq(boostRequestsTable.id, existing[0].id));
   } else {
     await db
@@ -229,7 +236,7 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
 boostRouter.post("/webhook", async (req: Request, res: Response) => {
   const signature = req.headers["verif-hash"] as string | undefined;
 
-  if (signature && !verifyWebhookSignature(JSON.stringify(req.body), signature)) {
+  if (!signature || !verifyWebhookSignature(JSON.stringify(req.body), signature)) {
     return res.status(400).json({ error: "Invalid webhook signature" });
   }
 
@@ -255,7 +262,7 @@ boostRouter.post("/webhook", async (req: Request, res: Response) => {
     } catch {
       return res.status(502).json({ error: "Payment verification unavailable" });
     }
-    if (!verified.success || verified.txRef !== txRef || verified.currency !== "USD") {
+    if (verified.status !== "successful" || verified.txRef !== txRef || verified.currency !== "USD") {
       return res.status(400).json({ error: "Payment verification failed" });
     }
 

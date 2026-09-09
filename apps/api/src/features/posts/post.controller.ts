@@ -5,9 +5,9 @@ import { db } from "@workspace/db";
 import {
   postsTable, likesTable, commentsTable, followsTable,
   postSharesTable, repostsTable, savedPostsTable,
-  commentLikesTable, userTrustScoresTable, usersTable,
+  commentLikesTable, userTrustScoresTable, usersTable, boostRequestsTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, isNull, gte, gt, or } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, isNull, gte, lte, gt, or } from "drizzle-orm";
 import { enrichPost } from "../profiles/profile.service";
 import { recordPostView } from "../analytics/analytics.service";
 import { updateUserTrustScoreSafe } from "../trust/trust.service";
@@ -430,8 +430,8 @@ export const getFeed = async (req: Request, res: Response) => {
       or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ))
     .orderBy(desc(postsTable.createdAt))
-    .limit(limit * 3)
-    .offset(offset);
+    .limit(type === "chronological" ? limit : Math.max(limit * 10, 200))
+    .offset(type === "chronological" ? offset : 0);
 
   if (type === "chronological") {
     const enriched = await Promise.all(posts.slice(0, limit).map(p => enrichPost(p, viewerId)));
@@ -478,6 +478,30 @@ export const getFeed = async (req: Request, res: Response) => {
     trustScores.map(t => [t.userId, { tier: t.tier ?? "normal", vm: Number(t.vm ?? 1) }])
   );
 
+  const authorProfiles = authorIds.length > 0
+    ? await db.select({
+        id: usersTable.id,
+        reachMultiplier: usersTable.reachMultiplier,
+        isOfficialAccount: usersTable.isOfficialAccount,
+        role: usersTable.role,
+      }).from(usersTable).where(inArray(usersTable.id, authorIds))
+    : [];
+  const authorProfileMap = new Map(authorProfiles.map(author => [author.id, author]));
+
+  const activeBoosts = postIds.length > 0
+    ? await db.select({
+        postId: boostRequestsTable.postId,
+        reachMultiplier: boostRequestsTable.reachMultiplier,
+        placementPriority: boostRequestsTable.placementPriority,
+      }).from(boostRequestsTable).where(and(
+        inArray(boostRequestsTable.postId, postIds),
+        eq(boostRequestsTable.status, "approved"),
+        or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, new Date())),
+        or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, new Date())),
+      ))
+    : [];
+  const boostMap = new Map(activeBoosts.map(boost => [boost.postId, boost]));
+
   // Cold-start boost: query join dates for all authors to identify new creators
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const authorJoinDates = authorIds.length > 0
@@ -501,15 +525,26 @@ export const getFeed = async (req: Request, res: Response) => {
     const vm = trust?.vm ?? 1.0;
     const tierBoost = tier === "trusted" ? Math.min(1.2, vm) : tier === "restricted" ? Math.min(0.5, vm) : vm;
 
+    const author = authorProfileMap.get(post.authorId);
+    const isHighTrustAuthor = tier === "trusted" || tier === "established";
+    const isOfficialAuthor = Boolean(author?.isOfficialAccount) || author?.role === "super_admin";
+    const officialMultiplier = post.isOfficialPost || isOfficialAuthor ? 4 : 1;
+    const authorReachMultiplier = Math.max(0.1, Number(author?.reachMultiplier ?? 1));
+    const activeBoost = boostMap.get(post.id);
+    const boostMultiplier = Math.max(1, Number(activeBoost?.reachMultiplier ?? 1));
+    const placementBonus = Number(activeBoost?.placementPriority ?? 0) * 100;
+
     // New creators (joined < 30 days) get a 2× cold-start multiplier so they always surface
     const coldStartBoost = newCreatorSet.has(post.authorId) ? 2.0 : 1.0;
 
-    const score = (rawScore * decayFactor * tierBoost + decayFactor * 10) * coldStartBoost;
-    return { post, score, tier };
+    // Ranking formula: ((engagement * recency + baseline) * trust * author reach
+    // * boost reach * official preference) * cold-start + active placement bonus.
+    const score = ((rawScore * decayFactor + decayFactor * 10) * tierBoost * authorReachMultiplier * boostMultiplier * officialMultiplier) * coldStartBoost + placementBonus;
+    return { post, score, tier, isHighTrustAuthor };
   });
 
   scored.sort((a, b) => b.score - a.score);
-  const topPosts = scored.slice(0, limit).map(s => s.post);
+  const topPosts = scored.slice(offset, offset + limit).map(s => s.post);
   const enriched = await Promise.all(topPosts.map(p => enrichPost(p, viewerId)));
   const feedResult = { posts: enriched, total: enriched.length, page, limit, type };
   await setCache(cacheKey, feedResult, 90);

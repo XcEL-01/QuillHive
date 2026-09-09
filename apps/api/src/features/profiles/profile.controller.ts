@@ -918,16 +918,28 @@ export const getMySavedPosts = async (req: Request, res: Response) => {
     .limit(limit)
     .offset((page - 1) * limit);
 
+  const [totalRow] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(savedPostsTable)
+    .innerJoin(postsTable, eq(savedPostsTable.postId, postsTable.id))
+    .where(and(eq(savedPostsTable.userId, viewerId), eq(postsTable.isDeleted, false)));
+
   const postIds = savedRows.map(r => r.postId);
-  if (postIds.length === 0) return res.json({ posts: [], total: 0, page, limit });
+  const total = Number(totalRow?.count ?? 0);
+  if (postIds.length === 0) return res.json({ posts: [], total, page, limit, hasMore: false });
 
   const posts = await db
     .select()
     .from(postsTable)
     .where(and(inArray(postsTable.id, postIds), eq(postsTable.isDeleted, false)));
 
-  const enriched = await Promise.all(posts.map(p => enrichPost(p, viewerId)));
-  return res.json({ posts: enriched, total: enriched.length, page, limit });
+  const enrichedPosts = await Promise.all(posts.map(p => enrichPost(p, viewerId)));
+  const enrichedById = new Map(enrichedPosts.map(post => [post.id, post]));
+  const orderedPosts = postIds.flatMap(postId => {
+    const post = enrichedById.get(postId);
+    return post ? [post] : [];
+  });
+  return res.json({ posts: orderedPosts, total, page, limit, hasMore: page * limit < total });
 };
 
 export const getUserPortfolio = async (req: Request, res: Response) => {

@@ -6,3 +6,6 @@ collaborationRouter.post("/request", CollaborationController.sendRequest);
 collaborationRouter.get("/requests/received", CollaborationController.getReceivedRequests);
 collaborationRouter.get("/requests/sent", CollaborationController.getSentRequests);
 collaborationRouter.patch("/requests/:id", CollaborationController.updateRequest);
+collaborationRouter.get("/rooms", CollaborationController.getRooms);
+collaborationRouter.post("/rooms", CollaborationController.createRoom);
+collaborationRouter.patch("/rooms/:id", CollaborationController.updateRoom);

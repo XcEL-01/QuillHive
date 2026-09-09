@@ -48,6 +48,16 @@ interface CommissionRequest {
   toUser?: UserSnippet;
 }
 
+interface CollaborationRoom {
+  id: number;
+  requestId: number;
+  title: string;
+  brief: string;
+  splitSuggestion: Record<string, number>;
+  status: string;
+  updatedAt: string;
+}
+
 // ── Status helpers ───────────────────────────────────────────────────────────
 
 const COMMISSION_STATUS: Record<string, { label: string; icon: typeof Clock; cls: string }> = {
@@ -270,6 +280,8 @@ export default function Inbox() {
   const [collabReceived, setCollabReceived] = useState<CollabRequest[]>([]);
   const [collabSent, setCollabSent] = useState<CollabRequest[]>([]);
   const [draftCollab, setDraftCollab] = useState<CollabRequest | null>(null);
+  const [rooms, setRooms] = useState<CollaborationRoom[]>([]);
+  const [savingRoomId, setSavingRoomId] = useState<number | null>(null);
 
   // Commission state
   const [commReceived, setCommReceived] = useState<CommissionRequest[]>([]);
@@ -280,16 +292,18 @@ export default function Inbox() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [cr, cs, mr, ms] = await Promise.all([
+      const [cr, cs, mr, ms, roomsRes] = await Promise.all([
         apiFetch("/api/collaboration/requests/received"),
         apiFetch("/api/collaboration/requests/sent"),
         apiFetch("/api/services/commissions/received"),
         apiFetch("/api/services/commissions/sent"),
+        apiFetch("/api/collaboration/rooms"),
       ]);
       if (cr.ok) setCollabReceived(await cr.json());
       if (cs.ok) setCollabSent(await cs.json());
       if (mr.ok) setCommReceived(await mr.json());
       if (ms.ok) setCommSent(await ms.json());
+      if (roomsRes.ok) setRooms(await roomsRes.json());
     } catch {
       toast({ title: "Failed to load inbox", variant: "destructive" });
     } finally {
@@ -315,6 +329,46 @@ export default function Inbox() {
       toast({ title: "Action failed", variant: "destructive" });
     } finally {
       setActingId(null);
+    }
+  };
+
+  const createRoom = async (request: CollabRequest) => {
+    try {
+      const counterpart = request.sender ?? request.receiver;
+      const res = await apiFetch("/api/collaboration/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: request.id,
+          title: `Project with ${counterpart?.displayName ?? counterpart?.username ?? "Creator"}`,
+          brief: request.message,
+          splitSuggestion: { You: 50, [counterpart?.displayName ?? "Collaborator"]: 50 },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const room = await res.json();
+      setRooms(previous => [room, ...previous.filter(item => item.id !== room.id)]);
+      toast({ title: "Project room created" });
+    } catch {
+      toast({ title: "Could not create project room", variant: "destructive" });
+    }
+  };
+
+  const saveRoom = async (room: CollaborationRoom) => {
+    setSavingRoomId(room.id);
+    try {
+      const res = await apiFetch(`/api/collaboration/rooms/${room.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: room.title, brief: room.brief, splitSuggestion: room.splitSuggestion }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setRooms(previous => previous.map(item => item.id === room.id ? { ...item, updatedAt: new Date().toISOString() } : item));
+      toast({ title: "Room updated" });
+    } catch {
+      toast({ title: "Could not update room", variant: "destructive" });
+    } finally {
+      setSavingRoomId(null);
     }
   };
 
@@ -382,6 +436,46 @@ export default function Inbox() {
             </TabsTrigger>
           </TabsList>
 
+          {rooms.length > 0 && (
+            <section className="mb-6 space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold">Project rooms</h2>
+                <p className="text-xs text-muted-foreground">Shared briefs and split suggestions for accepted collaborations.</p>
+              </div>
+              {rooms.map(room => (
+                <Card key={room.id} className="p-4 border-primary/20 bg-primary/[0.03]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <input
+                        value={room.title}
+                        onChange={event => setRooms(previous => previous.map(item => item.id === room.id ? { ...item, title: event.target.value } : item))}
+                        className="w-full bg-transparent text-sm font-semibold outline-none border-b border-transparent focus:border-primary/40"
+                        aria-label="Project room title"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">Updated {new Date(room.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0" onClick={() => saveRoom(room)} disabled={savingRoomId === room.id}>
+                      {savingRoomId === room.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      Save
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={room.brief}
+                    onChange={event => setRooms(previous => previous.map(item => item.id === room.id ? { ...item, brief: event.target.value } : item))}
+                    placeholder="Shared project brief"
+                    className="mt-3 min-h-[72px] text-sm resize-y"
+                  />
+                  <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Suggested split</span>
+                    {Object.entries(room.splitSuggestion).map(([name, share]) => (
+                      <Badge key={name} variant="outline">{name}: {share}%</Badge>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </section>
+          )}
+
           {/* ── Received Collaborations ── */}
           <TabsContent value="received-collab" className="space-y-3">
             {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -418,7 +512,10 @@ export default function Inbox() {
                 )}
                 {r.status === "accepted" && (
                   <div className="flex justify-end mt-3">
-                    <Button variant="outline" size="sm" className="rounded-xl gap-1.5 text-xs min-h-[44px]" onClick={() => setDraftCollab(r)}>
+                    <Button variant="outline" size="sm" className="rounded-xl gap-1.5 text-xs min-h-[44px]" onClick={() => createRoom(r)} disabled={rooms.some(room => room.requestId === r.id)}>
+                      <Handshake className="w-3.5 h-3.5" /> {rooms.some(room => room.requestId === r.id) ? "Room Created" : "Create Project Room"}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="rounded-xl gap-1.5 text-xs min-h-[44px]" onClick={() => setDraftCollab(r)}>
                       <FileText className="w-3.5 h-3.5" /> Create Project Draft
                     </Button>
                   </div>

@@ -11,6 +11,7 @@ export * from "./systemSettings";
 export * from "./portfolio";
 export * from "./creatorProfiles";
 export * from "./collaborationRequests";
+export * from "./collaborationRooms";
 export * from "./pushSubscriptions";
 export * from "./achievements";
 export * from "./writingStreaks";

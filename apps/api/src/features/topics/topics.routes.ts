@@ -10,6 +10,8 @@ import {
 import { eq, desc, and, sql, gt, isNull, or } from "drizzle-orm";
 import { getSessionUserId } from "../../lib/auth";
 import { enrichPost } from "../posts/post.service";
+import { getHighTrustAuthorMultiplier } from "../posts/ranking.service";
+import { usersTable, userTrustScoresTable } from "@workspace/db/schema";
 
 export const topicsRouter = Router();
 export const topicFeedRouter = Router();
@@ -98,6 +100,30 @@ topicsRouter.get("/:slug", async (req, res) => {
         eq(postsTable.isDeleted, false),
         or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
       ));
+    const authorIds = [...new Set(rawPosts.map(p => p.authorId))];
+    const [authors, trustScores] = await Promise.all([
+      db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
+        .from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
+      db.select({ userId: userTrustScoresTable.userId, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+        .from(userTrustScoresTable).where(sql`${userTrustScoresTable.userId} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
+    ]);
+    const authorMap = new Map(authors.map(a => [a.id, a]));
+    const trustMap = new Map(trustScores.map(t => [t.userId, t]));
+    const now = Date.now();
+    rawPosts.sort((a, b) => {
+      const rank = (post: typeof a) => {
+        const author = authorMap.get(post.authorId);
+        const trust = trustMap.get(post.authorId);
+        const freshness = Math.max(0.05, Math.exp(-((now - new Date(post.createdAt).getTime()) / 3_600_000) / 72));
+        return freshness * getHighTrustAuthorMultiplier({
+          isOfficialAccount: author?.isOfficialAccount,
+          role: author?.role,
+          tier: trust?.tier,
+          creatorLevel: trust?.creatorLevel,
+        }, post);
+      };
+      return rank(b) - rank(a);
+    });
     posts = await Promise.all(rawPosts.map(p => enrichPost(p, viewerId)));
   }
 
@@ -171,6 +197,30 @@ topicFeedRouter.get("/feed/topic/:slug", async (req, res) => {
       or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
     ));
 
+  const authorIds = [...new Set(rawPosts.map(p => p.authorId))];
+  const [authors, trustScores] = await Promise.all([
+    db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
+      .from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
+    db.select({ userId: userTrustScoresTable.userId, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+      .from(userTrustScoresTable).where(sql`${userTrustScoresTable.userId} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
+  ]);
+  const authorMap = new Map(authors.map(a => [a.id, a]));
+  const trustMap = new Map(trustScores.map(t => [t.userId, t]));
+  const now = Date.now();
+  rawPosts.sort((a, b) => {
+    const rank = (post: typeof a) => {
+      const author = authorMap.get(post.authorId);
+      const trust = trustMap.get(post.authorId);
+      const freshness = Math.max(0.05, Math.exp(-((now - new Date(post.createdAt).getTime()) / 3_600_000) / 72));
+      return freshness * getHighTrustAuthorMultiplier({
+        isOfficialAccount: author?.isOfficialAccount,
+        role: author?.role,
+        tier: trust?.tier,
+        creatorLevel: trust?.creatorLevel,
+      }, post);
+    };
+    return rank(b) - rank(a);
+  });
   const posts = await Promise.all(rawPosts.map(p => enrichPost(p, viewerId)));
   return res.json({ topic, posts, total: posts.length });
 });

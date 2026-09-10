@@ -228,6 +228,7 @@ export async function enrichPost(post: any, viewerId: number | null) {
     author: authorWithCounts,
     quotedPost,
     authorIsOfficial: (authorWithCounts as any)?.isOfficialAccount ?? false,
+    authorIsSuperUser: (authorWithCounts as any)?.role === "super_admin",
     authorCreatorLevel,
     authorHireEnabled: (authorWithCounts as any)?.hireMeEnabled ?? false,
     likesCount: likesResult?.count ?? 0,

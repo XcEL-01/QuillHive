@@ -19,6 +19,7 @@ import { getUserWithCounts, enrichPost } from "../profiles/profile.service";
 import { emitToUser } from "../../lib/socket";
 import { sanitizeRichText, sanitizePlain } from "../../lib/sanitize";
 import { notify } from "../notifications/notification.service";
+import { getHighTrustAuthorMultiplier } from "./ranking.service";
 
 async function getBlockedUserIds(viewerId: number | null): Promise<number[]> {
   if (!viewerId) return [];
@@ -166,10 +167,10 @@ export async function listPosts(
     const now = new Date();
 
     const [authorRows, authorTrustRows, postTrustRows, activeBoosts, viewerTopics] = await Promise.all([
-      db.select({ id: usersTable.id, reachMultiplier: usersTable.reachMultiplier, visibilityPenalty: usersTable.visibilityPenalty })
+      db.select({ id: usersTable.id, reachMultiplier: usersTable.reachMultiplier, visibilityPenalty: usersTable.visibilityPenalty, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
         .from(usersTable)
         .where(inArray(usersTable.id, authorIds)),
-      db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier })
+      db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
         .from(userTrustScoresTable)
         .where(inArray(userTrustScoresTable.userId, authorIds)),
       db.select({ postId: postTrustScoresTable.postId, retentionScore: postTrustScoresTable.retentionScore, saveRate: postTrustScoresTable.saveRate, deepEngagementRate: postTrustScoresTable.deepEngagementRate, cisScore: postTrustScoresTable.cisScore })
@@ -189,10 +190,11 @@ export async function listPosts(
       : [];
 
     const boostedPostIds = new Set(activeBoosts.map((b) => b.postId));
+    const authorById = new Map(authorRows.map((a) => [a.id as number, a]));
     const reachByAuthor = new Map<number, number>(authorRows.map((a) => [a.id as number, Number(a.reachMultiplier ?? 1)]));
     const penaltyByAuthor = new Map<number, number>(authorRows.map((a) => [a.id as number, Number(a.visibilityPenalty ?? 0)]));
-    const trustByAuthor = new Map<number, { uti: number; visibilityMultiplier: number }>(
-      authorTrustRows.map((t) => [t.userId as number, { uti: Number(t.uti ?? 50), visibilityMultiplier: Number(t.visibilityMultiplier ?? 1) }])
+    const trustByAuthor = new Map<number, { uti: number; visibilityMultiplier: number; tier: string | null; creatorLevel: string | null }>(
+      authorTrustRows.map((t) => [t.userId as number, { uti: Number(t.uti ?? 50), visibilityMultiplier: Number(t.visibilityMultiplier ?? 1), tier: t.tier, creatorLevel: t.creatorLevel }])
     );
     type PostTrustEntry = { postId: number; retentionScore: number | null; saveRate: number | null; deepEngagementRate: number | null; cisScore: number | null };
     const trustByPost = new Map<number, PostTrustEntry>(
@@ -218,6 +220,7 @@ export async function listPosts(
       const freshness = Math.max(0.05, Math.exp(-ageHours / 72));
       // Author trust: UTI/100 blended with reach multiplier, minus visibility penalty
       const at = trustByAuthor.get(p.authorId);
+      const author = authorById.get(p.authorId);
       const reachMult = Number(reachByAuthor.get(p.authorId) ?? 1);
       const visPenalty = Number(penaltyByAuthor.get(p.authorId) ?? 0);
       const authorTrustBoost = (0.5 + (at?.uti ?? 50) / 200) * (at?.visibilityMultiplier ?? 1) * reachMult * (1 - visPenalty);
@@ -240,7 +243,13 @@ export async function listPosts(
       const officialBoost = (p as { isOfficialPost?: boolean | null }).isOfficialPost
         ? 1.2 + Math.min(((p as { officialPostPriority?: number | null }).officialPostPriority ?? 0) / 10, 0.1)
         : 1.0;
-      const rawScore = freshness * authorTrustBoost * retentionBoost * saveBoost * deepEngagementBoost * cisBoost * topicAffinityBoost * followingBonus * officialBoost;
+      const highTrustAuthorBoost = getHighTrustAuthorMultiplier({
+        isOfficialAccount: author?.isOfficialAccount,
+        role: author?.role,
+        tier: at?.tier,
+        creatorLevel: at?.creatorLevel,
+      }, p);
+      const rawScore = freshness * authorTrustBoost * highTrustAuthorBoost * retentionBoost * saveBoost * deepEngagementBoost * cisBoost * topicAffinityBoost * followingBonus * officialBoost;
       return boostedPostIds.has(p.id) ? rawScore * 3.5 : rawScore;
     };
 

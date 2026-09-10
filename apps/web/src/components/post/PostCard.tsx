@@ -33,6 +33,7 @@ type EnrichedPost = Post & {
   isSaved?: boolean;
   authorTrustTier?: string;
   authorIsOfficial?: boolean;
+  authorIsSuperUser?: boolean;
   authorCreatorLevel?: string | null;
   authorStreakDays?: number;
   hasPoll?: boolean;
@@ -82,6 +83,18 @@ function OfficialBadge({ isOfficial }: { isOfficial?: boolean }) {
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="text-xs">Official QuillHive Account</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function SuperUserBadge({ isSuperUser }: { isSuperUser?: boolean }) {
+  if (!isSuperUser) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex items-center ml-1"><BadgeCheck className="w-3.5 h-3.5 text-blue-500" /></span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">Super User</TooltipContent>
     </Tooltip>
   );
 }
@@ -628,6 +641,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
               <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors flex items-center flex-wrap gap-1">
                 {post.author.displayName}
                 <OfficialBadge isOfficial={post.authorIsOfficial} />
+                <SuperUserBadge isSuperUser={post.authorIsSuperUser} />
                 <TrustBadge tier={post.authorTrustTier} isAdmin={isAdmin} />
                 <CreatorLevelBadge level={post.authorCreatorLevel} size="xs" />
                 {post.authorHireEnabled && (

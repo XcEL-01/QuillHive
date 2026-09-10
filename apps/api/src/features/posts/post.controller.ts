@@ -14,6 +14,7 @@ import { updateUserTrustScoreSafe } from "../trust/trust.service";
 import { getCache, setCache, deleteCachePattern } from "../../lib/cache";
 import { memGet, memSet, memDeletePattern } from "../../lib/memCache";
 import { addReputationEvent } from "../trust/reputation.service";
+import { getHighTrustAuthorMultiplier } from "./ranking.service";
 
 function refreshTrustForUsers(...userIds: Array<number | null | undefined>) {
   for (const userId of [...new Set(userIds.filter(Boolean) as number[])]) {
@@ -470,12 +471,12 @@ export const getFeed = async (req: Request, res: Response) => {
 
   const authorIds = [...new Set(posts.map(p => p.authorId))];
   const trustScores = authorIds.length > 0
-    ? await db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, tier: userTrustScoresTable.tier, vm: userTrustScoresTable.visibilityMultiplier })
+    ? await db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel, vm: userTrustScoresTable.visibilityMultiplier })
         .from(userTrustScoresTable)
         .where(inArray(userTrustScoresTable.userId, authorIds))
     : [];
-  const trustMap = new Map<number, { tier: string; vm: number }>(
-    trustScores.map(t => [t.userId, { tier: t.tier ?? "normal", vm: Number(t.vm ?? 1) }])
+  const trustMap = new Map<number, { tier: string; creatorLevel: string; vm: number }>(
+    trustScores.map(t => [t.userId, { tier: t.tier ?? "normal", creatorLevel: t.creatorLevel ?? "new_voice", vm: Number(t.vm ?? 1) }])
   );
 
   const authorProfiles = authorIds.length > 0
@@ -526,9 +527,13 @@ export const getFeed = async (req: Request, res: Response) => {
     const tierBoost = tier === "trusted" ? Math.min(1.2, vm) : tier === "restricted" ? Math.min(0.5, vm) : vm;
 
     const author = authorProfileMap.get(post.authorId);
-    const isHighTrustAuthor = tier === "trusted" || tier === "established";
-    const isOfficialAuthor = Boolean(author?.isOfficialAccount) || author?.role === "super_admin";
-    const officialMultiplier = post.isOfficialPost || isOfficialAuthor ? 4 : 1;
+    const permanentAuthorMultiplier = getHighTrustAuthorMultiplier({
+      isOfficialAccount: author?.isOfficialAccount,
+      role: author?.role,
+      tier,
+      creatorLevel: trust?.creatorLevel,
+    }, post);
+    const officialPostMultiplier = post.isOfficialPost ? 4 : 1;
     const authorReachMultiplier = Math.max(0.1, Number(author?.reachMultiplier ?? 1));
     const activeBoost = boostMap.get(post.id);
     const boostMultiplier = Math.max(1, Number(activeBoost?.reachMultiplier ?? 1));
@@ -539,8 +544,8 @@ export const getFeed = async (req: Request, res: Response) => {
 
     // Ranking formula: ((engagement * recency + baseline) * trust * author reach
     // * boost reach * official preference) * cold-start + active placement bonus.
-    const score = ((rawScore * decayFactor + decayFactor * 10) * tierBoost * authorReachMultiplier * boostMultiplier * officialMultiplier) * coldStartBoost + placementBonus;
-    return { post, score, tier, isHighTrustAuthor };
+    const score = ((rawScore * decayFactor + decayFactor * 10) * tierBoost * authorReachMultiplier * permanentAuthorMultiplier * boostMultiplier * officialPostMultiplier) * coldStartBoost + placementBonus;
+    return { post, score, tier, isHighTrustAuthor: permanentAuthorMultiplier > 1 };
   });
 
   scored.sort((a, b) => b.score - a.score);

@@ -1,7 +1,8 @@
 import { db } from "@workspace/db";
-import { postsTable, postFingerprintsTable, followsTable, usersTable, postTopicsTable, userTopicAffinityTable } from "@workspace/db/schema";
+import { postsTable, postFingerprintsTable, followsTable, usersTable, postTopicsTable, userTopicAffinityTable, userTrustScoresTable } from "@workspace/db/schema";
 import { and, desc, eq, gt, inArray, ne, sql, notInArray } from "drizzle-orm";
 import { getMutualBlockSet } from "../safety/blocks.service";
+import { getHighTrustAuthorMultiplier } from "../posts/ranking.service";
 
 /**
  * Posts similar to `postId`. Combines two cheap signals:
@@ -70,9 +71,27 @@ export async function similarPosts(postId: number, viewerId: number | null, limi
       eq(postsTable.isDeleted, false),
     ));
 
+  const authorIds = [...new Set(rows.map((p) => p.authorId))];
+  const [authors, trustScores] = await Promise.all([
+    db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
+      .from(usersTable).where(inArray(usersTable.id, authorIds)),
+    db.select({ userId: userTrustScoresTable.userId, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+      .from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, authorIds)),
+  ]);
+  const authorMap = new Map(authors.map((a) => [a.id, a]));
+  const trustMap = new Map(trustScores.map((t) => [t.userId, t]));
+
   return rows
     .filter((p) => !blocked.has(p.authorId))
-    .map((p) => ({ post: p, score: scoreById.get(p.id) ?? 0 }))
+    .map((p) => ({
+      post: p,
+      score: (scoreById.get(p.id) ?? 0) * getHighTrustAuthorMultiplier({
+        isOfficialAccount: authorMap.get(p.authorId)?.isOfficialAccount,
+        role: authorMap.get(p.authorId)?.role,
+        tier: trustMap.get(p.authorId)?.tier,
+        creatorLevel: trustMap.get(p.authorId)?.creatorLevel,
+      }, p),
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }

@@ -7,6 +7,7 @@ export interface FlwVerifyResult {
   amount: number;
   currency: string;
   txRef: string;
+  flwRef: string;
   transactionId: number;
   meta: Record<string, string>;
 }
@@ -45,6 +46,7 @@ export async function verifyTransaction(transactionId: string | number): Promise
     amount: d.amount,
     currency: d.currency,
     txRef: d.tx_ref,
+    flwRef: d.tx_ref,
     transactionId: d.id,
     meta: d.meta ?? {},
   };
@@ -53,7 +55,10 @@ export async function verifyTransaction(transactionId: string | number): Promise
 export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
   const secretHash = process.env.FLW_WEBHOOK_SECRET ?? process.env.FLW_ENCRYPTION_KEY;
   if (!secretHash) return false;
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(secretHash));
+  const sigBuf = Buffer.from(signature);
+  const secretBuf = Buffer.from(secretHash);
+  if (sigBuf.length !== secretBuf.length) return false;
+  return crypto.timingSafeEqual(sigBuf, secretBuf);
 }
 
 export function generateTxRef(prefix: string): string {

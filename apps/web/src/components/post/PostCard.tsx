@@ -51,6 +51,10 @@ type EnrichedPost = Post & {
   sponsorLogoUrl?: string | null;
   sponsorUrl?: string | null;
   isBoosted?: boolean;
+  boostPlan?: string | null;
+  boostEndsAt?: string | Date | null;
+  boostReachMultiplier?: number;
+  boostPlacementPriority?: number;
   isTrending?: boolean;
   viewsCount?: number;
   // Official QuillHive System Posts
@@ -332,6 +336,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
   const [boostOpen, setBoostOpen] = useState(false);
   const [boostPlan, setBoostPlan] = useState<'starter' | 'growth' | 'spotlight'>('starter');
   const [isBoosting, setIsBoosting] = useState(false);
+  const [boostTimeLeft, setBoostTimeLeft] = useState('');
   const [optimisticLiked, setOptimisticLiked] = useState<boolean>(Boolean(initialPost.isLiked));
   const [optimisticLikes, setOptimisticLikes] = useState<number>(Number(initialPost.likesCount ?? 0));
   const isOwner = currentUser?.id === post.author.id;
@@ -340,6 +345,26 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
   const token = getStoredToken();
   const t = useT();
   const { lang } = useI18n();
+
+  useEffect(() => {
+    if (!post.isBoosted || !post.boostEndsAt) {
+      setBoostTimeLeft('');
+      return;
+    }
+    const update = () => {
+      const remaining = new Date(post.boostEndsAt as string).getTime() - Date.now();
+      if (remaining <= 0) {
+        setBoostTimeLeft('');
+        return;
+      }
+      const hours = Math.floor(remaining / 3_600_000);
+      const minutes = Math.floor((remaining % 3_600_000) / 60_000);
+      setBoostTimeLeft(hours > 0 ? `${hours}h ${minutes}m left` : `${Math.max(1, minutes)}m left`);
+    };
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, [post.isBoosted, post.boostEndsAt]);
 
   // A/B title display: pick random variant on mount unless winner is locked.
   // After first click on the post, increment that variant's click counter.
@@ -745,7 +770,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
               )}
               {post.isBoosted && (
                 <Badge variant="outline" className="px-2 py-0.5 text-[10px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 uppercase tracking-wider inline-flex items-center gap-1" data-testid="badge-boosted">
-                  <Rocket className="w-3 h-3" /> Boosted
+                  <Rocket className="w-3 h-3" /> Boosted{boostTimeLeft ? ` · ${boostTimeLeft}` : ''}
                 </Badge>
               )}
               {isFirst24h && !post.isBoosted && (

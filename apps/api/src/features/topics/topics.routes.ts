@@ -5,9 +5,10 @@ import {
   topicFollowsTable,
   postTopicsTable,
   postsTable,
+  boostRequestsTable,
   DEFAULT_TOPICS,
 } from "@workspace/db/schema";
-import { eq, desc, and, sql, gt, isNull, or } from "drizzle-orm";
+import { eq, desc, and, sql, gt, isNull, lte, or, inArray } from "drizzle-orm";
 import { getSessionUserId } from "../../lib/auth";
 import { enrichPost } from "../posts/post.service";
 import { getHighTrustAuthorMultiplier } from "../posts/ranking.service";
@@ -101,26 +102,30 @@ topicsRouter.get("/:slug", async (req, res) => {
         or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
       ));
     const authorIds = [...new Set(rawPosts.map(p => p.authorId))];
-    const [authors, trustScores] = await Promise.all([
+    const [authors, trustScores, activeBoosts] = await Promise.all([
       db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
         .from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
       db.select({ userId: userTrustScoresTable.userId, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
         .from(userTrustScoresTable).where(sql`${userTrustScoresTable.userId} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
+      db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+        .from(boostRequestsTable).where(and(inArray(boostRequestsTable.postId, postIds), eq(boostRequestsTable.status, "approved"), or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, new Date())), gt(boostRequestsTable.boostEndsAt, new Date()))),
     ]);
     const authorMap = new Map(authors.map(a => [a.id, a]));
     const trustMap = new Map(trustScores.map(t => [t.userId, t]));
+    const boostMap = new Map(activeBoosts.map(b => [b.postId, b]));
     const now = Date.now();
     rawPosts.sort((a, b) => {
       const rank = (post: typeof a) => {
         const author = authorMap.get(post.authorId);
         const trust = trustMap.get(post.authorId);
         const freshness = Math.max(0.05, Math.exp(-((now - new Date(post.createdAt).getTime()) / 3_600_000) / 72));
+        const boost = boostMap.get(post.id);
         return freshness * getHighTrustAuthorMultiplier({
           isOfficialAccount: author?.isOfficialAccount,
           role: author?.role,
           tier: trust?.tier,
           creatorLevel: trust?.creatorLevel,
-        }, post);
+        }, post) * (boost ? Number(boost.reachMultiplier ?? 1) : 1) + (boost?.placementPriority ?? 0);
       };
       return rank(b) - rank(a);
     });
@@ -198,26 +203,31 @@ topicFeedRouter.get("/feed/topic/:slug", async (req, res) => {
     ));
 
   const authorIds = [...new Set(rawPosts.map(p => p.authorId))];
-  const [authors, trustScores] = await Promise.all([
+  const postIdsForRanking = rawPosts.map(p => p.id);
+  const [authors, trustScores, activeBoosts] = await Promise.all([
     db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
       .from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
     db.select({ userId: userTrustScoresTable.userId, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
       .from(userTrustScoresTable).where(sql`${userTrustScoresTable.userId} = ANY(ARRAY[${sql.join(authorIds.map(id => sql`${id}`), sql`, `)}])`),
+    db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+      .from(boostRequestsTable).where(and(inArray(boostRequestsTable.postId, postIdsForRanking), eq(boostRequestsTable.status, "approved"), or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, new Date())), gt(boostRequestsTable.boostEndsAt, new Date()))),
   ]);
   const authorMap = new Map(authors.map(a => [a.id, a]));
   const trustMap = new Map(trustScores.map(t => [t.userId, t]));
+  const boostMap = new Map(activeBoosts.map(b => [b.postId, b]));
   const now = Date.now();
   rawPosts.sort((a, b) => {
     const rank = (post: typeof a) => {
       const author = authorMap.get(post.authorId);
       const trust = trustMap.get(post.authorId);
       const freshness = Math.max(0.05, Math.exp(-((now - new Date(post.createdAt).getTime()) / 3_600_000) / 72));
+      const boost = boostMap.get(post.id);
       return freshness * getHighTrustAuthorMultiplier({
         isOfficialAccount: author?.isOfficialAccount,
         role: author?.role,
         tier: trust?.tier,
         creatorLevel: trust?.creatorLevel,
-      }, post);
+      }, post) * (boost ? Number(boost.reachMultiplier ?? 1) : 1) + (boost?.placementPriority ?? 0);
     };
     return rank(b) - rank(a);
   });

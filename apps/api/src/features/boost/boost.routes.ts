@@ -1,11 +1,12 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import { boostRequestsTable, postsTable, usersTable, incomeLogsTable } from "@workspace/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull, lte, gt, or } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../../middleware/admin";
 import { verifyTransaction, verifyWebhookSignature, generateTxRef } from "./flutterwave.service";
 import { notify } from "../notifications/notification.service";
 import { sendEmail } from "../email/email.service";
+import { isBoostActive } from "./boost.state";
 
 function boostReceiptHtml(opts: {
   displayName: string;
@@ -50,7 +51,11 @@ type PlanKey = keyof typeof BOOST_PLANS;
 // ── Initialize Flutterwave payment ───────────────────────────────────────────
 boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Response) => {
   const flwPublicKey = process.env.FLW_PUBLIC_KEY ?? process.env.FLUTTERWAVE_PUBLIC_KEY;
-  if (!flwPublicKey) return res.status(503).json({ error: "Payment processing is not configured" });
+  const flwSecretKey = process.env.FLW_SECRET_KEY ?? process.env.FLUTTERWAVE_SECRET_KEY;
+  const flwWebhookSecret = process.env.FLW_WEBHOOK_SECRET ?? process.env.FLW_ENCRYPTION_KEY;
+  if (!flwPublicKey || !flwSecretKey || !flwWebhookSecret) {
+    return res.status(503).json({ error: "Boost payments are not configured. Please contact support or try again later." });
+  }
 
   const userId = (req as AuthedReq).currentUser.id;
   const user = (req as AuthedReq).currentUser;
@@ -132,6 +137,11 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
 boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Response) => {
   const userId = (req as AuthedReq).currentUser.id;
   const { tx_ref, transaction_id } = req.query as { tx_ref?: string; transaction_id?: string };
+
+  const flwSecretKey = process.env.FLW_SECRET_KEY ?? process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!flwSecretKey) {
+    return res.status(503).json({ error: "Boost payments are not configured. Please contact support or try again later." });
+  }
 
   if (!tx_ref || !transaction_id) {
     return res.status(400).json({ error: "tx_ref and transaction_id are required" });
@@ -345,6 +355,8 @@ boostRouter.get("/plans", (_req: Request, res: Response) => {
       durationHours: p.durationHours,
       amountUsd: p.amountUsd,
       priceDisplay: `$${p.amountUsd}`,
+      reachMultiplier: p.reachMultiplier,
+      placementPriority: p.placementPriority,
     })),
   });
 });
@@ -374,7 +386,15 @@ boostRouter.post("/request", requireAuth, async (req: Request, res: Response) =>
   const planInfo = BOOST_PLANS[plan as PlanKey];
   const [request] = await db
     .insert(boostRequestsTable)
-    .values({ userId, postId, plan, durationHours: planInfo.durationHours, status: "pending" })
+    .values({
+      userId,
+      postId,
+      plan,
+      durationHours: planInfo.durationHours,
+      reachMultiplier: planInfo.reachMultiplier,
+      placementPriority: planInfo.placementPriority,
+      status: "pending",
+    })
     .returning();
 
   return res.status(201).json({ request, message: "Boost request submitted. Our team will review it soon." });
@@ -389,9 +409,12 @@ boostRouter.get("/admin", requireAdmin, async (_req: Request, res: Response) => 
       durationHours: boostRequestsTable.durationHours,
       status: boostRequestsTable.status,
       adminNote: boostRequestsTable.adminNote,
+      boostStartsAt: boostRequestsTable.boostStartsAt,
+      boostEndsAt: boostRequestsTable.boostEndsAt,
+      reachMultiplier: boostRequestsTable.reachMultiplier,
+      placementPriority: boostRequestsTable.placementPriority,
       createdAt: boostRequestsTable.createdAt,
       reviewedAt: boostRequestsTable.reviewedAt,
-      boostEndsAt: boostRequestsTable.boostEndsAt,
       paidAmountCents: boostRequestsTable.paidAmountCents,
       postId: postsTable.id,
       postTitle: postsTable.title,
@@ -403,7 +426,7 @@ boostRouter.get("/admin", requireAdmin, async (_req: Request, res: Response) => 
     .leftJoin(usersTable, eq(usersTable.id, boostRequestsTable.userId))
     .orderBy(desc(boostRequestsTable.createdAt))
     .limit(100);
-  return res.json({ requests: rows });
+  return res.json({ requests: rows.map((row) => ({ ...row, isActive: isBoostActive(row as any) })) });
 });
 
 // ── Admin: approve ────────────────────────────────────────────────────────
@@ -439,7 +462,10 @@ boostRouter.get("/my", requireAuth, async (req: Request, res: Response) => {
       plan: boostRequestsTable.plan,
       postId: boostRequestsTable.postId,
       postTitle: postsTable.title,
+      boostStartsAt: boostRequestsTable.boostStartsAt,
       boostEndsAt: boostRequestsTable.boostEndsAt,
+      reachMultiplier: boostRequestsTable.reachMultiplier,
+      placementPriority: boostRequestsTable.placementPriority,
       createdAt: boostRequestsTable.createdAt,
       adminNote: boostRequestsTable.adminNote,
     })
@@ -449,7 +475,7 @@ boostRouter.get("/my", requireAuth, async (req: Request, res: Response) => {
     .orderBy(desc(boostRequestsTable.createdAt))
     .limit(50);
 
-  return res.json(boosts);
+  return res.json(boosts.map((boost) => ({ ...boost, isActive: isBoostActive(boost as any) })));
 });
 
 // ── Admin: revoke ─────────────────────────────────────────────────────────

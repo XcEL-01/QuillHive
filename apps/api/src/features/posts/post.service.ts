@@ -14,7 +14,7 @@ import {
   postTrustScoresTable,
   topicFollowsTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, notInArray, gt, gte, isNull, or, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, notInArray, gt, gte, lte, isNull, or, ne } from "drizzle-orm";
 import { getUserWithCounts, enrichPost } from "../profiles/profile.service";
 import { emitToUser } from "../../lib/socket";
 import { sanitizeRichText, sanitizePlain } from "../../lib/sanitize";
@@ -176,9 +176,14 @@ export async function listPosts(
       db.select({ postId: postTrustScoresTable.postId, retentionScore: postTrustScoresTable.retentionScore, saveRate: postTrustScoresTable.saveRate, deepEngagementRate: postTrustScoresTable.deepEngagementRate, cisScore: postTrustScoresTable.cisScore })
         .from(postTrustScoresTable)
         .where(inArray(postTrustScoresTable.postId, candidateIds)),
-      db.select({ postId: boostRequestsTable.postId })
+      db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority, boostStartsAt: boostRequestsTable.boostStartsAt, boostEndsAt: boostRequestsTable.boostEndsAt, status: boostRequestsTable.status })
         .from(boostRequestsTable)
-        .where(and(inArray(boostRequestsTable.postId, candidateIds), eq(boostRequestsTable.status, "approved"), gt(boostRequestsTable.boostEndsAt, now))),
+        .where(and(
+          inArray(boostRequestsTable.postId, candidateIds),
+          eq(boostRequestsTable.status, "approved"),
+          or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
+          gt(boostRequestsTable.boostEndsAt, now),
+        )),
       viewerId
         ? db.select({ topicId: topicFollowsTable.topicId }).from(topicFollowsTable).where(eq(topicFollowsTable.userId, viewerId))
         : Promise.resolve([] as { topicId: number }[]),
@@ -189,7 +194,10 @@ export async function listPosts(
           .from(postTopicsTable).where(inArray(postTopicsTable.postId, candidateIds))
       : [];
 
-    const boostedPostIds = new Set(activeBoosts.map((b) => b.postId));
+    const boostByPost = new Map(activeBoosts.map((b) => [b.postId, {
+      reachMultiplier: Math.max(1, Number(b.reachMultiplier ?? 1)),
+      placementPriority: Number(b.placementPriority ?? 0),
+    }]));
     const authorById = new Map(authorRows.map((a) => [a.id as number, a]));
     const reachByAuthor = new Map<number, number>(authorRows.map((a) => [a.id as number, Number(a.reachMultiplier ?? 1)]));
     const penaltyByAuthor = new Map<number, number>(authorRows.map((a) => [a.id as number, Number(a.visibilityPenalty ?? 0)]));
@@ -250,7 +258,10 @@ export async function listPosts(
         creatorLevel: at?.creatorLevel,
       }, p);
       const rawScore = freshness * authorTrustBoost * highTrustAuthorBoost * retentionBoost * saveBoost * deepEngagementBoost * cisBoost * topicAffinityBoost * followingBonus * officialBoost;
-      return boostedPostIds.has(p.id) ? rawScore * 3.5 : rawScore;
+      const activeBoost = boostByPost.get(p.id);
+      return activeBoost
+        ? rawScore * activeBoost.reachMultiplier + activeBoost.placementPriority
+        : rawScore;
     };
 
     // Sort by composite score
@@ -270,7 +281,7 @@ export async function listPosts(
     let totalInSlice = 0;
     for (const { p } of scored) {
       const isOfficial = !!(p as { isOfficialPost?: boolean | null }).isOfficialPost;
-      const isBoosted = boostedPostIds.has(p.id);
+      const isBoosted = boostByPost.has(p.id);
       const n = authorCountInSlice.get(p.authorId) ?? 0;
       // Boosted posts: max 15% of feed
       if (isBoosted && boostedCountInSlice >= BOOST_CAP) {

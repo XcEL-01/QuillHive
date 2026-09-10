@@ -170,11 +170,21 @@ export async function enrichPost(post: any, viewerId: number | null) {
 
   // Boost status (best-effort)
   let isBoosted = false;
+  let boostPlan: string | null = null;
+  let boostEndsAt: Date | null = null;
+  let boostReachMultiplier = 1;
+  let boostPlacementPriority = 0;
   try {
     const { boostRequestsTable } = await import("@workspace/db/schema");
     const now = new Date();
     const [boost] = await db
-      .select({ id: boostRequestsTable.id })
+      .select({
+        id: boostRequestsTable.id,
+        plan: boostRequestsTable.plan,
+        boostEndsAt: boostRequestsTable.boostEndsAt,
+        reachMultiplier: boostRequestsTable.reachMultiplier,
+        placementPriority: boostRequestsTable.placementPriority,
+      })
       .from(boostRequestsTable)
       .where(
         and(
@@ -185,6 +195,10 @@ export async function enrichPost(post: any, viewerId: number | null) {
       )
       .limit(1);
     isBoosted = !!boost;
+    boostPlan = boost?.plan ?? null;
+    boostEndsAt = boost?.boostEndsAt ?? null;
+    boostReachMultiplier = Number(boost?.reachMultiplier ?? 1);
+    boostPlacementPriority = Number(boost?.placementPriority ?? 0);
   } catch { /* non-fatal */ }
 
   // Trending status: 50+ views in last 24h (best-effort)
@@ -245,6 +259,10 @@ export async function enrichPost(post: any, viewerId: number | null) {
     editedCount,
     trustScore,
     isBoosted,
+    boostPlan,
+    boostEndsAt,
+    boostReachMultiplier,
+    boostPlacementPriority,
     isTrending,
     isOfficialPost: (post as { isOfficialPost?: boolean | null }).isOfficialPost ?? false,
     postCategory: (post as { postCategory?: string | null }).postCategory ?? null,

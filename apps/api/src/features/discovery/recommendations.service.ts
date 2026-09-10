@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
-import { postsTable, postFingerprintsTable, followsTable, usersTable, postTopicsTable, userTopicAffinityTable, userTrustScoresTable } from "@workspace/db/schema";
-import { and, desc, eq, gt, inArray, ne, sql, notInArray } from "drizzle-orm";
+import { postsTable, postFingerprintsTable, followsTable, usersTable, postTopicsTable, userTopicAffinityTable, userTrustScoresTable, boostRequestsTable } from "@workspace/db/schema";
+import { and, desc, eq, gt, inArray, isNull, lte, ne, sql, notInArray, or } from "drizzle-orm";
 import { getMutualBlockSet } from "../safety/blocks.service";
 import { getHighTrustAuthorMultiplier } from "../posts/ranking.service";
 
@@ -80,6 +80,16 @@ export async function similarPosts(postId: number, viewerId: number | null, limi
   ]);
   const authorMap = new Map(authors.map((a) => [a.id, a]));
   const trustMap = new Map(trustScores.map((t) => [t.userId, t]));
+  const activeBoosts = await db
+    .select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+    .from(boostRequestsTable)
+    .where(and(
+      inArray(boostRequestsTable.postId, ids),
+      eq(boostRequestsTable.status, "approved"),
+      or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, new Date())),
+      gt(boostRequestsTable.boostEndsAt, new Date()),
+    ));
+  const boostMap = new Map(activeBoosts.map((b) => [b.postId, b]));
 
   return rows
     .filter((p) => !blocked.has(p.authorId))
@@ -90,7 +100,7 @@ export async function similarPosts(postId: number, viewerId: number | null, limi
         role: authorMap.get(p.authorId)?.role,
         tier: trustMap.get(p.authorId)?.tier,
         creatorLevel: trustMap.get(p.authorId)?.creatorLevel,
-      }, p),
+      }, p) * Number(boostMap.get(p.id)?.reachMultiplier ?? 1) + Number(boostMap.get(p.id)?.placementPriority ?? 0),
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);

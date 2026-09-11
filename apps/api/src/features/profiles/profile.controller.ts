@@ -74,6 +74,7 @@ const RESERVED_USERNAMES = new Set([
 
 export const register = async (req: Request, res: Response) => {
   const { username, email, password, displayName } = req.body;
+  const normalizedEmail = String(email ?? "").trim().toLowerCase();
   const refRaw = (req.body?.ref ?? req.query?.ref ?? "") as string;
   const inviteCodeRaw = (req.body?.inviteCode ?? req.query?.invite ?? "") as string;
   const referralSource = typeof refRaw === "string" ? refRaw.slice(0, 80) : null;
@@ -112,7 +113,7 @@ export const register = async (req: Request, res: Response) => {
     await logBlockedEmailAttempt(email, emailCheck, req);
     return res.status(400).json({ error: emailCheck.reason || "Email is not allowed.", emailCheck });
   }
-  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, normalizedEmail));
   if (existing.length > 0) return res.status(400).json({ error: "Email already registered" });
 
   const existingUsername = await (db as any).select().from(usersTable).where(eq(usersTable.username, username));
@@ -206,7 +207,7 @@ export const login = async (req: Request, res: Response) => {
   const normalizedEmail = String(email).trim().toLowerCase();
   const failKey = `${rawIp}:${normalizedEmail}`;
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, normalizedEmail));
   if (!user) {
     const fails = trackLoginFailure(rawIp, email);
     if (fails >= 8) {

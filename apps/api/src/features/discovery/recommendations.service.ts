@@ -2,7 +2,7 @@ import { db } from "@workspace/db";
 import { postsTable, postFingerprintsTable, followsTable, usersTable, postTopicsTable, userTopicAffinityTable, userTrustScoresTable, boostRequestsTable } from "@workspace/db/schema";
 import { and, desc, eq, gt, inArray, isNull, lte, ne, sql, notInArray, or } from "drizzle-orm";
 import { getMutualBlockSet } from "../safety/blocks.service";
-import { getHighTrustAuthorMultiplier } from "../posts/ranking.service";
+import { calculateRankingScore } from "../posts/ranking.service";
 
 /**
  * Posts similar to `postId`. Combines two cheap signals:
@@ -95,12 +95,19 @@ export async function similarPosts(postId: number, viewerId: number | null, limi
     .filter((p) => !blocked.has(p.authorId))
     .map((p) => ({
       post: p,
-      score: (scoreById.get(p.id) ?? 0) * getHighTrustAuthorMultiplier({
-        isOfficialAccount: authorMap.get(p.authorId)?.isOfficialAccount,
-        role: authorMap.get(p.authorId)?.role,
-        tier: trustMap.get(p.authorId)?.tier,
-        creatorLevel: trustMap.get(p.authorId)?.creatorLevel,
-      }, p) * Number(boostMap.get(p.id)?.reachMultiplier ?? 1) + Number(boostMap.get(p.id)?.placementPriority ?? 0),
+      score: calculateRankingScore({
+        relevanceScore: scoreById.get(p.id),
+        ageHours: (Date.now() - new Date(p.createdAt).getTime()) / 3_600_000,
+        author: {
+          isOfficialAccount: authorMap.get(p.authorId)?.isOfficialAccount,
+          role: authorMap.get(p.authorId)?.role,
+          tier: trustMap.get(p.authorId)?.tier,
+          creatorLevel: trustMap.get(p.authorId)?.creatorLevel,
+        },
+        post: p,
+        isOfficialPost: p.isOfficialPost,
+        activeBoost: boostMap.get(p.id),
+      }),
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);

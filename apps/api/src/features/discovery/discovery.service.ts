@@ -1,7 +1,8 @@
 import { db } from "@workspace/db";
-import { postsTable, usersTable, topicsTable, followsTable } from "@workspace/db/schema";
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { postsTable, usersTable, topicsTable, followsTable, boostRequestsTable, userTrustScoresTable } from "@workspace/db/schema";
+import { and, desc, eq, gt, ilike, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { getMutualBlockSet } from "../safety/blocks.service";
+import { calculateRankingScore } from "../posts/ranking.service";
 
 export interface SearchHit<T> {
   type: "post" | "user" | "topic";
@@ -45,7 +46,7 @@ export async function search(opts: SearchOptions) {
             OR title ILIKE ${"%" + q + "%"}
           )
         ORDER BY score DESC, created_at DESC
-        LIMIT ${limit}
+        LIMIT ${limit * 5}
       `)
     : Promise.resolve({ rows: [] as any[] });
 
@@ -78,7 +79,49 @@ export async function search(opts: SearchOptions) {
     : Promise.resolve([] as any[]);
 
   const [postsRes, users, topics] = await Promise.all([postsP, usersP, topicsP]);
-  const posts = ((postsRes as any).rows ?? []).filter((p: any) => !blocked.has(p.authorId));
+  const searchRows = ((postsRes as any).rows ?? []).filter((p: any) => !blocked.has(p.authorId));
+  const authorIds: number[] = Array.from(new Set<number>(searchRows.map((p: any) => Number(p.authorId))));
+  const postIds: number[] = searchRows.map((p: any) => Number(p.id));
+  const now = new Date();
+  const [authors, trustScores, activeBoosts] = postIds.length > 0
+    ? await Promise.all([
+        db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role, reachMultiplier: usersTable.reachMultiplier })
+          .from(usersTable).where(inArray(usersTable.id, authorIds)),
+        db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+          .from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, authorIds)),
+        db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+          .from(boostRequestsTable).where(and(
+            inArray(boostRequestsTable.postId, postIds),
+            eq(boostRequestsTable.status, "approved"),
+            or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
+            or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, now)),
+          )),
+      ])
+    : [[], [], []];
+  const authorMap = new Map((authors as any[]).map((a) => [a.id, a]));
+  const trustMap = new Map((trustScores as any[]).map((t) => [t.userId, t]));
+  const boostMap = new Map((activeBoosts as any[]).map((b) => [b.postId, b]));
+  const posts = searchRows
+    .map((p: any) => {
+      const author = authorMap.get(Number(p.authorId));
+      const trust = trustMap.get(Number(p.authorId));
+      return {
+        ...p,
+        score: calculateRankingScore({
+          relevanceScore: Number(p.score ?? 0),
+          ageHours: (now.getTime() - new Date(p.createdAt).getTime()) / 3_600_000,
+          authorTrustScore: trust?.uti,
+          visibilityMultiplier: trust?.visibilityMultiplier,
+          authorReachMultiplier: author?.reachMultiplier,
+          author: { isOfficialAccount: author?.isOfficialAccount, role: author?.role, tier: trust?.tier, creatorLevel: trust?.creatorLevel },
+          post: p,
+          isOfficialPost: p.isOfficialPost,
+          activeBoost: boostMap.get(Number(p.id)),
+        }),
+      };
+    })
+    .sort((a: any, b: any) => b.score - a.score)
+    .slice(0, limit);
 
   return { posts, users, topics };
 }

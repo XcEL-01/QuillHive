@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, Flag, Copy, Edit, Trash2, Check, Repeat2, ShieldCheck, AlertTriangle, Languages, HelpCircle, Code2, Clock, Zap, History, Pin, Rocket, Loader2, TrendingUp, BadgeCheck, Eye, Megaphone, Star, Lightbulb, Trophy, Sparkles, Bell, Users, ExternalLink, Quote as QuoteIcon } from 'lucide-react';
 import { EditHistoryModal } from './EditHistoryModal';
@@ -337,6 +337,9 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
   const [boostPlan, setBoostPlan] = useState<'starter' | 'growth' | 'spotlight'>('starter');
   const [isBoosting, setIsBoosting] = useState(false);
   const [boostTimeLeft, setBoostTimeLeft] = useState('');
+  const [isBoostActive, setIsBoostActive] = useState(() => Boolean(
+    post.isBoosted && post.boostEndsAt && new Date(post.boostEndsAt as string).getTime() > Date.now(),
+  ));
   const [optimisticLiked, setOptimisticLiked] = useState<boolean>(Boolean(initialPost.isLiked));
   const [optimisticLikes, setOptimisticLikes] = useState<number>(Number(initialPost.likesCount ?? 0));
   const isOwner = currentUser?.id === post.author.id;
@@ -348,15 +351,18 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
 
   useEffect(() => {
     if (!post.isBoosted || !post.boostEndsAt) {
+      setIsBoostActive(false);
       setBoostTimeLeft('');
       return;
     }
     const update = () => {
       const remaining = new Date(post.boostEndsAt as string).getTime() - Date.now();
       if (remaining <= 0) {
+        setIsBoostActive(false);
         setBoostTimeLeft('');
         return;
       }
+      setIsBoostActive(true);
       const hours = Math.floor(remaining / 3_600_000);
       const minutes = Math.floor((remaining % 3_600_000) / 60_000);
       setBoostTimeLeft(hours > 0 ? `${hours}h ${minutes}m left` : `${Math.max(1, minutes)}m left`);
@@ -768,7 +774,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
                   <TrendingUp className="w-3 h-3" /> Trending
                 </Badge>
               )}
-              {post.isBoosted && (
+              {isBoostActive && (
                 <Badge variant="outline" className="px-2 py-0.5 text-[10px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 uppercase tracking-wider inline-flex items-center gap-1" data-testid="badge-boosted">
                   <Rocket className="w-3 h-3" /> Boosted{boostTimeLeft ? ` · ${boostTimeLeft}` : ''}
                 </Badge>

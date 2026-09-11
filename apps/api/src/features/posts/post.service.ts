@@ -19,7 +19,7 @@ import { getUserWithCounts, enrichPost } from "../profiles/profile.service";
 import { emitToUser } from "../../lib/socket";
 import { sanitizeRichText, sanitizePlain } from "../../lib/sanitize";
 import { notify } from "../notifications/notification.service";
-import { getHighTrustAuthorMultiplier } from "./ranking.service";
+import { calculateRankingScore } from "./ranking.service";
 
 async function getBlockedUserIds(viewerId: number | null): Promise<number[]> {
   if (!viewerId) return [];
@@ -126,33 +126,15 @@ export async function listPosts(
 
   const blockedIds = await getBlockedUserIds(viewerId);
 
-  if (feed === "following" && viewerId) {
-    const followingFiltered = followingIds.filter(id => !blockedIds.includes(id));
-    if (followingFiltered.length === 0) return { posts: [], total: 0, page, limit };
-
-    const posts = await db
-      .select()
-      .from(postsTable)
-      .where(and(
-        eq(postsTable.isPublished, true),
-        inArray(postsTable.authorId, followingFiltered),
-        or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
-      ))
-      .orderBy(desc(postsTable.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
-
-    const enriched = await Promise.all(posts.map(async p => ({
-      ...(await enrichPost(p, viewerId)),
-      reason: "following_creator",
-    })));
-    return { posts: enriched, total: enriched.length, page, limit };
-  }
-
   const conds = [
     eq(postsTable.isPublished, true),
     or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
   ];
+  if (feed === "following" && viewerId) {
+    const followingFiltered = followingIds.filter(id => !blockedIds.includes(id));
+    if (followingFiltered.length === 0) return { posts: [], total: 0, page, limit };
+    conds.push(inArray(postsTable.authorId, followingFiltered));
+  }
   if (type) conds.push(eq(postsTable.type, type));
   if (blockedIds.length > 0) conds.push(notInArray(postsTable.authorId, blockedIds));
 
@@ -224,14 +206,9 @@ export async function listPosts(
 
     const score = (p: typeof postsTable.$inferSelect): number => {
       const ageHours = (now.getTime() - new Date(p.createdAt).getTime()) / 3_600_000;
-      // Freshness: exponential decay with 72h half-life, floors at 0.05
-      const freshness = Math.max(0.05, Math.exp(-ageHours / 72));
-      // Author trust: UTI/100 blended with reach multiplier, minus visibility penalty
       const at = trustByAuthor.get(p.authorId);
       const author = authorById.get(p.authorId);
       const reachMult = Number(reachByAuthor.get(p.authorId) ?? 1);
-      const visPenalty = Number(penaltyByAuthor.get(p.authorId) ?? 0);
-      const authorTrustBoost = (0.5 + (at?.uti ?? 50) / 200) * (at?.visibilityMultiplier ?? 1) * reachMult * (1 - visPenalty);
       // Post quality signals from trust engine
       const pt = trustByPost.get(p.id);
       const retentionBoost = 1 + Math.min(Number(pt?.retentionScore ?? 0) / 100, 1) * 0.3;
@@ -251,17 +228,25 @@ export async function listPosts(
       const officialBoost = (p as { isOfficialPost?: boolean | null }).isOfficialPost
         ? 1.2 + Math.min(((p as { officialPostPriority?: number | null }).officialPostPriority ?? 0) / 10, 0.1)
         : 1.0;
-      const highTrustAuthorBoost = getHighTrustAuthorMultiplier({
-        isOfficialAccount: author?.isOfficialAccount,
-        role: author?.role,
-        tier: at?.tier,
-        creatorLevel: at?.creatorLevel,
-      }, p);
-      const rawScore = freshness * authorTrustBoost * highTrustAuthorBoost * retentionBoost * saveBoost * deepEngagementBoost * cisBoost * topicAffinityBoost * followingBonus * officialBoost;
       const activeBoost = boostByPost.get(p.id);
-      return activeBoost
-        ? rawScore * activeBoost.reachMultiplier + activeBoost.placementPriority
-        : rawScore;
+      return calculateRankingScore({
+        ageHours,
+        engagementScore: 0,
+        relevanceScore: followingBonus * topicAffinityBoost,
+        authorTrustScore: at?.uti,
+        visibilityMultiplier: at?.visibilityMultiplier,
+        authorReachMultiplier: reachMult,
+        author: {
+          isOfficialAccount: author?.isOfficialAccount,
+          role: author?.role,
+          tier: at?.tier,
+          creatorLevel: at?.creatorLevel,
+        },
+        post: p,
+        isOfficialPost: (p as { isOfficialPost?: boolean | null }).isOfficialPost,
+        postQualityMultiplier: retentionBoost * saveBoost * deepEngagementBoost * cisBoost * officialBoost,
+        activeBoost,
+      });
     };
 
     // Sort by composite score

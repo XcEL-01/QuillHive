@@ -10,7 +10,7 @@ import {
   repostsTable,
   savedPostsTable,
 } from "@workspace/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, lte, isNull, or, sql } from "drizzle-orm";
 import { getCache, setCache, deleteCache } from "../../lib/cache";
 
 export async function getUserWithCounts(userId: number, viewerId: number | null) {
@@ -190,6 +190,7 @@ export async function enrichPost(post: any, viewerId: number | null) {
         and(
           eq(boostRequestsTable.postId, post.id),
           eq(boostRequestsTable.status, "approved"),
+          or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
           sql`${boostRequestsTable.boostEndsAt} > ${now}`,
         ),
       )

@@ -11,7 +11,7 @@ import {
 import { eq, desc, and, sql, gt, isNull, lte, or, inArray } from "drizzle-orm";
 import { getSessionUserId } from "../../lib/auth";
 import { enrichPost } from "../posts/post.service";
-import { getHighTrustAuthorMultiplier } from "../posts/ranking.service";
+import { calculateRankingScore } from "../posts/ranking.service";
 import { usersTable, userTrustScoresTable } from "@workspace/db/schema";
 
 export const topicsRouter = Router();
@@ -118,14 +118,20 @@ topicsRouter.get("/:slug", async (req, res) => {
       const rank = (post: typeof a) => {
         const author = authorMap.get(post.authorId);
         const trust = trustMap.get(post.authorId);
-        const freshness = Math.max(0.05, Math.exp(-((now - new Date(post.createdAt).getTime()) / 3_600_000) / 72));
+        const ageHours = (now - new Date(post.createdAt).getTime()) / 3_600_000;
         const boost = boostMap.get(post.id);
-        return freshness * getHighTrustAuthorMultiplier({
+        return calculateRankingScore({
+          ageHours,
+          author: {
           isOfficialAccount: author?.isOfficialAccount,
           role: author?.role,
           tier: trust?.tier,
           creatorLevel: trust?.creatorLevel,
-        }, post) * (boost ? Number(boost.reachMultiplier ?? 1) : 1) + (boost?.placementPriority ?? 0);
+          },
+          post,
+          isOfficialPost: post.isOfficialPost,
+          activeBoost: boost,
+        });
       };
       return rank(b) - rank(a);
     });
@@ -220,14 +226,20 @@ topicFeedRouter.get("/feed/topic/:slug", async (req, res) => {
     const rank = (post: typeof a) => {
       const author = authorMap.get(post.authorId);
       const trust = trustMap.get(post.authorId);
-      const freshness = Math.max(0.05, Math.exp(-((now - new Date(post.createdAt).getTime()) / 3_600_000) / 72));
+      const ageHours = (now - new Date(post.createdAt).getTime()) / 3_600_000;
       const boost = boostMap.get(post.id);
-      return freshness * getHighTrustAuthorMultiplier({
+      return calculateRankingScore({
+        ageHours,
+        author: {
         isOfficialAccount: author?.isOfficialAccount,
         role: author?.role,
         tier: trust?.tier,
         creatorLevel: trust?.creatorLevel,
-      }, post) * (boost ? Number(boost.reachMultiplier ?? 1) : 1) + (boost?.placementPriority ?? 0);
+        },
+        post,
+        isOfficialPost: post.isOfficialPost,
+        activeBoost: boost,
+      });
     };
     return rank(b) - rank(a);
   });

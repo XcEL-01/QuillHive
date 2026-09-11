@@ -14,12 +14,35 @@ import { updateUserTrustScoreSafe } from "../trust/trust.service";
 import { getCache, setCache, deleteCachePattern } from "../../lib/cache";
 import { memGet, memSet, memDeletePattern } from "../../lib/memCache";
 import { addReputationEvent } from "../trust/reputation.service";
-import { getHighTrustAuthorMultiplier } from "./ranking.service";
+import { calculateRankingScore } from "./ranking.service";
 
 function refreshTrustForUsers(...userIds: Array<number | null | undefined>) {
   for (const userId of [...new Set(userIds.filter(Boolean) as number[])]) {
     void updateUserTrustScoreSafe(userId);
   }
+}
+
+async function getRankingContext(postIds: number[], authorIds: number[]) {
+  if (postIds.length === 0) return { authors: new Map(), trust: new Map(), boosts: new Map() };
+  const now = new Date();
+  const [authors, trustScores, boosts] = await Promise.all([
+    db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role, reachMultiplier: usersTable.reachMultiplier })
+      .from(usersTable).where(inArray(usersTable.id, [...new Set(authorIds)])),
+    db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+      .from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, [...new Set(authorIds)])),
+    db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+      .from(boostRequestsTable).where(and(
+        inArray(boostRequestsTable.postId, postIds),
+        eq(boostRequestsTable.status, "approved"),
+        or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
+        or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, now)),
+      )),
+  ]);
+  return {
+    authors: new Map(authors.map(author => [author.id, author])),
+    trust: new Map(trustScores.map(score => [score.userId, score])),
+    boosts: new Map(boosts.map(boost => [boost.postId, boost])),
+  };
 }
 
 function getViewerId(req: Request): number | null {
@@ -517,35 +540,30 @@ export const getFeed = async (req: Request, res: Response) => {
     const comments = Number(commentMap.get(post.id) ?? 0);
     const shares = Number(shareMap.get(post.id) ?? 0);
     const reposts = Number(repostMap.get(post.id) ?? 0);
-    const rawScore = likes * 2 + comments * 3 + shares * 4 + reposts * 5;
     const ageHours = (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
-    const decayFactor = 1 / (1 + ageHours / 24);
 
     const trust = trustMap.get(post.authorId);
     const tier = trust?.tier ?? "normal";
     const vm = trust?.vm ?? 1.0;
-    const tierBoost = tier === "trusted" ? Math.min(1.2, vm) : tier === "restricted" ? Math.min(0.5, vm) : vm;
-
     const author = authorProfileMap.get(post.authorId);
-    const permanentAuthorMultiplier = getHighTrustAuthorMultiplier({
+    const activeBoost = boostMap.get(post.id);
+    const score = calculateRankingScore({
+      ageHours,
+      engagementScore: likes * 2 + comments * 3 + shares * 4 + reposts * 5,
+      authorTrustScore: trustScores.find(t => t.userId === post.authorId)?.uti,
+      visibilityMultiplier: vm,
+      authorReachMultiplier: Number(author?.reachMultiplier ?? 1),
+      author: {
       isOfficialAccount: author?.isOfficialAccount,
       role: author?.role,
       tier,
       creatorLevel: trust?.creatorLevel,
-    }, post);
-    const officialPostMultiplier = post.isOfficialPost ? 4 : 1;
-    const authorReachMultiplier = Math.max(0.1, Number(author?.reachMultiplier ?? 1));
-    const activeBoost = boostMap.get(post.id);
-    const boostMultiplier = Math.max(1, Number(activeBoost?.reachMultiplier ?? 1));
-    const placementBonus = Number(activeBoost?.placementPriority ?? 0) * 100;
-
-    // New creators (joined < 30 days) get a 2× cold-start multiplier so they always surface
-    const coldStartBoost = newCreatorSet.has(post.authorId) ? 2.0 : 1.0;
-
-    // Ranking formula: ((engagement * recency + baseline) * trust * author reach
-    // * boost reach * official preference) * cold-start + active placement bonus.
-    const score = ((rawScore * decayFactor + decayFactor * 10) * tierBoost * authorReachMultiplier * permanentAuthorMultiplier * boostMultiplier * officialPostMultiplier) * coldStartBoost + placementBonus;
-    return { post, score, tier, isHighTrustAuthor: permanentAuthorMultiplier > 1 };
+      },
+      post,
+      isOfficialPost: post.isOfficialPost,
+      activeBoost,
+    });
+    return { post, score, tier };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -836,6 +854,7 @@ export const getTrending = async (req: Request, res: Response) => {
   if (posts.length === 0) return res.json({ posts: [], total: 0 });
 
   const postIds = posts.map(p => p.id);
+  const rankingContext = await getRankingContext(postIds, [...new Set(posts.map(p => p.authorId))]);
 
   const [likeCounts, commentCounts, repostCounts] = await Promise.all([
     db.select({ postId: likesTable.postId, count: sql<number>`count(*)::int` })
@@ -857,8 +876,19 @@ export const getTrending = async (req: Request, res: Response) => {
     const reposts = Number(repostMap.get(post.id) ?? 0);
     const rawScore = likes * 2 + comments * 3 + reposts * 5;
     const ageHours = (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
-    const recencyBoost = Math.max(0, 1 - ageHours / 72);
-    const score = rawScore + recencyBoost * 20;
+    const author = rankingContext.authors.get(post.authorId);
+    const trust = rankingContext.trust.get(post.authorId);
+    const score = calculateRankingScore({
+      ageHours,
+      engagementScore: rawScore,
+      authorTrustScore: trust?.uti,
+      visibilityMultiplier: trust?.visibilityMultiplier,
+      authorReachMultiplier: author?.reachMultiplier,
+      author: { isOfficialAccount: author?.isOfficialAccount, role: author?.role, tier: trust?.tier, creatorLevel: trust?.creatorLevel },
+      post,
+      isOfficialPost: post.isOfficialPost,
+      activeBoost: rankingContext.boosts.get(post.id),
+    });
     return { post, score };
   });
 
@@ -909,6 +939,7 @@ export const getMotion = async (req: Request, res: Response) => {
   if (candidates.length === 0) return res.json({ posts: [], total: 0, page, limit });
 
   const postIds = candidates.map(p => p.id);
+  const rankingContext = await getRankingContext(postIds, [...new Set(candidates.map(p => p.authorId))]);
   const [likeCounts, commentCounts] = await Promise.all([
     db.select({ postId: likesTable.postId, count: sql<number>`count(*)::int` })
       .from(likesTable).where(inArray(likesTable.postId, postIds)).groupBy(likesTable.postId),
@@ -919,14 +950,24 @@ export const getMotion = async (req: Request, res: Response) => {
   const commentMap = new Map<number, number>(commentCounts.map(c => [c.postId, Number(c.count)]));
   const now = Date.now();
 
-  // Trending sort favours engagement, default favours recency.
   const scored = candidates.map(post => {
     const likes = Number(likeMap.get(post.id) ?? 0);
     const comments = Number(commentMap.get(post.id) ?? 0);
     const ageHours = (now - new Date(post.createdAt).getTime()) / 3_600_000;
-    const score = feed === "trending"
-      ? likes * 2 + comments * 3 + Math.max(0, 1 - ageHours / 72) * 25
-      : -ageHours;
+    const author = rankingContext.authors.get(post.authorId);
+    const trust = rankingContext.trust.get(post.authorId);
+    const score = calculateRankingScore({
+      ageHours,
+      engagementScore: likes * 2 + comments * 3,
+      relevanceScore: feed === "trending" ? 1.1 : 1,
+      authorTrustScore: trust?.uti,
+      visibilityMultiplier: trust?.visibilityMultiplier,
+      authorReachMultiplier: author?.reachMultiplier,
+      author: { isOfficialAccount: author?.isOfficialAccount, role: author?.role, tier: trust?.tier, creatorLevel: trust?.creatorLevel },
+      post,
+      isOfficialPost: post.isOfficialPost,
+      activeBoost: rankingContext.boosts.get(post.id),
+    });
     return { post, score };
   });
   scored.sort((a, b) => b.score - a.score);

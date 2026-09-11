@@ -367,7 +367,7 @@ export default function Profile() {
         setBoostsLoading(true);
         fetch('/api/boost/my', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
           .then(r => r.ok ? r.json() : null)
-          .then(d => { if (d?.requests) setBoostRequests(d.requests); })
+          .then(d => setBoostRequests(Array.isArray(d) ? d : d?.requests ?? []))
           .catch(() => {})
           .finally(() => setBoostsLoading(false));
       }

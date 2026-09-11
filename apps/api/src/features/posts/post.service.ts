@@ -176,7 +176,7 @@ export async function listPosts(
       db.select({ postId: postTrustScoresTable.postId, retentionScore: postTrustScoresTable.retentionScore, saveRate: postTrustScoresTable.saveRate, deepEngagementRate: postTrustScoresTable.deepEngagementRate, cisScore: postTrustScoresTable.cisScore })
         .from(postTrustScoresTable)
         .where(inArray(postTrustScoresTable.postId, candidateIds)),
-      db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority, boostStartsAt: boostRequestsTable.boostStartsAt, boostEndsAt: boostRequestsTable.boostEndsAt, status: boostRequestsTable.status })
+      db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
         .from(boostRequestsTable)
         .where(and(
           inArray(boostRequestsTable.postId, candidateIds),

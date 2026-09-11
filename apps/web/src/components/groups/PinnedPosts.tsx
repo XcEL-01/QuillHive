@@ -28,10 +28,11 @@ export function PinnedPosts({ groupId, myRole }: PinnedPostsProps) {
   const unpin = async (postId: number) => {
     if (!token) return;
     try {
-      await fetch(`/api/groups/${groupId}/posts/${postId}/pin`, {
+      const res = await fetch(`/api/groups/${groupId}/posts/${postId}/pin`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) return;
       setPinned(prev => prev.filter(p => p.id !== postId));
     } catch { /* ignore */ }
   };

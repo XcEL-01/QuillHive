@@ -913,7 +913,8 @@ export const getMySavedPosts = async (req: Request, res: Response) => {
   const savedRows = await db
     .select({ postId: savedPostsTable.postId })
     .from(savedPostsTable)
-    .where(eq(savedPostsTable.userId, viewerId))
+    .innerJoin(postsTable, eq(savedPostsTable.postId, postsTable.id))
+    .where(and(eq(savedPostsTable.userId, viewerId), eq(postsTable.isDeleted, false)))
     .orderBy(desc(savedPostsTable.createdAt))
     .limit(limit)
     .offset((page - 1) * limit);

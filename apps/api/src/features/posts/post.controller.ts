@@ -494,9 +494,6 @@ export const getFeed = async (req: Request, res: Response) => {
         postId: boostRequestsTable.postId,
         reachMultiplier: boostRequestsTable.reachMultiplier,
         placementPriority: boostRequestsTable.placementPriority,
-        boostStartsAt: boostRequestsTable.boostStartsAt,
-        boostEndsAt: boostRequestsTable.boostEndsAt,
-        status: boostRequestsTable.status,
       }).from(boostRequestsTable).where(and(
         inArray(boostRequestsTable.postId, postIds),
         eq(boostRequestsTable.status, "approved"),

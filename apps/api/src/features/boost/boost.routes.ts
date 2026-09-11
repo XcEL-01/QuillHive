@@ -1,12 +1,13 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import { boostRequestsTable, postsTable, usersTable, incomeLogsTable } from "@workspace/db/schema";
-import { eq, and, desc, isNull, lte, gt, or } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../../middleware/admin";
 import { verifyTransaction, verifyWebhookSignature, generateTxRef } from "./flutterwave.service";
 import { notify } from "../notifications/notification.service";
 import { sendEmail } from "../email/email.service";
-import { isBoostActive } from "./boost.state";
+import { deleteCachePattern } from "../../lib/cache";
+import { memDeletePattern } from "../../lib/memCache";
 
 function boostReceiptHtml(opts: {
   displayName: string;
@@ -48,14 +49,18 @@ const BOOST_PLANS = {
 } as const;
 type PlanKey = keyof typeof BOOST_PLANS;
 
+async function invalidateRankingCaches(): Promise<void> {
+  await Promise.all([
+    deleteCachePattern("feed:*"),
+    deleteCachePattern("trending:*"),
+  ]);
+  memDeletePattern("trending:");
+}
+
 // ── Initialize Flutterwave payment ───────────────────────────────────────────
 boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Response) => {
   const flwPublicKey = process.env.FLW_PUBLIC_KEY ?? process.env.FLUTTERWAVE_PUBLIC_KEY;
-  const flwSecretKey = process.env.FLW_SECRET_KEY ?? process.env.FLUTTERWAVE_SECRET_KEY;
-  const flwWebhookSecret = process.env.FLW_WEBHOOK_SECRET ?? process.env.FLW_ENCRYPTION_KEY;
-  if (!flwPublicKey || !flwSecretKey || !flwWebhookSecret) {
-    return res.status(503).json({ error: "Boost payments are not configured. Please contact support or try again later." });
-  }
+  if (!flwPublicKey) return res.status(503).json({ error: "Payment processing is not configured" });
 
   const userId = (req as AuthedReq).currentUser.id;
   const user = (req as AuthedReq).currentUser;
@@ -138,11 +143,6 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
   const userId = (req as AuthedReq).currentUser.id;
   const { tx_ref, transaction_id } = req.query as { tx_ref?: string; transaction_id?: string };
 
-  const flwSecretKey = process.env.FLW_SECRET_KEY ?? process.env.FLUTTERWAVE_SECRET_KEY;
-  if (!flwSecretKey) {
-    return res.status(503).json({ error: "Boost payments are not configured. Please contact support or try again later." });
-  }
-
   if (!tx_ref || !transaction_id) {
     return res.status(400).json({ error: "tx_ref and transaction_id are required" });
   }
@@ -198,6 +198,7 @@ boostRouter.get("/verify-payment", requireAuth, async (req: Request, res: Respon
     .returning({ id: boostRequestsTable.id });
 
   if (updated.length === 0) return res.json({ ok: true, message: "Boost already active" });
+  await invalidateRankingCaches();
 
   void db.insert(incomeLogsTable).values({
     userId: boostRequest.userId,
@@ -303,6 +304,7 @@ boostRouter.post("/webhook", async (req: Request, res: Response) => {
           .returning({ id: boostRequestsTable.id });
 
         if (updated.length === 0) return res.json({ received: true });
+        await invalidateRankingCaches();
 
         void db.insert(incomeLogsTable).values({
           userId: boostRequest.userId,
@@ -409,12 +411,9 @@ boostRouter.get("/admin", requireAdmin, async (_req: Request, res: Response) => 
       durationHours: boostRequestsTable.durationHours,
       status: boostRequestsTable.status,
       adminNote: boostRequestsTable.adminNote,
-      boostStartsAt: boostRequestsTable.boostStartsAt,
-      boostEndsAt: boostRequestsTable.boostEndsAt,
-      reachMultiplier: boostRequestsTable.reachMultiplier,
-      placementPriority: boostRequestsTable.placementPriority,
       createdAt: boostRequestsTable.createdAt,
       reviewedAt: boostRequestsTable.reviewedAt,
+      boostEndsAt: boostRequestsTable.boostEndsAt,
       paidAmountCents: boostRequestsTable.paidAmountCents,
       postId: postsTable.id,
       postTitle: postsTable.title,
@@ -426,7 +425,7 @@ boostRouter.get("/admin", requireAdmin, async (_req: Request, res: Response) => 
     .leftJoin(usersTable, eq(usersTable.id, boostRequestsTable.userId))
     .orderBy(desc(boostRequestsTable.createdAt))
     .limit(100);
-  return res.json({ requests: rows.map((row) => ({ ...row, isActive: isBoostActive(row as any) })) });
+  return res.json({ requests: rows });
 });
 
 // ── Admin: approve ────────────────────────────────────────────────────────
@@ -447,6 +446,7 @@ boostRouter.post("/:id/approve", requireAdmin, async (req: Request, res: Respons
     .update(boostRequestsTable)
     .set({ status: "approved", reviewedBy: adminId, reviewedAt: now, boostStartsAt: now, boostEndsAt, adminNote: adminNote || null })
     .where(eq(boostRequestsTable.id, id));
+  await invalidateRankingCaches();
 
   return res.json({ ok: true, boostEndsAt });
 });
@@ -462,10 +462,7 @@ boostRouter.get("/my", requireAuth, async (req: Request, res: Response) => {
       plan: boostRequestsTable.plan,
       postId: boostRequestsTable.postId,
       postTitle: postsTable.title,
-      boostStartsAt: boostRequestsTable.boostStartsAt,
       boostEndsAt: boostRequestsTable.boostEndsAt,
-      reachMultiplier: boostRequestsTable.reachMultiplier,
-      placementPriority: boostRequestsTable.placementPriority,
       createdAt: boostRequestsTable.createdAt,
       adminNote: boostRequestsTable.adminNote,
     })
@@ -475,7 +472,7 @@ boostRouter.get("/my", requireAuth, async (req: Request, res: Response) => {
     .orderBy(desc(boostRequestsTable.createdAt))
     .limit(50);
 
-  return res.json(boosts.map((boost) => ({ ...boost, isActive: isBoostActive(boost as any) })));
+  return res.json(boosts);
 });
 
 // ── Admin: revoke ─────────────────────────────────────────────────────────
@@ -488,6 +485,7 @@ boostRouter.post("/:id/revoke", requireAdmin, async (req: Request, res: Response
     .update(boostRequestsTable)
     .set({ status: "rejected", reviewedBy: adminId, reviewedAt: new Date(), boostEndsAt: new Date(), adminNote: "Revoked by admin" })
     .where(eq(boostRequestsTable.id, id));
+  await invalidateRankingCaches();
 
   return res.json({ ok: true });
 });

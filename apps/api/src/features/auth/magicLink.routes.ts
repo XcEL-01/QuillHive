@@ -4,7 +4,7 @@ import { db } from "@workspace/db";
 import { magicLinkTokensTable, usersTable } from "@workspace/db/schema";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { createAuthTokens } from "../../lib/auth";
-import { sendEmail } from "../email/email.service";
+import { getPublicAppUrl, sendEmail } from "../email/email.service";
 import { magicLinkEmailHtml, magicLinkEmailText } from "../email/email.templates";
 import { rateLimit } from "../../middleware/rateLimit";
 
@@ -49,19 +49,17 @@ magicLinkRouter.post("/request", magicLinkLimit, async (req, res: Response) => {
       userAgent: (req.headers["user-agent"] || "").slice(0, 200),
     });
 
-    const base = process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get("host")}`;
-    const url = `${base}/auth/magic?token=${encodeURIComponent(token)}`;
+    const url = `${getPublicAppUrl()}/auth/magic?token=${encodeURIComponent(token)}`;
     const brand = process.env.BRAND_NAME || "QuillHive";
 
-    try {
-      await sendEmail({
-        to: email,
-        subject: `Your ${brand} sign-in link`,
-        html: magicLinkEmailHtml({ link: url }),
-        text: magicLinkEmailText({ link: url }),
-      });
-    } catch {
-      /* email may not be configured in dev */
+    const result = await sendEmail({
+      to: email,
+      subject: `Your ${brand} sign-in link`,
+      html: magicLinkEmailHtml({ link: url }),
+      text: magicLinkEmailText({ link: url }),
+    });
+    if (!result.ok && process.env.NODE_ENV === "production") {
+      return res.status(503).json({ error: result.error || "Email delivery is unavailable. Please try again later." });
     }
 
     if (process.env.NODE_ENV !== "production") {
@@ -92,6 +90,7 @@ magicLinkRouter.post("/consume", async (req, res: Response) => {
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, row.email)).limit(1);
   if (!user) return res.status(400).json({ error: "Account not found" });
+  if (!user.emailVerified) return res.status(403).json({ error: "Please verify your email before using a magic link." });
 
   await db.update(magicLinkTokensTable)
     .set({ usedAt: new Date() })

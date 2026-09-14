@@ -145,6 +145,10 @@ export interface SendEmailOptions {
   from?: string;
 }
 
+export function getPublicAppUrl(): string {
+  return (process.env.PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:5173").replace(/\/$/, "");
+}
+
 /**
  * Best-effort email send.
  * Priority: RESEND_API_KEY → SMTP (nodemailer) → console (dev only).
@@ -153,41 +157,38 @@ export interface SendEmailOptions {
  * provider outage.
  */
 export async function sendEmail(opts: SendEmailOptions): Promise<{ ok: boolean; provider: string; error?: string }> {
-  const from = opts.from || process.env.MAIL_FROM || `no-reply@${process.env.MAIL_DOMAIN || "quillhive.app"}`;
+  const from = opts.from || process.env.EMAIL_FROM || process.env.MAIL_FROM || `no-reply@${process.env.MAIL_DOMAIN || "quillhive.app"}`;
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text }),
-    });
-    if (!r.ok) throw new Error(`resend_send_failed_${r.status}`);
-    return { ok: true, provider: "resend" };
+    try {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text }),
+      });
+      if (!r.ok) return { ok: false, provider: "resend", error: `Resend rejected the email (HTTP ${r.status}).` };
+      return { ok: true, provider: "resend" };
+    } catch (error) {
+      return { ok: false, provider: "resend", error: error instanceof Error ? `Resend delivery failed: ${error.message}` : "Resend delivery failed." };
+    }
   }
   const smtpHost = process.env.SMTP_HOST;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
   if (smtpHost && smtpUser && smtpPass) {
-    const nodemailer = (await import("nodemailer")).default;
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: { user: smtpUser, pass: smtpPass },
-    });
-    await transporter.sendMail({
-      from: `"QuillHive" <${smtpUser}>`,
-      to: opts.to,
-      subject: opts.subject,
-      html: opts.html,
-      text: opts.text,
-    });
-    return { ok: true, provider: "smtp" };
-  }
-  if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
-    console.log(`[mail:dev] to=${opts.to} subject=${opts.subject}\n${opts.text || opts.html || ""}\n`);
-    return { ok: true, provider: "console" };
+    try {
+      const nodemailer = (await import("nodemailer")).default;
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+      await transporter.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text });
+      return { ok: true, provider: "smtp" };
+    } catch (error) {
+      return { ok: false, provider: "smtp", error: error instanceof Error ? `SMTP delivery failed: ${error.message}` : "SMTP delivery failed." };
+    }
   }
   return {
     ok: false,

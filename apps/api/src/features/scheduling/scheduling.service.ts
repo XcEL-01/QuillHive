@@ -377,7 +377,7 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
   const { db: _db } = await import("@workspace/db");
   const { usersTable } = await import("@workspace/db/schema");
   const { eq, and } = await import("drizzle-orm");
-  const { sendEmail } = await import("../email/email.service");
+  const { getPublicAppUrl, sendEmail } = await import("../email/email.service");
   const { getWeeklyReport } = await import("../analytics/topicAnalytics.service");
 
   const creators = await _db
@@ -396,7 +396,8 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
     )
     .limit(500);
 
-  const appUrl = process.env.APP_URL || "http://localhost:5173";
+  const appUrl = getPublicAppUrl();
+  let sent = 0;
 
   for (const creator of creators) {
     try {
@@ -432,12 +433,13 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
         `To unsubscribe from weekly digests, visit ${appUrl}/settings`,
       ].filter(line => line !== undefined).join("\n");
 
-      await sendEmail({ to: creator.email, subject, text });
+      const result = await sendEmail({ to: creator.email, subject, text });
+      if (result.ok) sent += 1;
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch { /* skip this creator on error */ }
   }
 
-  logger.info({ sent: creators.length }, "weekly creator digest complete");
+  logger.info({ selected: creators.length, sent }, "weekly creator digest complete");
 }
 
 async function sendNurtureEmails(): Promise<void> {
@@ -447,7 +449,8 @@ async function sendNurtureEmails(): Promise<void> {
   const { sendEmail } = await import("../email/email.service");
   const { day3NurtureHtml, day7NurtureHtml } = await import("../email/email.templates");
 
-  const appUrl = process.env.PUBLIC_APP_URL || process.env.APP_URL || "";
+  const appUrl = (process.env.PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:5173").replace(/\/$/, "");
+  let sent = 0;
 
   // Day 3 nurture - created 3 days ago (±30 min window)
   const day3Users = await _db.execute(_sql`
@@ -461,12 +464,13 @@ async function sendNurtureEmails(): Promise<void> {
 
   for (const u of day3Users.rows as Array<{ id: number; email: string; displayName: string; username: string }>) {
     try {
-      await sendEmail({
+      const result = await sendEmail({
         to: u.email,
         subject: `${u.displayName}, day 3 check-in from QuillHive 👋`,
         html: day3NurtureHtml({ displayName: u.displayName, username: u.username, appUrl }),
         text: `Hi ${u.displayName},\n\nIt's been 3 days! Members who share in their first week are 3× more likely to build lasting connections.\n\nShare something today: ${appUrl}/write\n\n- QuillHive`,
       });
+      if (result.ok) sent += 1;
       await new Promise((r) => setTimeout(r, 80));
     } catch { /* skip */ }
   }
@@ -485,7 +489,7 @@ async function sendNurtureEmails(): Promise<void> {
 
   for (const u of day7Users.rows as Array<{ id: number; email: string; displayName: string; username: string; post_count: string; follower_count: string }>) {
     try {
-      await sendEmail({
+      const result = await sendEmail({
         to: u.email,
         subject: `One week on QuillHive - your progress, ${u.displayName}`,
         html: day7NurtureHtml({
@@ -496,11 +500,12 @@ async function sendNurtureEmails(): Promise<void> {
         }),
         text: `One week in! You've published ${u.post_count} posts and earned ${u.follower_count} followers. Keep going: ${appUrl}/dashboard\n\n- QuillHive`,
       });
+      if (result.ok) sent += 1;
       await new Promise((r) => setTimeout(r, 80));
     } catch { /* skip */ }
   }
 
-  logger.info({ day3: day3Users.rows.length, day7: day7Users.rows.length }, "nurture emails sent");
+  logger.info({ day3: day3Users.rows.length, day7: day7Users.rows.length, sent }, "nurture email job complete");
 }
 
 async function notifyDormantUsers(): Promise<void> {

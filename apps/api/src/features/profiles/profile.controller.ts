@@ -24,6 +24,7 @@ import {
   createEmailVerification,
   logBlockedEmailAttempt,
   verifyEmailToken,
+  getPublicAppUrl,
 } from "../email/email.service";
 import { recordLoginIntegrity, getLoginMeta } from "../security/locationIntegrity";
 import { emitEvent, maskIp } from "../../lib/events";
@@ -167,20 +168,23 @@ export const register = async (req: Request, res: Response) => {
   const verificationToken = await createEmailVerification(user.id);
 
   // Send welcome email (fire-and-forget - never block registration)
-  const appUrl = process.env.PUBLIC_APP_URL || process.env.APP_URL || "";
-  sendEmail({
+  const appUrl = getPublicAppUrl();
+  const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+  const emailResult = await sendEmail({
     to: emailCheck.email,
     subject: `Welcome to QuillHive, ${displayName}!`,
-    html: welcomeEmailHtml({ displayName, username, appUrl }),
-    text: welcomeEmailText({ displayName, username, appUrl }),
-  }).catch(() => {});
+    html: welcomeEmailHtml({ displayName, username, appUrl, verificationUrl }),
+    text: welcomeEmailText({ displayName, username, appUrl, verificationUrl }),
+  });
 
   const userWithCounts = await getUserWithCounts(user.id, null);
   return res.status(201).json({
     verificationRequired: true,
     message: "Account created. Please verify your email to activate sign in.",
+    emailSent: emailResult.ok,
+    emailError: emailResult.ok ? undefined : emailResult.error,
     verificationToken: process.env.NODE_ENV === "production" ? undefined : verificationToken,
-    verificationUrl: process.env.NODE_ENV === "production" ? undefined : `/login?verify=${verificationToken}`,
+    verificationUrl: process.env.NODE_ENV === "production" ? undefined : verificationUrl,
     user: userWithCounts,
   });
 };

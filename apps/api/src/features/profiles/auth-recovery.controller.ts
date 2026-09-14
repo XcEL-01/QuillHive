@@ -4,7 +4,7 @@ import { db } from "@workspace/db";
 import { usersTable, postsTable, commentsTable, followsTable, likesTable } from "@workspace/db/schema";
 import { and, eq, gt } from "drizzle-orm";
 import { hashPassword, getSessionUserId, destroySession } from "../../lib/auth";
-import { createEmailVerification, sendEmail } from "../email/email.service";
+import { createEmailVerification, getPublicAppUrl, sendEmail } from "../email/email.service";
 import { logger } from "../../lib/logger";
 
 function getUserIdFromAuth(req: Request): number | null {
@@ -33,7 +33,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
       .set({ passwordResetTokenHash: tokenHash, passwordResetExpires: expires })
       .where(eq(usersTable.id, user.id));
 
-    const resetUrl = `${process.env.APP_URL || "http://localhost:5000"}/reset-password?token=${rawToken}`;
+    const resetUrl = `${getPublicAppUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
     const brand = process.env.BRAND_NAME || "QuillHive";
 
     logger.info({ userId: user.id }, "Password reset requested - sending email");
@@ -104,8 +104,18 @@ export const resendVerification = async (req: Request, res: Response) => {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (user && !user.emailVerified) {
     const verificationToken = await createEmailVerification(user.id);
+    const verificationUrl = `${getPublicAppUrl()}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+    const result = await sendEmail({
+      to: email,
+      subject: "Verify your QuillHive email",
+      html: `<p>Please verify your QuillHive email address.</p><p><a href="${verificationUrl}">Verify your email</a></p><p>This link expires in 24 hours.</p>`,
+      text: `Verify your QuillHive email: ${verificationUrl}\nThis link expires in 24 hours.`,
+    });
+    if (!result.ok && process.env.NODE_ENV === "production") {
+      return res.status(503).json({ error: result.error || "Email delivery is unavailable. Please try again later." });
+    }
     if (process.env.NODE_ENV !== "production") {
-      return res.json({ success: true, devVerificationToken: verificationToken });
+      return res.json({ success: true, emailSent: result.ok, devVerificationToken: verificationToken, devVerificationUrl: verificationUrl, message: result.ok ? "Verification email sent." : result.error });
     }
   }
   return res.json({ success: true });

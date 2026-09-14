@@ -127,7 +127,7 @@ export function weeklyDigestEmailHtml(opts: {
   return baseLayout(`Your ${brand} weekly digest`, `Top posts from creators you follow on ${brand}`, body);
 }
 
-export function welcomeEmailHtml(opts: { displayName: string; username: string; appUrl?: string }): string {
+export function welcomeEmailHtml(opts: { displayName: string; username: string; appUrl?: string; verificationUrl?: string }): string {
   const url = opts.appUrl || appUrl;
   const body = `
     <div style="text-align:center;margin-bottom:28px;font-size:52px;">🎉</div>
@@ -162,7 +162,7 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
         </tr></table>
       </td></tr>
     </table>
-    <div style="text-align:center;margin-top:28px;">${primaryButton(`${url}/write`, "Write your first post →")}</div>
+    <div style="text-align:center;margin-top:28px;">${primaryButton(opts.verificationUrl || `${url}/write`, opts.verificationUrl ? "Verify your email" : "Write your first post →")}</div>
     <p style="margin:20px 0 0;font-size:12px;color:#52525b;text-align:center;">
       Your profile: <a href="${url}/profile/${opts.username}" style="color:#a1a1aa;">@${opts.username}</a>
     </p>
@@ -170,9 +170,9 @@ export function welcomeEmailHtml(opts: { displayName: string; username: string; 
   return baseLayout(`Welcome to ${brand} - let's get you growing`, `You're in. Here's how to make your first 48 hours count.`, body);
 }
 
-export function welcomeEmailText(opts: { displayName: string; username: string; appUrl?: string }): string {
+export function welcomeEmailText(opts: { displayName: string; username: string; appUrl?: string; verificationUrl?: string }): string {
   const url = opts.appUrl || appUrl;
-  return `Welcome to ${brand}, ${opts.displayName}!\n\nYour quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities - for everyone.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore people: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n- The ${brand} team`;
+  return `Welcome to ${brand}, ${opts.displayName}!\n\nPlease verify your email before signing in: ${opts.verificationUrl || `${url}/write`}\n\nYour quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities - for everyone.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore people: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n- The ${brand} team`;
 }
 
 export function day3NurtureHtml(opts: { displayName: string; username: string; appUrl?: string }): string {

@@ -18,8 +18,8 @@ export default function Trending() {
         const res = await fetch('/api/feed/trending?limit=20', {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        const data = await res.json();
-        setPosts(data.posts || []);
+        const data = await res.json() as { posts?: unknown };
+        setPosts(res.ok && Array.isArray(data.posts) ? data.posts : []);
       } catch {
         setPosts([]);
       } finally {

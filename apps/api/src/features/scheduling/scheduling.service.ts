@@ -286,7 +286,7 @@ async function updateUserTopicAffinity(): Promise<void> {
         JOIN posts p ON p.id = rp.post_id
         JOIN post_topics pt ON pt.post_id = p.id
         WHERE rp.user_id = ANY(${batch})
-          AND rp.updated_at >= ${cutoff}
+          AND rp.last_read_at >= ${cutoff}
         GROUP BY rp.user_id, pt.topic_id
       ),
       user_topic_likes AS (

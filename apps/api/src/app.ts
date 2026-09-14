@@ -135,7 +135,10 @@ app.get("/api/features", async (_req, res) => {
     res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60");
     return res.json(result);
   } catch {
-    return res.json({});
+    // Keep the public contract stable even when the settings table is
+    // temporarily unavailable. In particular, do not default maintenance
+    // mode to true and render a broken SPA.
+    return res.json({ maintenance_mode: false });
   }
 });
 

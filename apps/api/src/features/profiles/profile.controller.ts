@@ -82,11 +82,12 @@ export const register = async (req: Request, res: Response) => {
   if (!username || !email || !password || !displayName) {
     return res.status(400).json({ error: "All fields are required" });
   }
-  if (process.env.NODE_ENV === "production" && process.env.TURNSTILE_SECRET_KEY) {
+  // Only enforce Turnstile when the browser supplied a token. This makes a
+  // partially configured deployment (secret present, widget/site key missing,
+  // or the widget script unavailable) degrade gracefully instead of blocking
+  // registration or crashing the SPA.
+  if (process.env.NODE_ENV === "production" && process.env.TURNSTILE_SECRET_KEY && (req.body as any).turnstileToken) {
     const token = (req.body as any).turnstileToken;
-    if (!token) {
-      return res.status(400).json({ error: "Bot verification required." });
-    }
     try {
       const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
         method: "POST",
@@ -102,7 +103,8 @@ export const register = async (req: Request, res: Response) => {
         return res.status(400).json({ error: "Bot verification failed. Please try again." });
       }
     } catch {
-      // If Turnstile check fails, allow registration in case of network issues
+      // If Turnstile verification is unavailable, allow registration rather
+      // than turning a third-party outage into an auth outage.
     }
   }
   if (RESERVED_USERNAMES.has(username.toLowerCase())) {

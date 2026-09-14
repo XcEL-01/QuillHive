@@ -20,6 +20,7 @@ import { emitToUser } from "../../lib/socket";
 import { sanitizeRichText, sanitizePlain } from "../../lib/sanitize";
 import { notify } from "../notifications/notification.service";
 import { calculateRankingScore } from "./ranking.service";
+import { logger } from "../../lib/logger";
 
 async function getBlockedUserIds(viewerId: number | null): Promise<number[]> {
   if (!viewerId) return [];
@@ -148,7 +149,35 @@ export async function listPosts(
     const authorIds = [...new Set(candidates.map((p) => p.authorId))];
     const now = new Date();
 
-    const [authorRows, authorTrustRows, postTrustRows, activeBoosts, viewerTopics] = await Promise.all([
+    type FeedAuthorRow = {
+      id: number;
+      reachMultiplier: number | null;
+      visibilityPenalty: number | null;
+      isOfficialAccount: boolean | null;
+      role: string | null;
+    };
+    type FeedAuthorTrustRow = {
+      userId: number;
+      uti: number | null;
+      visibilityMultiplier: number | null;
+      tier: string | null;
+      creatorLevel: string | null;
+    };
+    type FeedPostTrustRow = {
+      postId: number;
+      retentionScore: number | null;
+      saveRate: number | null;
+      deepEngagementRate: number | null;
+      cisScore: number | null;
+    };
+    type FeedBoostRow = {
+      postId: number;
+      reachMultiplier: number | null;
+      placementPriority: number | null;
+    };
+    type FeedTopicRow = { topicId: number };
+
+    const [authorRows, authorTrustRows, postTrustRows, activeBoosts, viewerTopics] = await (Promise.all([
       db.select({ id: usersTable.id, reachMultiplier: usersTable.reachMultiplier, visibilityPenalty: usersTable.visibilityPenalty, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
         .from(usersTable)
         .where(inArray(usersTable.id, authorIds)),
@@ -169,12 +198,22 @@ export async function listPosts(
       viewerId
         ? db.select({ topicId: topicFollowsTable.topicId }).from(topicFollowsTable).where(eq(topicFollowsTable.userId, viewerId))
         : Promise.resolve([] as { topicId: number }[]),
-    ]);
+    ]).catch((err) => {
+      // Ranking signals are optional. A stale/missing signal column must not
+      // take down the core posts feed.
+      logger.warn({ err }, "Optional feed ranking signals unavailable; using chronological candidates");
+      return [[], [], [], [], []] as const;
+    }) as Promise<[FeedAuthorRow[], FeedAuthorTrustRow[], FeedPostTrustRow[], FeedBoostRow[], FeedTopicRow[]]>);
 
-    const postTopicLinks = candidateIds.length > 0
-      ? await db.select({ postId: postTopicsTable.postId, topicId: postTopicsTable.topicId })
-          .from(postTopicsTable).where(inArray(postTopicsTable.postId, candidateIds))
-      : [];
+    let postTopicLinks: Array<{ postId: number; topicId: number }> = [];
+    try {
+      postTopicLinks = candidateIds.length > 0
+        ? await db.select({ postId: postTopicsTable.postId, topicId: postTopicsTable.topicId })
+            .from(postTopicsTable).where(inArray(postTopicsTable.postId, candidateIds))
+        : [];
+    } catch (err) {
+      logger.warn({ err }, "Optional post topic signals unavailable; continuing without topic affinity");
+    }
 
     const boostByPost = new Map(activeBoosts.map((b) => [b.postId, {
       reachMultiplier: Math.max(1, Number(b.reachMultiplier ?? 1)),

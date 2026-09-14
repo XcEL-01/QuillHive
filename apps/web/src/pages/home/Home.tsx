@@ -375,8 +375,12 @@ export default function Home() {
       const res = await fetch(`/api/feed?type=${algo}&limit=20`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      const json = await res.json();
-      setFeedPosts(json.posts || []);
+      const json = await res.json() as { posts?: unknown };
+      if (!res.ok || !Array.isArray(json.posts)) {
+        setFeedPosts([]);
+        return;
+      }
+      setFeedPosts(json.posts as import('@workspace/api-client-react').Post[]);
     } catch {
       setFeedPosts(null);
     } finally {

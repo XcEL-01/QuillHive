@@ -83,8 +83,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const user: AuthUser = await res.json();
       set({ user, isAuthenticated: true, token });
     } catch (error) {
-      console.warn("[auth] Session check unavailable; keeping the stored session", error);
-      set({ user: null, isAuthenticated: true, token });
+      console.warn("[auth] Session check unavailable; clearing the incomplete session", error);
+      // A token without a verified user is not an authenticated app state.
+      // Keeping isAuthenticated=true here lets protected components render
+      // and dereference a null user during a transient API failure.
+      clearStoredToken();
+      set({ user: null, token: null, isAuthenticated: false });
     }
   },
 }));

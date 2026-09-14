@@ -29,6 +29,9 @@ export const FEATURE_FLAG_KEYS = [
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 
 const DEFAULT_FLAGS: Partial<Record<string, boolean>> = {
+  // Maintenance is an explicit opt-in state. A missing setting must not
+  // take the public app offline.
+  maintenance_mode:   false,
   motion_enabled:          false,
   chains_enabled:          false,
   series_enabled:          false,

@@ -147,9 +147,12 @@ export interface SendEmailOptions {
 
 /**
  * Best-effort email send.
- * Priority: RESEND_API_KEY → SMTP (nodemailer) → console (dev only) → throw
+ * Priority: RESEND_API_KEY → SMTP (nodemailer) → console (dev only).
+ * Missing production configuration is reported as a normal, actionable
+ * result so notification/auth requests do not crash on an unrelated email
+ * provider outage.
  */
-export async function sendEmail(opts: SendEmailOptions): Promise<{ ok: true; provider: string }> {
+export async function sendEmail(opts: SendEmailOptions): Promise<{ ok: boolean; provider: string; error?: string }> {
   const from = opts.from || process.env.MAIL_FROM || `no-reply@${process.env.MAIL_DOMAIN || "quillhive.app"}`;
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
@@ -186,5 +189,9 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ ok: true; pro
     console.log(`[mail:dev] to=${opts.to} subject=${opts.subject}\n${opts.text || opts.html || ""}\n`);
     return { ok: true, provider: "console" };
   }
-  throw new Error("No email provider configured (set RESEND_API_KEY or SMTP_HOST/SMTP_USER/SMTP_PASS)");
+  return {
+    ok: false,
+    provider: "none",
+    error: "Email delivery is not configured. Set RESEND_API_KEY or SMTP_HOST/SMTP_USER/SMTP_PASS.",
+  };
 }

@@ -15,6 +15,7 @@ import { getCache, setCache, deleteCachePattern } from "../../lib/cache";
 import { memGet, memSet, memDeletePattern } from "../../lib/memCache";
 import { addReputationEvent } from "../trust/reputation.service";
 import { calculateRankingScore } from "./ranking.service";
+import { logger } from "../../lib/logger";
 
 function refreshTrustForUsers(...userIds: Array<number | null | undefined>) {
   for (const userId of [...new Set(userIds.filter(Boolean) as number[])]) {
@@ -25,24 +26,29 @@ function refreshTrustForUsers(...userIds: Array<number | null | undefined>) {
 async function getRankingContext(postIds: number[], authorIds: number[]) {
   if (postIds.length === 0) return { authors: new Map(), trust: new Map(), boosts: new Map() };
   const now = new Date();
-  const [authors, trustScores, boosts] = await Promise.all([
-    db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role, reachMultiplier: usersTable.reachMultiplier })
-      .from(usersTable).where(inArray(usersTable.id, [...new Set(authorIds)])),
-    db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
-      .from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, [...new Set(authorIds)])),
-    db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
-      .from(boostRequestsTable).where(and(
-        inArray(boostRequestsTable.postId, postIds),
-        eq(boostRequestsTable.status, "approved"),
-        or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
-        or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, now)),
-      )),
-  ]);
-  return {
-    authors: new Map(authors.map(author => [author.id, author])),
-    trust: new Map(trustScores.map(score => [score.userId, score])),
-    boosts: new Map(boosts.map(boost => [boost.postId, boost])),
-  };
+  try {
+    const [authors, trustScores, boosts] = await Promise.all([
+      db.select({ id: usersTable.id, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role, reachMultiplier: usersTable.reachMultiplier })
+        .from(usersTable).where(inArray(usersTable.id, [...new Set(authorIds)])),
+      db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+        .from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, [...new Set(authorIds)])),
+      db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+        .from(boostRequestsTable).where(and(
+          inArray(boostRequestsTable.postId, postIds),
+          eq(boostRequestsTable.status, "approved"),
+          or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
+          or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, now)),
+        )),
+    ]);
+    return {
+      authors: new Map(authors.map(author => [author.id, author])),
+      trust: new Map(trustScores.map(score => [score.userId, score])),
+      boosts: new Map(boosts.map(boost => [boost.postId, boost])),
+    };
+  } catch (err) {
+    logger.warn({ err }, "Optional ranking context unavailable; continuing with base feed order");
+    return { authors: new Map(), trust: new Map(), boosts: new Map() };
+  }
 }
 
 function getViewerId(req: Request): number | null {

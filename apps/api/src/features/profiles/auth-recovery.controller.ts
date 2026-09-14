@@ -39,7 +39,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     logger.info({ userId: user.id }, "Password reset requested - sending email");
 
     try {
-      await sendEmail({
+      const result = await sendEmail({
         to: email,
         subject: `Reset your ${brand} password`,
         html:
@@ -48,7 +48,16 @@ export const forgotPassword = async (req: Request, res: Response) => {
           `<p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>`,
         text: `Reset your ${brand} password: ${resetUrl}\nExpires in 1 hour.`,
       });
-      logger.info({ userId: user.id, email }, "Password reset email sent successfully");
+      if (!result.ok) {
+        logger.warn({ userId: user.id, reason: result.error }, "Password reset email unavailable");
+        if (process.env.NODE_ENV === "production") {
+          return res.status(503).json({
+            error: result.error || "Email delivery is temporarily unavailable. Please try again later.",
+          });
+        }
+      } else {
+        logger.info({ userId: user.id, email }, "Password reset email sent successfully");
+      }
     } catch (err) {
       logger.error({ err, userId: user.id, email }, "Failed to send password reset email");
       if (process.env.NODE_ENV === "production") {

@@ -18,5 +18,7 @@ export function useFeatureFlags(): FeatureFlags {
 
 export function useFeature(flag: string): boolean {
   const flags = useFeatureFlags();
-  return flags[flag] ?? true;
+  // Missing flags should keep normal features available, but maintenance is
+  // an explicit opt-in switch and must never default to taking the app down.
+  return flags[flag] ?? (flag === "maintenance_mode" ? false : true);
 }

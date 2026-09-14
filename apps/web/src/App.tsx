@@ -222,6 +222,19 @@ function FeatureRoute({
   return <>{children}</>;
 }
 
+function MaintenanceNotice() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+      <div className="max-w-md text-center space-y-3">
+        <h1 className="text-2xl font-serif font-bold text-foreground">QuillHive is temporarily unavailable</h1>
+        <p className="text-muted-foreground">
+          We’re making a few improvements. Please check back shortly.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -436,14 +449,17 @@ export default function App() {
 function AppShell() {
   const [location] = useLocation();
   const showFooter = isPublicRoute(location) || location === "/explore";
+  const maintenanceMode = useFeature("maintenance_mode");
 
   return (
     <>
-      <ErrorBoundary>
-        <Suspense fallback={<PageLoader />}>
-          <AppRoot><Router /></AppRoot>
-        </Suspense>
-      </ErrorBoundary>
+      {maintenanceMode ? <MaintenanceNotice /> : (
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <AppRoot><Router /></AppRoot>
+          </Suspense>
+        </ErrorBoundary>
+      )}
       {showFooter && <Footer />}
     </>
   );

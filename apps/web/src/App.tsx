@@ -230,6 +230,9 @@ function MaintenanceNotice() {
         <p className="text-muted-foreground">
           We’re making a few improvements. Please check back shortly.
         </p>
+        <a href="/login" className="inline-block pt-4 text-sm text-primary hover:underline">
+          Site admin? Sign in →
+        </a>
       </div>
     </div>
   );
@@ -450,10 +453,13 @@ function AppShell() {
   const [location] = useLocation();
   const showFooter = isPublicRoute(location) || location === "/explore";
   const maintenanceMode = useFeature("maintenance_mode");
+  const { user } = useAuthStore();
+  const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
+  const blockedByMaintenance = maintenanceMode && !isAdminUser;
 
   return (
     <>
-      {maintenanceMode ? <MaintenanceNotice /> : (
+      {blockedByMaintenance ? <MaintenanceNotice /> : (
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <AppRoot><Router /></AppRoot>

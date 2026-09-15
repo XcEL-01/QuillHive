@@ -80,7 +80,7 @@ app.use(
   express.json({
     limit: "70mb",
     verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
-      if (req.url?.includes("/boost/webhook")) {
+      if (req.url?.includes("/boost/webhook") || req.url?.includes("/boost/stripe/webhook")) {
         (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
       }
     },

@@ -17,7 +17,7 @@ import { safeHtml } from '@/lib/sanitize';
 import { linkifyHashtags } from '@/lib/hashtags';
 import { readingTimeLabel } from '@/lib/readingTime';
 import { useToast } from '@/hooks/use-toast';
-import { getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken } from '@/lib/api';
 import { apiRequest } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { clsx } from 'clsx';
@@ -330,6 +330,24 @@ export default function PostDetail() {
   const progress = useReadingProgress(postId, { enabled: !!post });
   useRecordRead(post ? postId : null, !!user && !!post);
   const { data: comments, isLoading: isLoadingComments } = useGetPostComments(postId);
+
+  useEffect(() => {
+    const sessionId = new URLSearchParams(window.location.search).get('stripe_session_id');
+    if (!sessionId || !user) return;
+    const token = getStoredToken();
+    void fetch(apiUrl(`/api/boost/stripe/session/${encodeURIComponent(sessionId)}`), {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(async response => {
+        const data = await response.json() as { ok?: boolean; error?: string };
+        if (!response.ok || !data.ok) throw new Error(data.error ?? 'Stripe payment verification failed');
+        queryClient.invalidateQueries({ queryKey: [`/api/posts/${postId}`] });
+        toast({ title: 'Your boost is live!' });
+      })
+      .catch(error => toast({ title: error instanceof Error ? error.message : 'Stripe payment verification failed', variant: 'destructive' }));
+    window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
+  }, [postId, queryClient, toast, user]);
 
   const { mutate: toggleLike } = useLikePost({
     mutation: {

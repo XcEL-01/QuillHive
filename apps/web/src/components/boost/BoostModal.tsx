@@ -64,6 +64,7 @@ const PLANS: Plan[] = [
 
 type PlanKey = "starter" | "growth" | "spotlight";
 type Step = "select" | "processing" | "success" | "error";
+type Gateway = "flutterwave" | "stripe";
 
 interface BoostModalProps {
   postId: number;
@@ -114,10 +115,24 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
   const [step, setStep] = useState<Step>("select");
   const [errorMsg, setErrorMsg] = useState("");
   const [boostEndsAt, setBoostEndsAt] = useState<string>("");
+  const [gateway, setGateway] = useState<Gateway>("flutterwave");
+  const [availableGateways, setAvailableGateways] = useState<{ flutterwave: boolean; stripe: boolean }>({ flutterwave: true, stripe: false });
 
   useEffect(() => {
-    void loadFlutterwaveScript().catch(() => {});
+    void fetch(apiUrl("/api/boost/payment-methods"), { credentials: "include" })
+      .then(res => res.ok ? res.json() as Promise<{ flutterwave?: boolean; stripe?: boolean }> : null)
+      .then(data => {
+        if (!data) return;
+        const configured = { flutterwave: Boolean(data.flutterwave), stripe: Boolean(data.stripe) };
+        setAvailableGateways(configured);
+        if (!configured.flutterwave && configured.stripe) setGateway("stripe");
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (gateway === "flutterwave") void loadFlutterwaveScript().catch(() => {});
+  }, [gateway]);
 
   const verifyPayment = useCallback(async (txRef: string, transactionId: string) => {
     try {
@@ -147,8 +162,25 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
     setStep("processing");
 
     try {
-      await loadFlutterwaveScript();
       const token = getStoredToken();
+      if (gateway === "stripe") {
+        const initRes = await fetch(apiUrl("/api/boost/stripe/init-payment"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          credentials: "include",
+          body: JSON.stringify({ postId, plan: selectedPlan }),
+        });
+        const initData = await initRes.json() as { checkoutUrl?: string; error?: string };
+        if (!initRes.ok || !initData.checkoutUrl) {
+          setErrorMsg(initData.error ?? "Failed to initialise Stripe checkout.");
+          setStep("error");
+          return;
+        }
+        window.location.assign(initData.checkoutUrl);
+        return;
+      }
+
+      await loadFlutterwaveScript();
 
       const initRes = await fetch(apiUrl("/api/boost/init-payment"), {
         method: "POST",
@@ -214,7 +246,7 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
       setErrorMsg(err instanceof Error ? err.message : "Failed to start payment. Please try again.");
       setStep("error");
     }
-  }, [user, selectedPlan, postId, postTitle, verifyPayment]);
+  }, [user, selectedPlan, postId, postTitle, gateway, verifyPayment]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -283,6 +315,31 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
                   );
                 })}
               </div>
+              {(availableGateways.flutterwave || availableGateways.stripe) && (
+                <div className="mb-5">
+                  <p className="text-xs text-white/50 mb-2">Payment method</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableGateways.flutterwave && (
+                      <button
+                        type="button"
+                        onClick={() => setGateway("flutterwave")}
+                        className={`rounded-lg border px-3 py-2 text-sm ${gateway === "flutterwave" ? "border-amber-400 bg-amber-400/10 text-white" : "border-white/10 text-white/60"}`}
+                      >
+                        Flutterwave
+                      </button>
+                    )}
+                    {availableGateways.stripe && (
+                      <button
+                        type="button"
+                        onClick={() => setGateway("stripe")}
+                        className={`rounded-lg border px-3 py-2 text-sm ${gateway === "stripe" ? "border-amber-400 bg-amber-400/10 text-white" : "border-white/10 text-white/60"}`}
+                      >
+                        Stripe
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <button
                 onClick={() => void startPayment()}
                 className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -291,7 +348,7 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
                 Pay ${PLANS.find(p => p.key === selectedPlan)?.price} · Boost Now
               </button>
               <p className="text-center text-xs text-white/30 mt-3">
-                Secured by Flutterwave · Instant activation · Cancel anytime
+                Secured by {gateway === "stripe" ? "Stripe" : "Flutterwave"} · Instant activation · Cancel anytime
               </p>
             </>
           )}

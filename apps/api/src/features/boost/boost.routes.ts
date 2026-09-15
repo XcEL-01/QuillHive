@@ -4,6 +4,13 @@ import { boostRequestsTable, postsTable, usersTable, incomeLogsTable } from "@wo
 import { eq, and, desc } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../../middleware/admin";
 import { verifyTransaction, verifyWebhookSignature, generateTxRef } from "./flutterwave.service";
+import {
+  constructStripeEvent,
+  createBoostCheckoutSession,
+  getStripePublishableKey,
+  isStripeConfigured,
+  retrieveCheckoutSession,
+} from "./stripe.service";
 import { notify } from "../notifications/notification.service";
 import { sendEmail } from "../email/email.service";
 import { deleteCachePattern } from "../../lib/cache";
@@ -56,6 +63,192 @@ async function invalidateRankingCaches(): Promise<void> {
   ]);
   memDeletePattern("trending:");
 }
+
+async function activateStripeBoost(boostRequest: any, amountCents: number, reference: string): Promise<boolean> {
+  if (boostRequest.status === "approved") return true;
+  const planInfo = BOOST_PLANS[boostRequest.plan as PlanKey];
+  if (!planInfo || amountCents < Math.round(planInfo.amountUsd * 100)) return false;
+
+  const now = new Date();
+  const boostEndsAt = new Date(now.getTime() + boostRequest.durationHours * 3_600_000);
+  const updated = await db
+    .update(boostRequestsTable)
+    .set({
+      status: "approved",
+      paidAmountCents: amountCents,
+      reviewedAt: now,
+      boostStartsAt: now,
+      boostEndsAt,
+      adminNote: `Auto-approved via Stripe (reference: ${reference})`,
+    })
+    .where(and(eq(boostRequestsTable.id, boostRequest.id), eq(boostRequestsTable.status, "pending_payment")))
+    .returning({ id: boostRequestsTable.id });
+
+  if (updated.length === 0) return true;
+  await invalidateRankingCaches();
+
+  void db.insert(incomeLogsTable).values({
+    userId: boostRequest.userId,
+    amount: amountCents / 100,
+    currency: "USD",
+    source: "boost",
+    description: `${planInfo.label} - Post #${boostRequest.postId} (Stripe)`,
+    date: now,
+  }).catch(() => {});
+
+  void notify({
+    userId: boostRequest.userId,
+    actorId: boostRequest.userId,
+    type: "system",
+    title: "🚀 Your boost is live!",
+    message: `${planInfo.label} activated. Post boosted for ${boostRequest.durationHours} hours.`,
+    url: "/promotions",
+    postId: boostRequest.postId ?? undefined,
+  });
+
+  return true;
+}
+
+boostRouter.get("/payment-methods", (_req: Request, res: Response) => {
+  return res.json({
+    flutterwave: Boolean(process.env.FLW_PUBLIC_KEY ?? process.env.FLUTTERWAVE_PUBLIC_KEY),
+    stripe: isStripeConfigured(),
+    stripePublishableKey: getStripePublishableKey(),
+  });
+});
+
+// ── Initialize Stripe Checkout for a boost ───────────────────────────────────
+boostRouter.post("/stripe/init-payment", requireAuth, async (req: Request, res: Response) => {
+  if (!isStripeConfigured()) return res.status(503).json({ error: "Stripe payment processing is not configured" });
+
+  const userId = (req as AuthedReq).currentUser.id;
+  const { postId, plan, targeting } = req.body as { postId?: number; plan?: string; targeting?: Record<string, unknown> };
+  if (!postId || !plan || !(plan in BOOST_PLANS)) {
+    return res.status(400).json({ error: "postId and a valid plan (starter/growth/spotlight) are required" });
+  }
+
+  const [post] = await db
+    .select({ id: postsTable.id, authorId: postsTable.authorId })
+    .from(postsTable)
+    .where(and(eq(postsTable.id, postId), eq(postsTable.isDeleted, false)));
+  if (!post) return res.status(404).json({ error: "Post not found" });
+  if (post.authorId !== userId) return res.status(403).json({ error: "Only the author can boost this post" });
+
+  const planInfo = BOOST_PLANS[plan as PlanKey];
+  const [existing] = await db
+    .select()
+    .from(boostRequestsTable)
+    .where(and(
+      eq(boostRequestsTable.postId, postId),
+      eq(boostRequestsTable.userId, userId),
+      eq(boostRequestsTable.status, "pending_payment"),
+    ))
+    .limit(1);
+
+  let boostRequestId: number;
+  if (existing) {
+    boostRequestId = existing.id;
+    await db.update(boostRequestsTable).set({
+      plan,
+      durationHours: planInfo.durationHours,
+      reachMultiplier: planInfo.reachMultiplier,
+      placementPriority: planInfo.placementPriority,
+      targeting: targeting ?? null,
+      stripeSessionId: null,
+    }).where(eq(boostRequestsTable.id, existing.id));
+  } else {
+    const [created] = await db.insert(boostRequestsTable).values({
+      userId,
+      postId,
+      plan,
+      durationHours: planInfo.durationHours,
+      reachMultiplier: planInfo.reachMultiplier,
+      placementPriority: planInfo.placementPriority,
+      targeting: targeting ?? null,
+      status: "pending_payment",
+    }).returning({ id: boostRequestsTable.id });
+    boostRequestId = created.id;
+  }
+
+  const [user] = await db.select({ email: usersTable.email, displayName: usersTable.displayName })
+    .from(usersTable).where(eq(usersTable.id, userId));
+  if (!user?.email) return res.status(400).json({ error: "A valid email is required for Stripe checkout" });
+
+  const appUrl = process.env.PUBLIC_APP_URL ?? process.env.APP_URL ?? `${req.protocol}://${req.get("host")}`;
+  try {
+    const session = await createBoostCheckoutSession({
+      amountUsd: planInfo.amountUsd,
+      plan,
+      planLabel: planInfo.label,
+      durationHours: planInfo.durationHours,
+      postId,
+      userId,
+      boostRequestId,
+      customerEmail: user.email,
+      customerName: user.displayName ?? "Creator",
+      successUrl: `${appUrl}/post/${postId}?stripe_session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${appUrl}/post/${postId}`,
+    });
+    await db.update(boostRequestsTable).set({ stripeSessionId: session.id }).where(eq(boostRequestsTable.id, boostRequestId));
+    return res.json({ ok: true, checkoutUrl: session.url, sessionId: session.id, publishableKey: getStripePublishableKey() });
+  } catch (err) {
+    return res.status(502).json({ error: err instanceof Error && err.message === "stripe_not_configured" ? "Stripe payment processing is not configured" : "Stripe checkout could not be created" });
+  }
+});
+
+boostRouter.get("/stripe/session/:sessionId", requireAuth, async (req: Request, res: Response) => {
+  if (!isStripeConfigured()) return res.status(503).json({ error: "Stripe payment processing is not configured" });
+  const userId = (req as AuthedReq).currentUser.id;
+  try {
+    const sessionId = Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId;
+    const session = await retrieveCheckoutSession(sessionId);
+    if (session.metadata?.userId !== String(userId)) return res.status(403).json({ error: "Stripe session does not belong to this user" });
+    if (session.payment_status !== "paid") return res.status(402).json({ error: "Stripe payment is not complete" });
+    const boostRequestId = Number(session.metadata?.boostRequestId);
+    const [boostRequest] = await db.select().from(boostRequestsTable).where(and(
+      eq(boostRequestsTable.id, boostRequestId),
+      eq(boostRequestsTable.userId, userId),
+    ));
+    if (!boostRequest) return res.status(404).json({ error: "Boost request not found" });
+    if (boostRequest.stripeSessionId !== session.id) {
+      return res.status(403).json({ error: "Stripe session does not match this boost" });
+    }
+    const activated = await activateStripeBoost(boostRequest, session.amount_total ?? 0, session.id);
+    if (!activated) return res.status(402).json({ error: "Stripe payment does not match this boost" });
+    return res.json({ ok: true, boostEndsAt: new Date(Date.now() + boostRequest.durationHours * 3_600_000) });
+  } catch (err) {
+    return res.status(502).json({ error: "Stripe session verification failed" });
+  }
+});
+
+boostRouter.post("/stripe/webhook", async (req: Request, res: Response) => {
+  const signature = req.headers["stripe-signature"] as string | undefined;
+  const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+  if (!signature || !rawBody || !isStripeConfigured()) return res.status(503).json({ error: "Stripe webhook is not configured" });
+
+  let event;
+  try {
+    event = constructStripeEvent(rawBody, signature);
+  } catch {
+    return res.status(400).json({ error: "Invalid Stripe webhook signature" });
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as import("stripe").default.Checkout.Session;
+    if (session.payment_status === "paid" && session.metadata?.boostRequestId) {
+      const [boostRequest] = await db.select().from(boostRequestsTable).where(eq(boostRequestsTable.id, Number(session.metadata.boostRequestId)));
+      if (boostRequest) await activateStripeBoost(boostRequest, session.amount_total ?? 0, session.id);
+    }
+  } else if (event.type === "payment_intent.succeeded") {
+    const intent = event.data.object as import("stripe").default.PaymentIntent;
+    if (intent.metadata?.boostRequestId) {
+      const [boostRequest] = await db.select().from(boostRequestsTable).where(eq(boostRequestsTable.id, Number(intent.metadata.boostRequestId)));
+      if (boostRequest) await activateStripeBoost(boostRequest, intent.amount_received, intent.id);
+    }
+  }
+
+  return res.json({ received: true });
+});
 
 // ── Initialize Flutterwave payment ───────────────────────────────────────────
 boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Response) => {

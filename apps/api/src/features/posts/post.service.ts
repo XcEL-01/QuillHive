@@ -34,6 +34,50 @@ async function getBlockedUserIds(viewerId: number | null): Promise<number[]> {
 
 export { enrichPost };
 
+// Keep feed reads compatible with deployments that have the baseline posts
+// schema while optional post metadata migrations are rolled out separately.
+export const stablePostSelection = {
+  id: postsTable.id,
+  authorId: postsTable.authorId,
+  title: postsTable.title,
+  titleA: postsTable.titleA,
+  titleB: postsTable.titleB,
+  titleAClicks: postsTable.titleAClicks,
+  titleBClicks: postsTable.titleBClicks,
+  abSelectedTitle: postsTable.abSelectedTitle,
+  abLockedAt: postsTable.abLockedAt,
+  content: postsTable.content,
+  excerpt: postsTable.excerpt,
+  type: postsTable.type,
+  imageUrl: postsTable.imageUrl,
+  attachments: postsTable.attachments,
+  tags: postsTable.tags,
+  isPublished: postsTable.isPublished,
+  scheduledAt: postsTable.scheduledAt,
+  expiresAt: postsTable.expiresAt,
+  isHighlight: postsTable.isHighlight,
+  contentWarning: postsTable.contentWarning,
+  contentTags: postsTable.contentTags,
+  aiTextScore: postsTable.aiTextScore,
+  fingerprint: postsTable.fingerprint,
+  seriesId: postsTable.seriesId,
+  seriesOrder: postsTable.seriesOrder,
+  groupId: postsTable.groupId,
+  isDeleted: postsTable.isDeleted,
+  deletedAt: postsTable.deletedAt,
+  createdAt: postsTable.createdAt,
+  updatedAt: postsTable.updatedAt,
+};
+
+async function optionalQuery<T>(query: PromiseLike<T>, fallback: T): Promise<T> {
+  try {
+    return await query;
+  } catch (err) {
+    logger.warn({ err }, "Optional feed ranking query unavailable");
+    return fallback;
+  }
+}
+
 function normalizeTag(tag: string): string {
   return tag.trim().replace(/^#/, "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
 }
@@ -140,7 +184,10 @@ export async function listPosts(
   if (blockedIds.length > 0) conds.push(notInArray(postsTable.authorId, blockedIds));
 
   // Pull a wider candidate set for multi-signal re-ranking.
-  const candidates = await db.select().from(postsTable).where(and(...conds))
+  const candidates = await db.select(stablePostSelection).from(postsTable).where(and(
+    ...conds,
+    eq(postsTable.isDeleted, false),
+  ))
     .orderBy(desc(postsTable.createdAt)).limit(limit * 6).offset((page - 1) * limit);
 
   let ranked = candidates;
@@ -177,33 +224,39 @@ export async function listPosts(
     };
     type FeedTopicRow = { topicId: number };
 
-    const [authorRows, authorTrustRows, postTrustRows, activeBoosts, viewerTopics] = await (Promise.all([
-      db.select({ id: usersTable.id, reachMultiplier: usersTable.reachMultiplier, visibilityPenalty: usersTable.visibilityPenalty, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
-        .from(usersTable)
-        .where(inArray(usersTable.id, authorIds)),
-      db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
-        .from(userTrustScoresTable)
-        .where(inArray(userTrustScoresTable.userId, authorIds)),
-      db.select({ postId: postTrustScoresTable.postId, retentionScore: postTrustScoresTable.retentionScore, saveRate: postTrustScoresTable.saveRate, deepEngagementRate: postTrustScoresTable.deepEngagementRate, cisScore: postTrustScoresTable.cisScore })
-        .from(postTrustScoresTable)
-        .where(inArray(postTrustScoresTable.postId, candidateIds)),
-      db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
-        .from(boostRequestsTable)
-        .where(and(
-          inArray(boostRequestsTable.postId, candidateIds),
-          eq(boostRequestsTable.status, "approved"),
-          or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
-          gt(boostRequestsTable.boostEndsAt, now),
-        )),
+    const [authorRows, authorTrustRows, postTrustRows, activeBoosts, viewerTopics] = await Promise.all([
+      optionalQuery(
+        db.select({ id: usersTable.id, reachMultiplier: usersTable.reachMultiplier, visibilityPenalty: usersTable.visibilityPenalty, isOfficialAccount: usersTable.isOfficialAccount, role: usersTable.role })
+          .from(usersTable).where(inArray(usersTable.id, authorIds)),
+        [] as FeedAuthorRow[],
+      ),
+      optionalQuery(
+        db.select({ userId: userTrustScoresTable.userId, uti: userTrustScoresTable.uti, visibilityMultiplier: userTrustScoresTable.visibilityMultiplier, tier: userTrustScoresTable.tier, creatorLevel: userTrustScoresTable.creatorLevel })
+          .from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, authorIds)),
+        [] as FeedAuthorTrustRow[],
+      ),
+      optionalQuery(
+        db.select({ postId: postTrustScoresTable.postId, retentionScore: postTrustScoresTable.retentionScore, saveRate: postTrustScoresTable.saveRate, deepEngagementRate: postTrustScoresTable.deepEngagementRate, cisScore: postTrustScoresTable.cisScore })
+          .from(postTrustScoresTable).where(inArray(postTrustScoresTable.postId, candidateIds)),
+        [] as FeedPostTrustRow[],
+      ),
+      optionalQuery(
+        db.select({ postId: boostRequestsTable.postId, reachMultiplier: boostRequestsTable.reachMultiplier, placementPriority: boostRequestsTable.placementPriority })
+          .from(boostRequestsTable).where(and(
+            inArray(boostRequestsTable.postId, candidateIds),
+            eq(boostRequestsTable.status, "approved"),
+            or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, now)),
+            gt(boostRequestsTable.boostEndsAt, now),
+          )),
+        [] as FeedBoostRow[],
+      ),
       viewerId
-        ? db.select({ topicId: topicFollowsTable.topicId }).from(topicFollowsTable).where(eq(topicFollowsTable.userId, viewerId))
-        : Promise.resolve([] as { topicId: number }[]),
-    ]).catch((err) => {
-      // Ranking signals are optional. A stale/missing signal column must not
-      // take down the core posts feed.
-      logger.warn({ err }, "Optional feed ranking signals unavailable; using chronological candidates");
-      return [[], [], [], [], []] as const;
-    }) as Promise<[FeedAuthorRow[], FeedAuthorTrustRow[], FeedPostTrustRow[], FeedBoostRow[], FeedTopicRow[]]>);
+        ? optionalQuery(
+            db.select({ topicId: topicFollowsTable.topicId }).from(topicFollowsTable).where(eq(topicFollowsTable.userId, viewerId)),
+            [] as FeedTopicRow[],
+          )
+        : Promise.resolve([] as FeedTopicRow[]),
+    ]);
 
     let postTopicLinks: Array<{ postId: number; topicId: number }> = [];
     try {
@@ -289,7 +342,7 @@ export async function listPosts(
     };
 
     // Sort by composite score
-    const scored = candidates.map((p) => ({ p, s: score(p) }));
+    const scored = candidates.map((p) => ({ p, s: score(p as typeof postsTable.$inferSelect) }));
     scored.sort((a, b) => b.s - a.s);
 
     // Diversity pass:
@@ -338,10 +391,10 @@ export async function listPosts(
   const sliced = ranked.slice(0, limit);
 
   const enriched = await Promise.all(sliced.map(async p => {
-    const rawReason = getFeedReason(p, followingIds);
-    const reasonDetails = getFeedReasonDetails(p, followingIds);
+    const rawReason = getFeedReason(p as typeof postsTable.$inferSelect, followingIds);
+    const reasonDetails = getFeedReasonDetails(p as typeof postsTable.$inferSelect, followingIds);
     return {
-      ...(await enrichPost(p, viewerId)),
+      ...(await enrichPost(p as typeof postsTable.$inferSelect, viewerId)),
       reason: normalizeFeedReason(rawReason),
       ...(reasonDetails ? { reasonDetails } : {}),
     };

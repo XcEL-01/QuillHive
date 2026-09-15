@@ -181,7 +181,7 @@ export const listPosts = async (req: Request, res: Response) => {
   if (mine) {
     if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
     const posts = await db
-      .select()
+      .select(PostService.stablePostSelection)
       .from(postsTable)
       .where(and(
         eq(postsTable.authorId, viewerId),
@@ -452,7 +452,7 @@ export const getFeed = async (req: Request, res: Response) => {
   if (cached) return res.json(cached);
 
   const posts = await db
-    .select()
+    .select(PostService.stablePostSelection)
     .from(postsTable)
     .where(and(
       eq(postsTable.isPublished, true),
@@ -566,7 +566,7 @@ export const getFeed = async (req: Request, res: Response) => {
       creatorLevel: trust?.creatorLevel,
       },
       post,
-      isOfficialPost: post.isOfficialPost,
+      isOfficialPost: (post as { isOfficialPost?: boolean | null }).isOfficialPost,
       activeBoost,
     });
     return { post, score, tier };

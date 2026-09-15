@@ -29,6 +29,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   token: getStoredToken(),
 
   setAuth: (user, token) => {
+    if (!user) {
+      clearStoredToken();
+      set({ user: null, token: null, isAuthenticated: false });
+      return;
+    }
     set({ user, token, isAuthenticated: true });
   },
 
@@ -71,6 +76,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
             if (retry.ok) {
               const user: AuthUser = await retry.json();
+              if (!user) {
+                clearStoredToken();
+                set({ user: null, token: null, isAuthenticated: false });
+                return;
+              }
               set({ user, isAuthenticated: true, token: refreshed.token });
               return;
             }
@@ -81,6 +91,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
       const user: AuthUser = await res.json();
+      if (!user) {
+        clearStoredToken();
+        set({ user: null, token: null, isAuthenticated: false });
+        return;
+      }
       set({ user, isAuthenticated: true, token });
     } catch (error) {
       console.warn("[auth] Session check unavailable; clearing the incomplete session", error);

@@ -360,6 +360,7 @@ export default function Home() {
   const feedAlgorithm: FeedAlgorithm = 'algorithmic';
   const [feedPosts, setFeedPosts] = useState<import('@workspace/api-client-react').Post[] | null>(null);
   const [feedLoading, setFeedLoading] = useState(false);
+  const [feedError, setFeedError] = useState(false);
   const [activeStoryGroup, setActiveStoryGroup] = useState<any>(null);
 
   useSocketConnection();
@@ -371,6 +372,7 @@ export default function Home() {
 
   const fetchAlgorithmicFeed = async (algo: FeedAlgorithm) => {
     setFeedLoading(true);
+    setFeedError(false);
     try {
       const res = await fetch(`/api/feed?type=${algo}&limit=20`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -378,11 +380,13 @@ export default function Home() {
       const json = await res.json() as { posts?: unknown };
       if (!res.ok || !Array.isArray(json.posts)) {
         setFeedPosts([]);
+        setFeedError(true);
         return;
       }
       setFeedPosts(json.posts as import('@workspace/api-client-react').Post[]);
     } catch {
-      setFeedPosts(null);
+      setFeedPosts([]);
+      setFeedError(true);
     } finally {
       setFeedLoading(false);
     }
@@ -395,10 +399,12 @@ export default function Home() {
   const handleSourceChange = (val: FeedSource) => {
     setFeedSource(val);
     setFeedPosts(null);
+    setFeedError(false);
   };
 
+  const apiPosts = Array.isArray(data?.posts) ? data.posts : [];
   const displayPosts =
-    feedSource === 'explore' ? (feedPosts ?? data?.posts ?? []) : (data?.posts ?? []);
+    feedSource === 'explore' ? (feedPosts ?? apiPosts) : apiPosts;
   const isDisplayLoading =
     feedSource === 'explore' ? (feedLoading || (feedPosts === null && isLoading)) : isLoading;
 
@@ -467,7 +473,7 @@ export default function Home() {
             ))
           )}
 
-          {error && !isDisplayLoading && (
+          {(error || feedError) && !isDisplayLoading && (
             <div className="text-center py-12 text-destructive bg-destructive/10 rounded-2xl border border-destructive/20">
               <p>{t('home.failedToLoad', 'Failed to load feed. Please try again.')}</p>
             </div>

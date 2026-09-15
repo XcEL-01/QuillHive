@@ -375,7 +375,7 @@ export default function Explore() {
                   </div>
                 ))
               )}
-              {data?.posts.map((post) => (
+              {(Array.isArray(data?.posts) ? data.posts : []).map((post) => (
                 <div key={post.id} className="break-inside-avoid mb-6">
                   <PostCard post={post} />
                 </div>

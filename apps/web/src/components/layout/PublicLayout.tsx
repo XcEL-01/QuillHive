@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { Footer } from "@/components/Footer";
 import { useAuthStore } from "@/store/auth";
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -36,8 +35,6 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">
         {children}
       </main>
-
-      <Footer />
     </div>
   );
 }

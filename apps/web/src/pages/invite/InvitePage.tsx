@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link2, Copy, Check, Users, Gift, Share2, ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
+import { getStoredToken } from "@/lib/api";
 
 interface InviteCode {
   id: number;
@@ -20,6 +21,7 @@ interface InviteStats {
 
 export default function InvitePage() {
   const { user } = useAuthStore();
+  const token = getStoredToken();
   const [data, setData] = useState<InviteStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -29,12 +31,15 @@ export default function InvitePage() {
   const appUrl = import.meta.env.VITE_PUBLIC_APP_URL as string | undefined ?? window.location.origin;
 
   useEffect(() => {
-    void fetch("/api/invites/my", { credentials: "include" })
+    void fetch("/api/invites/my", {
+      credentials: "include",
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    })
       .then(r => r.json())
       .then((d: InviteStats) => setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   const generateCode = async () => {
     setGenerating(true);
@@ -43,6 +48,7 @@ export default function InvitePage() {
       const res = await fetch("/api/invites/generate", {
         method: "POST",
         credentials: "include",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
       const d = await res.json() as { code?: string; error?: string };
       if (d.code) {

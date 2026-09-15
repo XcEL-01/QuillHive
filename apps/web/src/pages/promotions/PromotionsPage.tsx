@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { BoostModal } from "@/components/boost/BoostModal";
 import { useAuthStore } from "@/store/auth";
+import { getStoredToken } from "@/lib/api";
 
 type Range = "7d" | "30d" | "90d" | "all";
 type PlanKey = "starter" | "growth" | "spotlight";
@@ -92,6 +93,7 @@ function StatusBadge({ status, endsAt }: { status: string; endsAt: string | null
 
 export default function PromotionsPage() {
   const { token } = useAuthStore();
+  const storedToken = getStoredToken();
   const [range, setRange] = useState<Range>("30d");
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -133,7 +135,10 @@ export default function PromotionsPage() {
 
   useEffect(() => {
     setLoading(true);
-    void fetch(`/api/analytics/creator/spending?range=${range}`, { credentials: "include" })
+    void fetch(`/api/analytics/creator/spending?range=${range}`, {
+      credentials: "include",
+      headers: { ...(storedToken ? { Authorization: `Bearer ${storedToken}` } : {}) },
+    })
       .then(r => r.json())
       .then((data: {
         overview?: Overview;
@@ -146,7 +151,7 @@ export default function PromotionsPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [range]);
+  }, [range, storedToken]);
 
   useEffect(() => {
     if (!token) return;

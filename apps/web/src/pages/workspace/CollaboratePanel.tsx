@@ -242,8 +242,8 @@ export function CollaboratePanel() {
       const [cr, cs, cmr, cms] = await Promise.all([
         apiFetch("/api/collaboration/requests/received").then(r => r.json()).catch(() => ({ requests: [] })),
         apiFetch("/api/collaboration/requests/sent").then(r => r.json()).catch(() => ({ requests: [] })),
-        apiFetch("/api/commissions/received").then(r => r.json()).catch(() => ({ commissions: [] })),
-        apiFetch("/api/commissions/sent").then(r => r.json()).catch(() => ({ commissions: [] })),
+        apiFetch("/api/services/commissions/received").then(r => r.json()).catch(() => ({ commissions: [] })),
+        apiFetch("/api/services/commissions/sent").then(r => r.json()).catch(() => ({ commissions: [] })),
       ]);
       setCollabReceived(cr.requests ?? []);
       setCollabSent(cs.requests ?? []);
@@ -264,8 +264,8 @@ export function CollaboratePanel() {
   };
 
   const handleCommRespond = async (id: number, status: string, response: string) => {
-    await apiFetch(`/api/commissions/${id}/respond`, {
-      method: "POST", body: JSON.stringify({ status, response }),
+    await apiFetch(`/api/services/commissions/${id}/respond`, {
+      method: "PATCH", body: JSON.stringify({ status, response: response.trim() || undefined }),
     });
     setCommReceived(prev => prev.map(r => r.id === id ? { ...r, status, creatorResponse: response || null } : r));
   };

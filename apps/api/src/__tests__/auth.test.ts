@@ -21,4 +21,9 @@ describe('Auth Routes', () => {
     const res = await request(app).get('/api/admin/stats');
     expect([401, 403]).toContain(res.status);
   });
+
+  it('GET /api/analytics/portfolio-views without token returns 401', async () => {
+    const res = await request(app).get('/api/analytics/portfolio-views');
+    expect([401, 403]).toContain(res.status);
+  });
 });

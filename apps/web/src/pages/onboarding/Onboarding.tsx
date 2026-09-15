@@ -176,7 +176,7 @@ export default function Onboarding() {
         }
 
         if (selectedSkills.length > 0) {
-          await fetch('/api/creator-profile', {
+          await fetch('/api/users/me/creator', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify({ skills: selectedSkills }),

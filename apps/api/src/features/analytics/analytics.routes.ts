@@ -18,6 +18,7 @@ import {
   boostRequestsTable,
   incomeLogsTable,
   postViewsTable,
+  profileViewsTable,
 } from "@workspace/db/schema";
 import { eq, and, gte, count, sql, inArray, desc } from "drizzle-orm";
 import { logger } from "../../lib/logger";
@@ -66,6 +67,30 @@ analyticsRouter.get("/creator/:username/stats", async (req, res) => {
 analyticsRouter.get("/user", requireAuth, async (req: any, res) => {
   const analytics = await getUserAnalytics(req.currentUser.id);
   return res.json(analytics);
+});
+
+analyticsRouter.get("/portfolio-views", requireAuth, async (req: any, res) => {
+  const userId = req.currentUser.id as number;
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [portfolioViewsRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(profileViewsTable)
+    .where(and(eq(profileViewsTable.profileUserId, userId), gte(profileViewsTable.viewedAt, thirtyDaysAgo)));
+
+  const [recruiterViewsRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(profileViewsTable)
+    .where(and(
+      eq(profileViewsTable.profileUserId, userId),
+      gte(profileViewsTable.viewedAt, thirtyDaysAgo),
+      sql`${profileViewsTable.viewerUserId} IS NOT NULL`,
+    ));
+
+  return res.json({
+    portfolioViews30d: Number(portfolioViewsRow?.count ?? 0),
+    recruiterViews30d: Number(recruiterViewsRow?.count ?? 0),
+  });
 });
 
 analyticsRouter.get("/dashboard", requireAuth, async (req: any, res) => {

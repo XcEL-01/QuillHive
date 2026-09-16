@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
     const t = useI18n.getState().t;
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-8">
-        <div className="max-w-sm w-full text-center space-y-4">
+        <div className="max-w-md w-full text-center space-y-4">
           <div className="flex justify-center">
             <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center">
               <AlertTriangle className="w-7 h-7 text-destructive" />
@@ -52,6 +52,23 @@ export class ErrorBoundary extends Component<Props, State> {
               {t("common.pageErrorSafe", "This page hit an error. Your data is safe.")}
             </p>
           </div>
+          {this.state.error && (
+            <div className="text-left">
+              <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40 text-destructive whitespace-pre-wrap break-words">
+                {this.state.error.name}: {this.state.error.message}
+              </pre>
+              {this.state.componentStack && (
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">
+                    Show technical details
+                  </summary>
+                  <pre className="text-[10px] bg-muted p-3 rounded-lg overflow-auto max-h-48 mt-1 whitespace-pre-wrap break-words">
+                    {this.state.componentStack}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
           <button
             onClick={this.handleReset}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition">

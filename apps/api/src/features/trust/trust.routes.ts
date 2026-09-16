@@ -1,13 +1,15 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { userTrustScoresTable, usersTable } from "@workspace/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { userTrustScoresTable } from "@workspace/db/schema";
+import { desc } from "drizzle-orm";
 import { getSessionUserId } from "../../lib/auth";
+import { requireAdmin } from "../../middleware/admin";
 import { updateUserTrustScore, getUserTrustScore } from "./trust.service";
 import { getUserReputationTimeline } from "./reputation.service";
 
 export const trustRouter = Router();
 export const adminTrustRouter = Router();
+adminTrustRouter.use(requireAdmin);
 
 function getViewerId(req: any): number | null {
   const auth = req.headers.authorization;
@@ -61,12 +63,6 @@ trustRouter.post("/recalculate", async (req, res) => {
 });
 
 adminTrustRouter.get("/users", async (req, res) => {
-  const userId = getViewerId(req);
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
-  const [user] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, userId));
-  if (!user || user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
-
   const scores = await db
     .select()
     .from(userTrustScoresTable)

@@ -12,6 +12,7 @@ import { z } from "zod";
 import { getIO } from "../../lib/socket";
 
 export const officialPostsRouter: Router = Router();
+export const officialPublicRouter: Router = Router();
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -465,7 +466,7 @@ officialPostsRouter.get("/official-posts/analytics", requireAdmin, async (_req: 
 });
 
 // POST /posts/:id/cta-click - track CTA button clicks (public, no auth required)
-officialPostsRouter.post("/posts/:id/cta-click", async (req: Request, res: Response) => {
+officialPublicRouter.post("/posts/:id/cta-click", async (req: Request, res: Response) => {
   const id = Number(req.params["id"]);
   const ctaLabel = typeof req.body?.label === "string" ? req.body.label.slice(0, 80) : "unknown";
 
@@ -494,7 +495,7 @@ officialPostsRouter.post("/posts/:id/cta-click", async (req: Request, res: Respo
 });
 
 // GET /official/feed - public endpoint returning current official posts for feed injection
-officialPostsRouter.get("/official/feed", async (req: Request, res: Response) => {
+officialPublicRouter.get("/official/feed", async (req: Request, res: Response) => {
   const limit = Math.min(Number(req.query["limit"] ?? 5), 20);
 
   const posts = await db

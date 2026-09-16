@@ -4,7 +4,7 @@ import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionUserId, isTokenBlacklisted } from "../lib/auth";
 
-const ADMIN_ROLES = ["admin", "super_admin"];
+export const ADMIN_ROLES = ["moderator", "admin", "super_admin"] as const;
 const SUPER_ADMIN_ROLES = ["super_admin"];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {

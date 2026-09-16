@@ -60,7 +60,7 @@ import { notificationPrefsRouter } from "../features/notifications/notificationP
 import { paymentRouter } from "../features/payments/payment.routes";
 import { serviceListingsRouter, endorsementsRouter } from "../features/creator-economy/serviceListing.routes";
 import { opportunitiesRouter } from "../features/creator-economy/opportunities.routes";
-import { officialPostsRouter } from "../features/official/officialPosts.routes";
+import { officialPostsRouter, officialPublicRouter } from "../features/official/officialPosts.routes";
 import { chainsRouter } from "../features/chains/chains.routes";
 import { carouselRouter } from "../features/carousel/carousel.routes";
 
@@ -181,6 +181,7 @@ router.use("/payments", paymentRouter);
 
 // Official QuillHive System Posting Engine
 router.use("/admin", officialPostsRouter);
+router.use(officialPublicRouter);
 
 // Collaborative chains (E1–E6)
 router.use(chainsRouter);

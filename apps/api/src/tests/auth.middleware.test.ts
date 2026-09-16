@@ -1,15 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 
+const authMocks = vi.hoisted(() => ({
+  getSessionUserId: vi.fn(),
+  isTokenBlacklisted: vi.fn(),
+}));
+const dbMocks = vi.hoisted(() => ({
+  user: { id: 1, role: "user", isBanned: false },
+}));
+
+vi.mock("../lib/auth", () => authMocks);
+vi.mock("drizzle-orm", () => ({ eq: vi.fn() }));
+
 vi.mock("@workspace/db", () => ({
   db: {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([{ id: 1, role: "user", isBanned: false }]),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => Promise.resolve([dbMocks.user])),
+      })),
+    })),
   },
 }));
-vi.mock("@workspace/db/schema", () => ({ usersTable: {} }));
+vi.mock("@workspace/db/schema", () => ({ usersTable: { id: "id" } }));
 vi.mock("../lib/logger", () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
@@ -49,6 +61,13 @@ describe("requireAuth middleware", () => {
 });
 
 describe("requireAdmin middleware", () => {
+  beforeEach(() => {
+    authMocks.getSessionUserId.mockReturnValue(1);
+    authMocks.isTokenBlacklisted.mockResolvedValue(false);
+    dbMocks.user.role = "user";
+    dbMocks.user.isBanned = false;
+  });
+
   it("rejects unauthenticated requests with 401 (requireAdmin calls resolveUser first)", async () => {
     const { requireAdmin } = await import("../middleware/admin");
     const req = {
@@ -62,6 +81,29 @@ describe("requireAdmin middleware", () => {
 
     await requireAdmin(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it.each(["moderator", "admin", "super_admin"])("allows %s", async (role) => {
+    dbMocks.user.role = role;
+    const { requireAdmin } = await import("../middleware/admin");
+    const req = { headers: { authorization: "Bearer valid-token" } } as unknown as Request;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() } as unknown as Response;
+    const next = vi.fn() as NextFunction;
+
+    await requireAdmin(req, res, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("rejects authenticated users without an admin role with 403", async () => {
+    const { requireAdmin } = await import("../middleware/admin");
+    const req = { headers: { authorization: "Bearer valid-token" } } as unknown as Request;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() } as unknown as Response;
+    const next = vi.fn() as NextFunction;
+
+    await requireAdmin(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 });

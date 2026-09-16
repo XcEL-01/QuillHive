@@ -519,16 +519,23 @@ export const getFeed = async (req: Request, res: Response) => {
   const authorProfileMap = new Map(authorProfiles.map(author => [author.id, author]));
 
   const activeBoosts = postIds.length > 0
-    ? await db.select({
-        postId: boostRequestsTable.postId,
-        reachMultiplier: boostRequestsTable.reachMultiplier,
-        placementPriority: boostRequestsTable.placementPriority,
-      }).from(boostRequestsTable).where(and(
-        inArray(boostRequestsTable.postId, postIds),
-        eq(boostRequestsTable.status, "approved"),
-        or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, new Date())),
-        or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, new Date())),
-      ))
+    ? await (async () => {
+        try {
+          return await db.select({
+            postId: boostRequestsTable.postId,
+            reachMultiplier: boostRequestsTable.reachMultiplier,
+            placementPriority: boostRequestsTable.placementPriority,
+          }).from(boostRequestsTable).where(and(
+            inArray(boostRequestsTable.postId, postIds),
+            eq(boostRequestsTable.status, "approved"),
+            or(isNull(boostRequestsTable.boostStartsAt), lte(boostRequestsTable.boostStartsAt, new Date())),
+            or(isNull(boostRequestsTable.boostEndsAt), gt(boostRequestsTable.boostEndsAt, new Date())),
+          ));
+        } catch (err) {
+          logger.warn({ err }, "Optional boost ranking unavailable; continuing without boosts");
+          return [];
+        }
+      })()
     : [];
   const boostMap = new Map(activeBoosts.map(boost => [boost.postId, boost]));
 

@@ -288,9 +288,13 @@ export default function Write() {
       const content = editor.getHTML();
       if (!content || content === '<p></p>') return;
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({
-          title, type, tagsStr, imageUrl, content, savedAt: Date.now(),
-        }));
+        const draft = JSON.stringify({
+          title, type, tagsStr,
+          imageUrl: imageUrl?.startsWith('data:') ? '' : imageUrl,
+          content, savedAt: Date.now(),
+        });
+        if (draft.length > 200_000) return;
+        localStorage.setItem(DRAFT_KEY, draft);
         setLastSavedAt(Date.now());
       } catch { }
     }, 30_000);

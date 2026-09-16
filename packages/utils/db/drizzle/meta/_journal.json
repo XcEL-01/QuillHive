@@ -36,6 +36,13 @@
       "when": 1788958000000,
       "tag": "0004_collaboration_rooms",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789058000000,
+      "tag": "0005_boost_requests_ranking",
+      "breakpoints": true
     }
   ]
 }

@@ -38,7 +38,7 @@ interface AppLayoutProps {
 
 // Keep the compact footer focused on the home feeds and the two high-frequency
 // social destinations. Professional/tools pages live under More.
-const MOBILE_PRIMARY = ["/", "/explore", "__create__", "/groups", "/notifications"];
+const MOBILE_PRIMARY = ["/", "__create__", "/groups", "/notifications"];
 const MOBILE_MORE = ["/workspace", "/library", "/saved", "/motion"];
 
 // Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
@@ -439,7 +439,8 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border pb-safe">
         <div className="flex items-center justify-around px-1 py-1">
           {MOBILE_PRIMARY.map(href => {
-            const item = NAV_ITEMS.find(n => n.href === href)!;
+            const item = NAV_ITEMS.find(n => n.href === href);
+            if (!item) return null;
             const Icon = item.icon;
             const active = isActive(item.href, item.exact);
             const isCreate = item.href === "__create__";

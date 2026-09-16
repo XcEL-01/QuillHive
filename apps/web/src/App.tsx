@@ -191,7 +191,7 @@ function GuestGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const ADMIN_ALLOWED_ROLES = ["moderator", "admin", "super_admin"];
+const ADMIN_ALLOWED_ROLES = ["admin", "super_admin"];
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isInitializing } = useAuthStore();

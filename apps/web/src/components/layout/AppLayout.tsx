@@ -39,7 +39,7 @@ interface AppLayoutProps {
 // Keep the compact footer focused on the home feeds and the two high-frequency
 // social destinations. Professional/tools pages live under More.
 const MOBILE_PRIMARY = ["/", "__create__", "/groups", "/notifications"];
-const MOBILE_MORE = ["/workspace", "/library", "/saved", "/motion"];
+const MOBILE_MORE = ["/workspace", "/library", "/saved"];
 
 // Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
 // inside the component loses the browsing trail whenever the route changes.
@@ -153,6 +153,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
     { href: "/library", icon: BookOpen, label: "Library" },
     { href: "/saved", icon: Bookmark, label: "Saved" },
   ];
+  const mobileMore = motionEnabled ? [...MOBILE_MORE, "/motion"] : MOBILE_MORE;
 
   const avatarUrl = mediaUrl(user?.avatarUrl);
 
@@ -489,7 +490,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
         <SheetContent side="bottom" className="rounded-t-3xl pb-8">
           <div className="py-2 space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-2">More</p>
-            {MOBILE_MORE.map(href => {
+            {mobileMore.map(href => {
               const item = NAV_ITEMS.find(n => n.href === href);
               if (!item) return null;
               const Icon = item.icon;

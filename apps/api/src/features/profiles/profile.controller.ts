@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "@workspace/db";
-import { usersTable, followsTable, postsTable, workHistoryTable, educationHistoryTable, savedPostsTable, profileViewsTable } from "@workspace/db/schema";
-import { eq, and, sql, ilike, desc, or, inArray } from "drizzle-orm";
+import { usersTable, followsTable, postsTable, commentsTable, likesTable, postTopicsTable, userTrustScoresTable, workHistoryTable, educationHistoryTable, savedPostsTable, profileViewsTable } from "@workspace/db/schema";
+import { eq, and, sql, ilike, desc, or, inArray, notInArray } from "drizzle-orm";
 import {
   hashPassword,
   verifyPassword,
@@ -372,6 +372,102 @@ export const getRecommendedUsers = async (req: Request, res: Response) => {
 
   const shuffled = candidates.sort(() => Math.random() - 0.5).slice(0, limit);
   const result = await Promise.all(shuffled.map(id => getUserWithCounts(id, viewerId)));
+  return res.json(result.filter(Boolean));
+};
+
+export const getSuggestedUsers = async (req: Request, res: Response) => {
+  const viewerId = (req as any).currentUser.id as number;
+  const followingRows = await db
+    .select({ followingId: followsTable.followingId })
+    .from(followsTable)
+    .where(eq(followsTable.followerId, viewerId));
+  const followingIds = followingRows.map(row => row.followingId);
+  const excludedIds = [viewerId, ...followingIds];
+
+  const candidates = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(and(
+      eq(usersTable.isDeleted, false),
+      eq(usersTable.isBanned, false),
+      eq(usersTable.showInSearch, true),
+      notInArray(usersTable.id, excludedIds),
+    ))
+    .limit(500);
+  if (candidates.length === 0) return res.json([]);
+
+  const candidateIds = candidates.map(candidate => candidate.id);
+  const [mutualRows, authoredTopics, likedTopics, commentedTopics, trustRows] = await Promise.all([
+    followingIds.length === 0 ? Promise.resolve([]) : db
+      .selectDistinct({ userId: followsTable.followingId })
+      .from(followsTable)
+      .where(and(
+        inArray(followsTable.followerId, followingIds),
+        inArray(followsTable.followingId, candidateIds),
+      )),
+    db.selectDistinct({ topicId: postTopicsTable.topicId })
+      .from(postTopicsTable)
+      .innerJoin(postsTable, eq(postsTable.id, postTopicsTable.postId))
+      .where(and(eq(postsTable.authorId, viewerId), eq(postsTable.isDeleted, false))),
+    db.selectDistinct({ topicId: postTopicsTable.topicId })
+      .from(likesTable)
+      .innerJoin(postTopicsTable, eq(postTopicsTable.postId, likesTable.postId))
+      .innerJoin(postsTable, eq(postsTable.id, likesTable.postId))
+      .where(and(eq(likesTable.userId, viewerId), eq(postsTable.isDeleted, false))),
+    db.selectDistinct({ topicId: postTopicsTable.topicId })
+      .from(commentsTable)
+      .innerJoin(postTopicsTable, eq(postTopicsTable.postId, commentsTable.postId))
+      .innerJoin(postsTable, eq(postsTable.id, commentsTable.postId))
+      .where(and(eq(commentsTable.authorId, viewerId), eq(postsTable.isDeleted, false))),
+    db.select({
+      userId: userTrustScoresTable.userId,
+      cvs: userTrustScoresTable.cvs,
+      bcs: userTrustScoresTable.bcs,
+      cts: userTrustScoresTable.cts,
+      avgCis: userTrustScoresTable.avgCis,
+      uti: userTrustScoresTable.uti,
+    }).from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, candidateIds)),
+  ]);
+
+  const mutualIds = new Set(mutualRows.map(row => row.userId));
+  const interactedTopicIds = new Set([
+    ...authoredTopics.map(row => row.topicId),
+    ...likedTopics.map(row => row.topicId),
+    ...commentedTopics.map(row => row.topicId),
+  ]);
+  const sharedTopicRows = interactedTopicIds.size === 0 ? [] : await db
+    .selectDistinct({ userId: postsTable.authorId })
+    .from(postsTable)
+    .innerJoin(postTopicsTable, eq(postTopicsTable.postId, postsTable.id))
+    .where(and(
+      inArray(postsTable.authorId, candidateIds),
+      inArray(postTopicsTable.topicId, [...interactedTopicIds]),
+      eq(postsTable.isPublished, true),
+      eq(postsTable.isDeleted, false),
+    ));
+  const sharedTopicIds = new Set(sharedTopicRows.map(row => row.userId));
+  const trustByUser = new Map(trustRows.map(row => [row.userId, row]));
+
+  const ranked = candidates.map(candidate => {
+    const trust = trustByUser.get(candidate.id);
+    const trustValues = trust ? [trust.cvs, trust.bcs, trust.cts, trust.avgCis, trust.uti] : [];
+    const normalizedTrust = trustValues.length > 0
+      ? Math.max(0, Math.min(1, trustValues.reduce((sum, value) => sum + Number(value ?? 0), 0) / trustValues.length / 100))
+      : 0;
+    const mutualConnection = mutualIds.has(candidate.id);
+    const sharesTopic = sharedTopicIds.has(candidate.id) && interactedTopicIds.size > 0;
+    return {
+      ...candidate,
+      score: (mutualConnection ? 3 : 0) + (sharesTopic ? 2 : 0) + normalizedTrust,
+      mutualConnection,
+      sharesTopic,
+    };
+  }).sort((a, b) => b.score - a.score).slice(0, 10);
+
+  const result = await Promise.all(ranked.map(async candidate => {
+    const user = await getUserWithCounts(candidate.id, viewerId);
+    return user ? { ...user, score: candidate.score, mutualConnection: candidate.mutualConnection, sharesTopic: candidate.sharesTopic } : null;
+  }));
   return res.json(result.filter(Boolean));
 };
 

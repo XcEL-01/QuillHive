@@ -121,6 +121,7 @@ usersRouter.patch("/me/education/:id", validateBody(educationSchema.partial()), 
 usersRouter.delete("/me/education/:id", ProfileController.deleteEducation);
 
 usersRouter.get("/search", ProfileController.searchUsers);
+usersRouter.get("/suggested", requireAuth, ProfileController.getSuggestedUsers);
 usersRouter.get("/recommended", ProfileController.getRecommendedUsers);
 usersRouter.get("/hireable", ProfileController.getHireableCreators);
 usersRouter.get("/featured", ProfileController.getFeaturedUsers);

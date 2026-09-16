@@ -18,6 +18,7 @@ import { NotificationToast } from './components/NotificationToast';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Home = lazy(() => import("@/pages/home/Home"));
+const Network = lazy(() => import("@/pages/network/Network"));
 const Explore = lazy(() => import("@/pages/explore/Explore"));
 const Write = lazy(() => import("@/pages/write/Write"));
 const Profile = lazy(() => import("@/pages/profile/Profile"));
@@ -255,6 +256,9 @@ function Router() {
       </Route>
       <Route path="/explore">
         <AuthGuard><Explore /></AuthGuard>
+      </Route>
+      <Route path="/network">
+        <AuthGuard><Network /></AuthGuard>
       </Route>
       <Route path="/polls/new">
         <AuthGuard><PollNew /></AuthGuard>

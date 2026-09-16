@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Link, useLocation } from "wouter";
 import {
-  Compass, PenLine, MessageCircle, User as UserIcon, ArrowLeft,
+  Compass, PenLine, MessageCircle, User as UserIcon,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
-  BarChart3, BookOpen, Users, MoreHorizontal, Handshake,
+  BarChart3, BookOpen, Users, Users2, Handshake,
   Bookmark, Archive, Star, Sparkles, Layers, Link2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
@@ -15,12 +15,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { getInitials } from "@/lib/utils";
 import { useGetNotifications } from "@workspace/api-client-react";
 import { useSocketEvent, useSocketConnection } from "@/hooks/useSocket";
 import { useT } from "@/lib/i18n";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { StrikesBanner } from "@/components/StrikesBanner";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -36,15 +34,14 @@ interface AppLayoutProps {
   publicPage?: boolean;
 }
 
-// Keep the compact footer focused on the home feeds and the two high-frequency
-// social destinations. Professional/tools pages live under More.
-const MOBILE_PRIMARY = ["/", "__create__", "/groups", "/notifications"];
-const MOBILE_MORE = ["/workspace", "/library", "/saved"];
-
-// Keep this outside AppLayout. Each page owns an AppLayout instance, so a ref
-// inside the component loses the browsing trail whenever the route changes.
-const appNavigationHistory: string[] = [];
-let browserPopPending = false;
+const MOBILE_PRIMARY = [
+  { href: "/", icon: Compass, label: "Home" },
+  { href: "/network", icon: Users, label: "Network" },
+  { href: "__create__", icon: PenLine, label: "Create" },
+  { href: "/notifications", icon: Bell, label: "Alerts", badge: true },
+  { href: "/groups", icon: Users2, label: "Group" },
+  { href: "/workspace", icon: Briefcase, label: "Workspace" },
+];
 
 export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const motionEnabled = useFeature("motion_enabled");
@@ -57,28 +54,7 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   const [baseMessageCount, setBaseMessageCount] = useState(0);
   const [trustTier, setTrustTier] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const t = useT();
-
-  useEffect(() => {
-    const markBrowserPop = () => { browserPopPending = true; };
-    window.addEventListener('popstate', markBrowserPop);
-    return () => window.removeEventListener('popstate', markBrowserPop);
-  }, []);
-
-  useEffect(() => {
-    if (appNavigationHistory.length === 0) {
-      appNavigationHistory.push(location);
-    } else if (browserPopPending) {
-      browserPopPending = false;
-      if (appNavigationHistory[appNavigationHistory.length - 1] !== location) {
-        appNavigationHistory.pop();
-      }
-    } else if (appNavigationHistory[appNavigationHistory.length - 1] !== location) {
-      appNavigationHistory.push(location);
-    }
-    if (appNavigationHistory.length > 50) appNavigationHistory.shift();
-  }, [location]);
 
   useKeyboardShortcuts({
     onOpenCreate: () => setCreateOpen(true),
@@ -143,7 +119,8 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
   };
 
   const NAV_ITEMS = [
-    { href: "/", icon: Compass, label: "Explore", exact: true },
+    { href: "/", icon: Compass, label: "Home", exact: true },
+    { href: "/network", icon: Users, label: "Network" },
     { href: "/notifications", icon: Bell, label: "Alerts", showBadge: "notif" as const },
     { href: "__create__", icon: PenLine, label: "Create", primary: true },
     ...(motionEnabled ? [{ href: "/motion", icon: Film, label: "Studio" }] : []),
@@ -153,8 +130,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
     { href: "/library", icon: BookOpen, label: "Library" },
     { href: "/saved", icon: Bookmark, label: "Saved" },
   ];
-  const mobileMore = motionEnabled ? [...MOBILE_MORE, "/motion"] : MOBILE_MORE;
-
   const avatarUrl = mediaUrl(user?.avatarUrl);
 
   const SidebarNavItem = ({ item }: { item: (typeof NAV_ITEMS)[0] }) => {
@@ -218,24 +193,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
       {/* ── TOP HEADER ── */}
       <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-background/90 backdrop-blur-lg border-b border-border">
         <div className="h-full flex items-center gap-3 px-4">
-          {location !== "/" && (
-            <button
-              type="button"
-              onClick={() => {
-                 if (appNavigationHistory.length > 1) {
-                   appNavigationHistory.pop();
-                  window.history.back();
-                } else {
-                  navigate('/');
-                }
-              }}
-              title="Back"
-              aria-label="Back"
-              className="p-2 -ml-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
             <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-105 transition-transform">
@@ -271,12 +228,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                 </span>
               )}
             </Link>
-
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground rounded-full hidden sm:flex">
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </Button>
-
-            <LanguageSwitcher saveToBackend={!!user} />
 
             {user && (
               <DropdownMenu>
@@ -367,11 +318,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Professional</DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link href="/workspace" className="cursor-pointer w-full flex items-center gap-2">
-                      <Briefcase className="w-4 h-4" /> Workspace
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/analytics" className="cursor-pointer w-full flex items-center gap-2">
                       <BarChart3 className="w-4 h-4" /> Analytics
                     </Link>
@@ -439,16 +385,14 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
       {/* ── MOBILE BOTTOM NAV ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border pb-safe">
         <div className="flex items-center justify-around px-1 py-1">
-          {MOBILE_PRIMARY.map(href => {
-            const item = NAV_ITEMS.find(n => n.href === href);
-            if (!item) return null;
+          {MOBILE_PRIMARY.map(item => {
             const Icon = item.icon;
-            const active = isActive(item.href, item.exact);
+            const active = isActive(item.href, item.href === "/");
             const isCreate = item.href === "__create__";
 
             return (
               <button
-                key={href}
+                key={item.href}
                 onClick={() => {
                   if (isCreate) { setCreateOpen(true); return; }
                   handleNavClick(item.href);
@@ -471,63 +415,8 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
               </button>
             );
           })}
-
-          {/* More button */}
-          <button
-            onClick={() => setMoreOpen(true)}
-            className="flex flex-col items-center justify-center p-1 min-w-[3.5rem]"
-          >
-            <div className="p-2.5 text-muted-foreground">
-              <MoreHorizontal className="w-5 h-5" />
-            </div>
-            <span className="text-[9px] mt-0.5 font-medium text-muted-foreground">More</span>
-          </button>
         </div>
       </nav>
-
-      {/* More Sheet */}
-      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl pb-8">
-          <div className="py-2 space-y-1">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-2">More</p>
-            {mobileMore.map(href => {
-              const item = NAV_ITEMS.find(n => n.href === href);
-              if (!item) return null;
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              const badge = item.showBadge === "notif" ? unreadNotifCount : 0;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => { setMoreOpen(false); handleNavClick(href); }}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl w-full transition-colors ${
-                    active ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="w-5 h-5 shrink-0" />
-                  <span className="text-sm font-medium">{item.label}</span>
-                  {badge > 0 && (
-                    <span className="ml-auto w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
-                      {badge > 9 ? "9+" : badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-            {user && (
-              <Link
-                href={`/profile/${user.username}`}
-                onClick={() => setMoreOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-foreground hover:bg-muted"
-              >
-                <UserIcon className="w-5 h-5 shrink-0" />
-                <span className="text-sm font-medium">Profile</span>
-              </Link>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
 
       {/* Create Type Selector */}
       <CreateTypeSelector open={createOpen} onClose={() => setCreateOpen(false)} />

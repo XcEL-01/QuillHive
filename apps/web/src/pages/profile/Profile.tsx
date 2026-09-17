@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { apiUrl, getStoredToken, mediaUrl } from '@/lib/api';
+import { ImageUploadField } from '@/components/media/ImageUploadField';
 import { useT } from '@/lib/i18n';
 import { ReputationTimeline } from '@/components/trust/ReputationTimeline';
 import { CreatorLevelBadge, CreatorLevelProgressPanel } from '@/components/trust/CreatorLevelBadge';
@@ -458,7 +459,7 @@ export default function Profile() {
 
   const handleAddPortfolio = async () => {
     if (!portfolioForm.title || !portfolioForm.mediaUrl) {
-      toast({ title: t('profile.portfolioRequired', 'Title and media URL are required'), variant: 'destructive' }); return;
+      toast({ title: t('profile.portfolioRequired', 'Title and image are required'), variant: 'destructive' }); return;
     }
     setIsSavingPortfolio(true);
     try {
@@ -1063,15 +1064,7 @@ export default function Profile() {
                 <div className="space-y-4 py-2">
                   <div className="space-y-2"><Label>{t('profile.titleLabel', 'Title')}</Label><Input placeholder={t('profile.portfolioTitlePlaceholder', 'e.g., Midnight Bloom')} value={portfolioForm.title} onChange={e => setPortfolioForm(f => ({ ...f, title: e.target.value }))} className="rounded-xl" /></div>
                   <div className="space-y-2"><Label>{t('profile.descriptionLabel', 'Description')}</Label><Textarea placeholder={t('profile.portfolioDescriptionPlaceholder', 'Tell us about this piece...')} value={portfolioForm.description} onChange={e => setPortfolioForm(f => ({ ...f, description: e.target.value }))} className="rounded-xl" /></div>
-                  <div className="space-y-2">
-                    <Label>{t('profile.mediaUrlLabel', 'Media URL (image link)')}</Label>
-                    <Input placeholder={t('profile.mediaUrlPlaceholder', 'https://example.com/your-artwork.jpg')} value={portfolioForm.mediaUrl} onChange={e => setPortfolioForm(f => ({ ...f, mediaUrl: e.target.value }))} className="rounded-xl" />
-                    {portfolioForm.mediaUrl && (
-                      <div className="aspect-video rounded-xl overflow-hidden bg-muted mt-2">
-                        <img src={portfolioForm.mediaUrl} alt="Preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      </div>
-                    )}
-                  </div>
+                  <ImageUploadField value={portfolioForm.mediaUrl} onChange={mediaUrl => setPortfolioForm(f => ({ ...f, mediaUrl }))} category="profile" label={t('profile.chooseArtwork', 'Choose artwork image')} previewClassName="aspect-video" />
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label>{t('profile.categoryLabel', 'Category')}</Label>

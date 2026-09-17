@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUploadField } from '@/components/media/ImageUploadField';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Upload, Heart, ExternalLink, Image as ImageIcon, X, Loader2, ImageOff, Filter
@@ -49,7 +50,7 @@ export default function Gallery() {
 
   const handleUpload = () => {
     if (!form.imageUrl) {
-      toast({ title: 'Image URL required', variant: 'destructive' });
+      toast({ title: 'Image required', variant: 'destructive' });
       return;
     }
     createPost({
@@ -155,16 +156,7 @@ export default function Gallery() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div>
-              <Label>Image URL *</Label>
-              <Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
-                placeholder="https://example.com/artwork.jpg" className="mt-1.5 rounded-xl" />
-            </div>
-            {form.imageUrl && (
-              <div className="rounded-xl overflow-hidden bg-muted aspect-video">
-                <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={e => ((e.target as HTMLImageElement).style.display = 'none')} />
-              </div>
-            )}
+            <ImageUploadField value={form.imageUrl} onChange={imageUrl => setForm(f => ({ ...f, imageUrl }))} category="gallery" label="Choose artwork image" previewClassName="aspect-video" />
             <div>
               <Label>Title</Label>
               <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}

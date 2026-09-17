@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, X, Plus, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getStoredToken } from "@/lib/api";
+import { ImageUploadField } from "@/components/media/ImageUploadField";
 
 const CATEGORIES = [
   { key: "writing_literature", label: "📝 Writing & Literature" },
@@ -272,18 +273,9 @@ export default function AddToLibrary() {
             />
           </div>
 
-          {/* Thumbnail URL */}
+          {/* Thumbnail */}
           <div className="space-y-1.5">
-            <Label htmlFor="thumbnailUrl">
-              Thumbnail / Cover Image URL <span className="text-muted-foreground text-xs">(optional)</span>
-            </Label>
-            <Input
-              id="thumbnailUrl"
-              type="url"
-              value={form.thumbnailUrl}
-              onChange={e => set("thumbnailUrl", e.target.value)}
-              placeholder="https://..."
-            />
+            <ImageUploadField value={form.thumbnailUrl} onChange={thumbnailUrl => set("thumbnailUrl", thumbnailUrl)} category="library" label="Choose thumbnail (optional)" />
           </div>
 
           {/* Tags */}

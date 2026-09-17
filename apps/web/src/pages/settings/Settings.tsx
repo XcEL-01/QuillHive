@@ -590,7 +590,6 @@ export default function Settings() {
                         </div>
                       </div>
                       <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
-                      <Input placeholder={t('settings.coverPhotoUrl')} value={profileForm.coverUrl} onChange={e => setProfileForm(f => ({ ...f, coverUrl: e.target.value }))} className="rounded-xl text-sm mt-2" />
                     </div>
                     <div className="flex items-center gap-5">
                       <div className="relative">
@@ -604,8 +603,7 @@ export default function Settings() {
                         <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </div>
                       <div className="flex-1">
-                        <Label className="mb-1.5 block">{t('settings.avatarUrl')}</Label>
-                        <Input placeholder={t('settings.avatarUrlPlaceholder')} value={profileForm.avatarUrl} onChange={e => setProfileForm(f => ({ ...f, avatarUrl: e.target.value }))} className="rounded-xl" />
+                        <Label className="mb-1.5 block">{t('settings.avatar')}</Label>
                         <p className="text-xs text-muted-foreground mt-1">{t('settings.avatarLimits')}</p>
                       </div>
                     </div>

@@ -27,6 +27,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { AttachmentPicker } from '@/components/post/AttachmentPicker';
 import { useT } from '@/lib/i18n';
+import { ImageUploadField } from '@/components/media/ImageUploadField';
 
 type AiPanel = 'assist' | 'caption' | 'improve' | 'ideas' | 'titles' | 'hashtags' | null;
 
@@ -102,7 +103,6 @@ export default function Write() {
   const [tagsStr, setTagsStr] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [postAttachments, setPostAttachments] = useState<import('@/components/post/AttachmentPicker').Attachment[]>([]);
-  const [coverPreview, setCoverPreview] = useState<string>('');
   const [enableSchedule, setEnableSchedule] = useState(false);
   const [scheduledAt, setScheduledAt] = useState('');
   const [enableAB, setEnableAB] = useState(false);
@@ -328,11 +328,6 @@ export default function Write() {
     }, 120_000);
     return () => window.clearInterval(interval);
   }, [editor, title, type, tagsStr, imageUrl, token]);
-
-  const handleRemoveCover = () => {
-    setImageUrl('');
-    setCoverPreview('');
-  };
 
   const checkOriginality = async (content: string): Promise<{ ok: boolean; warning: string | null }> => {
     if (!token || content.replace(/<[^>]+>/g, '').trim().length < 100) return { ok: true, warning: null };
@@ -738,37 +733,12 @@ export default function Write() {
               </div>
             )}
 
-            {/* Cover Image URL */}
+            {/* Cover image */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" /> {t('write.coverImageLabel')}
               </Label>
-              <Input
-                placeholder={t('write.coverUrlPlaceholder')}
-                value={imageUrl}
-                onChange={e => {
-                  setImageUrl(e.target.value);
-                  setCoverPreview(e.target.value);
-                }}
-                className="rounded-xl bg-background"
-              />
-              {coverPreview && (
-                <div className="relative rounded-xl overflow-hidden h-32 bg-muted">
-                  <img
-                    src={coverPreview}
-                    alt={t('write.coverPreviewAlt')}
-                    className="w-full h-full object-cover"
-                    onError={() => setCoverPreview('')}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRemoveCover}
-                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+              <ImageUploadField value={imageUrl} onChange={setImageUrl} category="post" label={t('write.chooseCoverImage', 'Choose cover image')} />
             </div>
             {/* Attachments */}
             <div className="space-y-2 col-span-1 md:col-span-2">

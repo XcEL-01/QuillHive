@@ -24,6 +24,7 @@ import { GroupMembersList } from '@/components/groups/GroupMembersList';
 import { PinnedPosts } from '@/components/groups/PinnedPosts';
 import { useAuthStore } from '@/store/auth';
 import { apiUrl, mediaUrl } from '@/lib/api';
+import { ImageUploadField } from '@/components/media/ImageUploadField';
 
 async function uploadGroupCover(file: File, token: string | null): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -186,7 +187,7 @@ function GroupDetail({ id }: { id: number }) {
                   <Textarea value={settings.description} onChange={e => setSettings(s => ({ ...s, description: e.target.value }))} placeholder="Description" />
                   <Select value={settings.privacy} onValueChange={privacy => setSettings(s => ({ ...s, privacy }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="open">Open group</SelectItem><SelectItem value="private">Private group</SelectItem></SelectContent></Select>
                   <Textarea value={settings.rules} onChange={e => setSettings(s => ({ ...s, rules: e.target.value }))} placeholder="Group rules" />
-                  <Input value={settings.coverUrl} onChange={e => setSettings(s => ({ ...s, coverUrl: e.target.value }))} placeholder="Cover image URL" />
+                  <ImageUploadField value={settings.coverUrl} onChange={coverUrl => setSettings(s => ({ ...s, coverUrl }))} category="group" label="Choose cover photo" />
                   <Button onClick={() => void saveSettings()} className="rounded-xl">Save settings</Button>
                 </div>}
               </div>

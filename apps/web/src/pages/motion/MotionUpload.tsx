@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { getStoredToken } from '@/lib/api';
 import { Film, Upload, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { ImageUploadField } from '@/components/media/ImageUploadField';
 
 export default function MotionUpload() {
   const [, navigate] = useLocation();
@@ -209,10 +210,7 @@ export default function MotionUpload() {
               <Label className="text-sm font-semibold">Tags <span className="text-xs font-normal text-muted-foreground">(comma-separated, max 5)</span></Label>
               <Input value={tagsStr} onChange={e => setTagsStr(e.target.value)} placeholder="filmmaking, creative, vlog..." className="rounded-xl" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">Custom Thumbnail URL</Label>
-              <Input value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="rounded-xl" />
-            </div>
+            <ImageUploadField value={thumbnail} onChange={setThumbnail} category="post" label="Choose custom thumbnail" />
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" onClick={() => navigate('/motion')} className="rounded-xl flex-1">Cancel</Button>

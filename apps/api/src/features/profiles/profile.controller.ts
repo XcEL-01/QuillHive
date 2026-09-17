@@ -377,10 +377,24 @@ export const getRecommendedUsers = async (req: Request, res: Response) => {
 
 export const getSuggestedUsers = async (req: Request, res: Response) => {
   const viewerId = (req as any).currentUser.id as number;
-  const followingRows = await db
-    .select({ followingId: followsTable.followingId })
-    .from(followsTable)
-    .where(eq(followsTable.followerId, viewerId));
+
+  const [followingRows, trustRows] = await Promise.all([
+    db
+      .select({ followingId: followsTable.followingId })
+      .from(followsTable)
+      .where(eq(followsTable.followerId, viewerId)),
+    db
+      .select({
+        userId: userTrustScoresTable.userId,
+        cvs: userTrustScoresTable.cvs,
+        bcs: userTrustScoresTable.bcs,
+        cts: userTrustScoresTable.cts,
+        avgCis: userTrustScoresTable.avgCis,
+        uti: userTrustScoresTable.uti,
+      })
+      .from(userTrustScoresTable),
+  ]);
+
   const followingIds = followingRows.map(row => row.followingId);
   const excludedIds = [viewerId, ...followingIds];
 
@@ -394,17 +408,11 @@ export const getSuggestedUsers = async (req: Request, res: Response) => {
       notInArray(usersTable.id, excludedIds),
     ))
     .limit(500);
+
   if (candidates.length === 0) return res.json([]);
 
   const candidateIds = candidates.map(candidate => candidate.id);
-  const [mutualRows, authoredTopics, likedTopics, commentedTopics, trustRows] = await Promise.all([
-    followingIds.length === 0 ? Promise.resolve([]) : db
-      .selectDistinct({ userId: followsTable.followingId })
-      .from(followsTable)
-      .where(and(
-        inArray(followsTable.followerId, followingIds),
-        inArray(followsTable.followingId, candidateIds),
-      )),
+  const [authoredTopics, likedTopics, commentedTopics] = await Promise.all([
     db.selectDistinct({ topicId: postTopicsTable.topicId })
       .from(postTopicsTable)
       .innerJoin(postsTable, eq(postsTable.id, postTopicsTable.postId))
@@ -419,56 +427,96 @@ export const getSuggestedUsers = async (req: Request, res: Response) => {
       .innerJoin(postTopicsTable, eq(postTopicsTable.postId, commentsTable.postId))
       .innerJoin(postsTable, eq(postsTable.id, commentsTable.postId))
       .where(and(eq(commentsTable.authorId, viewerId), eq(postsTable.isDeleted, false))),
-
-      db.select({
-      userId: userTrustScoresTable.userId,
-      cvs: userTrustScoresTable.cvs,
-      bcs: userTrustScoresTable.bcs,
-      cts: userTrustScoresTable.cts,
-      avgCis: userTrustScoresTable.avgCis,
-      uti: userTrustScoresTable.uti,
-    }).from(userTrustScoresTable).where(inArray(userTrustScoresTable.userId, candidateIds)),
   ]);
 
-  const mutualIds = new Set(mutualRows.map(row => row.userId));
   const interactedTopicIds = new Set([
     ...authoredTopics.map(row => row.topicId),
     ...likedTopics.map(row => row.topicId),
     ...commentedTopics.map(row => row.topicId),
   ]);
-  const sharedTopicRows = interactedTopicIds.size === 0 ? [] : await db
-    .selectDistinct({ userId: postsTable.authorId })
-    .from(postsTable)
-    .innerJoin(postTopicsTable, eq(postTopicsTable.postId, postsTable.id))
-    .where(and(
-      inArray(postsTable.authorId, candidateIds),
-      inArray(postTopicsTable.topicId, [...interactedTopicIds]),
-      eq(postsTable.isPublished, true),
-      eq(postsTable.isDeleted, false),
-    ));
-  const sharedTopicIds = new Set(sharedTopicRows.map(row => row.userId));
+
+  const [mutualRows, sharedRows] = await Promise.all([
+    followingIds.length === 0 ? Promise.resolve([]) : db
+      .selectDistinct({ userId: followsTable.followerId })
+      .from(followsTable)
+      .where(and(
+        inArray(followsTable.followingId, followingIds),
+        inArray(followsTable.followerId, candidateIds),
+      )),
+    interactedTopicIds.size === 0 ? Promise.resolve([]) : db
+      .selectDistinct({ userId: likesTable.userId })
+      .from(likesTable)
+      .innerJoin(postTopicsTable, eq(postTopicsTable.postId, likesTable.postId))
+      .innerJoin(postsTable, eq(postsTable.id, likesTable.postId))
+      .where(and(
+        inArray(likesTable.userId, candidateIds),
+        inArray(postTopicsTable.topicId, [...interactedTopicIds]),
+        eq(postsTable.isDeleted, false),
+      ))
+      .then(rows => rows.map(row => row.userId))
+      .then(likeUsers => {
+        const shared = new Set(likeUsers);
+        return Promise.all([
+          Promise.resolve(shared),
+          db.selectDistinct({ userId: commentsTable.authorId })
+            .from(commentsTable)
+            .innerJoin(postTopicsTable, eq(postTopicsTable.postId, commentsTable.postId))
+            .innerJoin(postsTable, eq(postsTable.id, commentsTable.postId))
+            .where(and(
+              inArray(commentsTable.authorId, candidateIds),
+              inArray(postTopicsTable.topicId, [...interactedTopicIds]),
+              eq(postsTable.isDeleted, false),
+            )),
+          db.selectDistinct({ userId: postsTable.authorId })
+            .from(postsTable)
+            .innerJoin(postTopicsTable, eq(postTopicsTable.postId, postsTable.id))
+            .where(and(
+              inArray(postsTable.authorId, candidateIds),
+              inArray(postTopicsTable.topicId, [...interactedTopicIds]),
+              eq(postsTable.isPublished, true),
+              eq(postsTable.isDeleted, false),
+            )),
+        ]).then(([likeSet, commentRows, postRows]) => {
+          const merged = new Set(likeSet);
+          commentRows.forEach(row => merged.add(row.userId));
+          postRows.forEach(row => merged.add(row.userId));
+          return [...merged];
+        });
+      }),
+  ]);
+
+  const mutualIds = new Set(mutualRows.map(row => row.userId));
+  const sharedTopicIds = new Set(sharedRows);
   const trustByUser = new Map(trustRows.map(row => [row.userId, row]));
 
-  const ranked = candidates.map(candidate => {
-    const trust = trustByUser.get(candidate.id);
-    const trustValues = trust ? [trust.cvs, trust.bcs, trust.cts, trust.avgCis, trust.uti] : [];
-    const normalizedTrust = trustValues.length > 0
-      ? Math.max(0, Math.min(1, trustValues.reduce((sum, value) => sum + Number(value ?? 0), 0) / trustValues.length / 100))
-      : 0;
-    const mutualConnection = mutualIds.has(candidate.id);
-    const sharesTopic = sharedTopicIds.has(candidate.id) && interactedTopicIds.size > 0;
-    return {
-      ...candidate,
-      score: (mutualConnection ? 3 : 0) + (sharesTopic ? 2 : 0) + normalizedTrust,
-      mutualConnection,
-      sharesTopic,
-    };
-  }).sort((a, b) => b.score - a.score).slice(0, 10);
+  const ranked = candidates
+    .map(candidate => {
+      const trust = trustByUser.get(candidate.id);
+      const trustValues = trust ? [trust.cvs, trust.bcs, trust.cts, trust.avgCis, trust.uti] : [];
+      const normalizedTrust = trustValues.length > 0
+        ? Math.max(0, Math.min(1, trustValues.reduce((sum, value) => sum + Number(value ?? 0), 0) / trustValues.length / 100))
+        : 0;
+
+      const mutualConnection = mutualIds.has(candidate.id);
+      const sharesTopic = sharedTopicIds.has(candidate.id) && interactedTopicIds.size > 0;
+
+      return {
+        ...candidate,
+        score: (mutualConnection ? 3 : 0) + (sharesTopic ? 2 : 0) + normalizedTrust,
+        mutualConnection,
+        sharesTopic,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
 
   const result = await Promise.all(ranked.map(async candidate => {
     const user = await getUserWithCounts(candidate.id, viewerId);
-    return user ? { ...user, score: candidate.score, mutualConnection: candidate.mutualConnection, sharesTopic: candidate.sharesTopic } : null;
+    return user
+      ? { ...user, score: candidate.score, mutualConnection: candidate.mutualConnection, sharesTopic: candidate.sharesTopic }
+      : null;
   }));
+
   return res.json(result.filter(Boolean));
 };
 

@@ -178,7 +178,6 @@ serviceListingsRouter.post("/:id/commission", requireAuth, validateParams(z.obje
     actorId: req.currentUser.id,
     type: "commission_request",
     message: `You have a new commission request: "${data.title.slice(0, 60)}"`,
-    priority: "high",
     category: "opportunity",
   }).onConflictDoNothing();
   return res.status(201).json(commission);
@@ -267,7 +266,6 @@ serviceListingsRouter.patch("/commissions/:id/respond", requireAuth, validatePar
     actorId: req.currentUser.id,
     type: "commission_response",
     message: `Your commission request "${commission.title.slice(0, 50)}" was ${status}.`,
-    priority: "high",
     category: "opportunity",
   }).onConflictDoNothing();
   return res.json(updated);
@@ -305,7 +303,6 @@ endorsementsRouter.post("/users/:username/endorse", requireAuth, validateParams(
       actorId: req.currentUser.id,
       type: "skill_endorsement",
       message: `Someone endorsed your skill: "${skill}"`,
-      priority: "normal",
       category: "growth",
     }).onConflictDoNothing();
   }

@@ -63,7 +63,6 @@ export async function awardAchievement(userId: number, key: string): Promise<boo
         actorId: userId,
         type: "system",
         message: `Achievement unlocked: ${ach.name}`,
-        priority: "high",
         category: "system",
         isRead: false,
       })

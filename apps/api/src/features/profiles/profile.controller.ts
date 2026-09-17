@@ -709,7 +709,6 @@ export const followUser = async (req: Request, res: Response) => {
             type: "opportunity_nudge",
             actorId: followedUser.id,
             message: `🎯 You reached ${milestone.toLocaleString()} followers, ${followedUser.displayName}!${hirePrompt}`,
-            priority: "high",
             category: "growth",
           });
           const { getIO } = await import("../../lib/socket");

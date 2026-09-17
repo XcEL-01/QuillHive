@@ -248,7 +248,6 @@ async function sendOfficialNotifications(
           message: [title, body].filter(Boolean).join(": "),
           postId: postId ?? null,
           isRead: false,
-          priority: (notifType === "official_announcement" ? "high" : "normal") as "high" | "normal",
         })),
       );
 

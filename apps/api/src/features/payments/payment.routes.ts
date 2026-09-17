@@ -182,7 +182,7 @@ paymentRouter.get("/service/verify", requireAuth, async (req: Request, res: Resp
     if (!markedPaid) return res.json({ ok: true, status: "paid", creatorId: payment.creatorId });
     if (payment.commissionRequestId) {
       await db.update(commissionRequestsTable).set({ status: "accepted", respondedAt: paidAt, updatedAt: paidAt }).where(eq(commissionRequestsTable.id, payment.commissionRequestId));
-      await db.insert(notificationsTable).values({ userId: payment.creatorId, actorId: buyerId, type: "commission_request", message: `A paid service purchase is ready: "${payment.txRef}"`, priority: "high", category: "opportunity" }).onConflictDoNothing();
+      await db.insert(notificationsTable).values({ userId: payment.creatorId, actorId: buyerId, type: "commission_request", message: `A paid service purchase is ready: "${payment.txRef}"`, category: "opportunity" }).onConflictDoNothing();
     }
     await db.insert(creatorEarningsTable).values({ creatorId: payment.creatorId, source: "service_purchase", sourceId: payment.serviceListingId, grossAmount: payment.amount, platformFee: 0, netAmount: payment.amount, currency: payment.currency, status: "pending" });
     await db.insert(incomeLogsTable).values({ userId: payment.creatorId, amount: payment.amount, currency: payment.currency, source: "service_purchase", description: `Service purchase ${payment.txRef}`, date: paidAt });

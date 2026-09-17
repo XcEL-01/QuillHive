@@ -78,7 +78,6 @@ export async function recordPostView(postId: number, viewerId: number | null, re
               type: "milestone",
               message: msg,
               postId,
-              priority: "high",
               category: "growth",
             });
             const io = getIO();
@@ -113,7 +112,6 @@ export async function recordPostView(postId: number, viewerId: number | null, re
                 type: "trending",
                 message: msg,
                 postId,
-                priority: "high",
                 category: "growth",
               });
               const io2 = getIO();

@@ -84,7 +84,6 @@ export async function recordWrite(userId: number, postId: number) {
         actorId: userId,
         type: "streak_milestone",
         message: `${milestone.emoji} You've hit a ${milestone.days}-day streak! You've earned the "${milestone.name}" badge.`,
-        priority: "high",
         category: "growth",
       });
       const { getIO } = await import("../../lib/socket");

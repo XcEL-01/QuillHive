@@ -119,7 +119,6 @@ let schedulingTimer: ReturnType<typeof setInterval> | null = null;
 let digestTimer: ReturnType<typeof setInterval> | null = null;
 let highlightTimer: ReturnType<typeof setInterval> | null = null;
 let draftReminderTimer: ReturnType<typeof setInterval> | null = null;
-let lastEngagementNudge = 0;
 let lastDraftReminder = 0;
 let lastStreakNudge = 0;
 let lastAffinityUpdate = 0;
@@ -128,47 +127,6 @@ let lastDormantNudge = 0;
 let lastChallengeReminder = 0;
 let lastProfileViewNotif = 0;
 let lastSparkExpiry = 0;
-
-async function sendEngagementNudges(): Promise<void> {
-  try {
-    const { notificationsTable, postsTable: _postsTable } = await import("@workspace/db/schema");
-    const { and: _and, lt: _lt, gt: _gt, eq: _eq } = await import("drizzle-orm");
-
-    const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
-
-    const candidates = await db
-      .select({ id: _postsTable.id, title: _postsTable.title, authorId: _postsTable.authorId })
-      .from(_postsTable)
-      .where(_and(_eq(_postsTable.isPublished, true), _eq(_postsTable.isDeleted, false), _lt(_postsTable.createdAt, cutoff24h), _gt(_postsTable.createdAt, cutoff48h)))
-      .limit(50);
-
-    for (const post of candidates) {
-      if (!post.authorId) continue;
-
-      const existing = await db
-        .select({ id: notificationsTable.id })
-        .from(notificationsTable)
-        .where(_and(_eq(notificationsTable.userId, post.authorId), _eq(notificationsTable.type, "share_nudge"), _eq(notificationsTable.postId, post.id)))
-        .limit(1);
-      if (existing.length > 0) continue;
-
-      const postLabel = post.title ? `"${post.title.slice(0, 50)}"` : "Your post";
-      await db.insert(notificationsTable).values({
-        userId: post.authorId,
-        actorId: post.authorId,
-        type: "share_nudge",
-        postId: post.id,
-        message: `📤 ${postLabel} hasn't gotten much traction yet - try sharing it on social media to reach more readers.`,
-        priority: "normal",
-        category: "growth",
-      });
-    }
-    logger.info({ count: candidates.length }, "Engagement nudges processed");
-  } catch (err) {
-    logger.error({ err }, "Error in sendEngagementNudges");
-  }
-}
 
 async function sendDraftReminders(): Promise<void> {
   try {
@@ -204,7 +162,6 @@ async function sendDraftReminders(): Promise<void> {
         type: "draft_reminder",
         postId: draft.id,
         message: `✍️ ${label} is waiting for you. Pick up where you left off when you're ready to share it.`,
-        priority: "normal",
         category: "growth",
       });
     }
@@ -245,7 +202,6 @@ async function sendStreakMilestoneNudges(): Promise<void> {
         actorId: row.userId,
         type: "streak_milestone",
         message: msg,
-        priority: streak >= 30 ? "high" : "normal",
         category: "growth",
       });
     }
@@ -553,7 +509,6 @@ async function notifyDormantUsers(): Promise<void> {
       actorId: user.id,
       type: "dormant_nudge",
       message: `✍️ Your audience misses you, ${user.display_name}! Share what you've been creating lately.`,
-      priority: "low",
       category: "growth",
     });
   }
@@ -606,7 +561,6 @@ async function sendOpportunityNotifications(): Promise<void> {
         type: "opportunity_insight",
         message,
         category: "growth",
-        priority: "low",
       }).catch(() => {});
     }
 
@@ -763,10 +717,6 @@ export function startScheduling(): void {
     const now = Date.now();
     if (now - lastSparkExpiry > 60 * 60 * 1000) {
       lastSparkExpiry = now;
-    }
-    if (now - lastEngagementNudge > 24 * 60 * 60 * 1000) {
-      lastEngagementNudge = now;
-      sendEngagementNudges().catch(() => {});
     }
     if (now - lastDraftReminder > 12 * 60 * 60 * 1000) {
       lastDraftReminder = now;

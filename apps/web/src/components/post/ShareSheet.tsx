@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Copy, Twitter, Facebook, Linkedin, MessageCircle, Star, Check, Repeat2, Send, Pencil } from "lucide-react";
+import { Copy, Twitter, Facebook, Linkedin, MessageCircle, Check, Repeat2, Send, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +26,6 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
   const { token } = useAuthStore();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [highlighted, setHighlighted] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [reposting, setReposting] = useState(false);
   const [showMessagePicker, setShowMessagePicker] = useState(false);
@@ -61,25 +60,6 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
       toast({ title: "Copy failed", variant: "destructive" });
     }
   }, [url, toast, trackShare]);
-
-  const highlight = useCallback(async () => {
-    if (!token) {
-      toast({ title: "Sign in to highlight", variant: "destructive" });
-      return;
-    }
-    try {
-      const res = await fetch(`/api/highlights/posts/${postId}/highlight`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("highlight failed");
-      setHighlighted(true);
-      toast({ title: "Added as Spark ✨" });
-      setTimeout(() => setHighlighted(false), 1500);
-    } catch {
-      toast({ title: "Could not highlight", variant: "destructive" });
-    }
-  }, [token, postId, toast]);
 
   const repost = useCallback(async () => {
     if (!token) {
@@ -246,18 +226,6 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
               <MessageCircle className="w-4 h-4" /><span className="text-[10px]">WhatsApp</span>
             </Button>
           </div>
-
-          {token && (
-            <Button
-              variant={highlighted ? "default" : "secondary"}
-              className="w-full"
-              onClick={highlight}
-              data-testid="button-highlight-post"
-            >
-              <Star className={`w-4 h-4 mr-2 ${highlighted ? "fill-current" : ""}`} />
-              {highlighted ? "Added as Spark" : "Add as Spark on your profile"}
-            </Button>
-          )}
 
           <div className="pt-1">
             <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5"><Pencil className="w-3 h-3" /> Format for social</p>

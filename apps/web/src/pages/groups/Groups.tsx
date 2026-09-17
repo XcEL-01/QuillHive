@@ -387,7 +387,15 @@ function GroupsList() {
               </Select>
             </div>
             <Button
-              onClick={() => createGroup({ data: { name: form.name, description: form.description || null, category: 'general', privacy: form.privacy, coverUrl: form.coverUrl || null } })}
+              onClick={() => createGroup({
+                data: {
+                  name: form.name,
+                  description: form.description || null,
+                  category: 'general',
+                  coverUrl: form.coverUrl || null,
+                  privacy: form.privacy,
+                } as any,
+              })}
               disabled={isCreating || !form.name}
               className="w-full rounded-xl"
             >

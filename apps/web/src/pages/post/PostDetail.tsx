@@ -420,23 +420,6 @@ export default function PostDetail() {
     }
   }
 
-  async function toggleHighlight() {
-    if (!post) return;
-    const extPost = post as typeof post & { isHighlight?: boolean };
-    try {
-      if (extPost.isHighlight) {
-        await apiRequest('DELETE', `/api/highlights/posts/${post.id}/highlight`);
-        toast({ title: 'Removed from highlights' });
-      } else {
-        await apiRequest('POST', `/api/highlights/posts/${post.id}/highlight`, { durationHours: 24 });
-        toast({ title: 'Published as 24-hour highlight' });
-      }
-      queryClient.invalidateQueries({ queryKey: [`/api/posts/${postId}`] });
-    } catch {
-      toast({ title: 'Action failed', variant: 'destructive' });
-    }
-  }
-
   return (
     <AppLayout>
       <ReadingProgressBar percent={progress} />
@@ -502,15 +485,6 @@ export default function PostDetail() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={toggleHighlight}
-                    className={(post as any).isHighlight ? 'text-primary' : 'text-muted-foreground'}
-                    title={(post as any).isHighlight ? 'Remove highlight' : 'Make 24h highlight'}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
                     onClick={() => setShowPollDialog(true)}
                     className="text-muted-foreground"
                     title="Add a poll"
@@ -559,13 +533,6 @@ export default function PostDetail() {
             </div>
           </div>
         </div>
-
-        {(post as any).isHighlight && (post as any).expiresAt && (
-          <div className="mb-6 inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Highlight · disappears {format(new Date((post as any).expiresAt), 'MMM d, h:mm a')}</span>
-          </div>
-        )}
 
         {isOwner && <OriginalityPanel postId={post.id} />}
 

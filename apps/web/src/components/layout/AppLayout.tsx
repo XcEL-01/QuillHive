@@ -309,12 +309,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                       <Archive className="w-4 h-4" /> Collections
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/highlights" className="cursor-pointer w-full flex items-center gap-2">
-                      <Star className="w-4 h-4" /> Highlights
-                    </Link>
-                  </DropdownMenuItem>
-
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Professional</DropdownMenuLabel>
                   <DropdownMenuItem asChild>

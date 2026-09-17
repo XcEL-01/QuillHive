@@ -54,7 +54,6 @@ const CreatorAnalytics = lazy(() => import("@/pages/analytics/CreatorAnalytics")
 const PromotionsPage = lazy(() => import("@/pages/promotions/PromotionsPage"));
 const InvitePage = lazy(() => import("@/pages/invite/InvitePage"));
 const Portfolio = lazy(() => import("@/pages/portfolio/Portfolio"));
-const Highlights = lazy(() => import("@/pages/highlights/Highlights"));
 const Inbox = lazy(() => import("@/pages/collaboration/Inbox"));
 const Motion = lazy(() => import("@/pages/motion/Motion"));
 const Challenges = lazy(() => import("@/pages/challenges/Challenges"));
@@ -336,17 +335,8 @@ function Router() {
       <Route path="/trending">
         <AuthGuard><Trending /></AuthGuard>
       </Route>
-      <Route path="/highlights">
-        <AuthGuard><FeatureRoute flag="highlights_enabled"><Highlights /></FeatureRoute></AuthGuard>
-      </Route>
-      <Route path="/flashes">
-        <AuthGuard><FeatureRoute flag="highlights_enabled"><Highlights /></FeatureRoute></AuthGuard>
-      </Route>
       <Route path="/sparks/new">
         <AuthGuard><SparksNew /></AuthGuard>
-      </Route>
-      <Route path="/sparks">
-        <AuthGuard><Highlights /></AuthGuard>
       </Route>
       <Route path="/challenges">
         <AuthGuard><Challenges /></AuthGuard>

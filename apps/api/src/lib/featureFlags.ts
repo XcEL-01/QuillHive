@@ -35,6 +35,7 @@ const DEFAULT_FLAGS: Partial<Record<string, boolean>> = {
   motion_enabled:          false,
   chains_enabled:          false,
   series_enabled:          false,
+  highlights_enabled:      false,
   gallery_enabled:         false,
   embed_enabled:           false,
   ab_testing_enabled:      false,

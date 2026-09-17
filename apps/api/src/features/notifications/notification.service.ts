@@ -51,38 +51,38 @@ interface NotifyOpts {
   digestGroup?: string | null;
 }
 
-const PRIORITY_MAP: Record<NotificationType, { priority: string; category: string }> = {
-  mention: { priority: "high", category: "mention" },
-  quote: { priority: "normal", category: "social" },
-  reply: { priority: "high", category: "social" },
-  comment: { priority: "normal", category: "social" },
-  comment_like: { priority: "low", category: "social" },
-  like: { priority: "low", category: "social" },
-  follow: { priority: "normal", category: "social" },
-  poll_vote: { priority: "low", category: "social" },
-  appreciation: { priority: "normal", category: "social" },
-  share: { priority: "normal", category: "social" },
-  highlight: { priority: "normal", category: "social" },
-  admin_action: { priority: "urgent", category: "admin" },
-  system: { priority: "high", category: "system" },
-  group_invite: { priority: "high", category: "social" },
-  milestone: { priority: "high", category: "growth" },
-  trending: { priority: "high", category: "growth" },
-  referral_reward: { priority: "high", category: "growth" },
-  achievement: { priority: "high", category: "growth" },
-  streak_milestone: { priority: "high", category: "growth" },
-  opportunity_nudge: { priority: "high", category: "growth" },
-  library_save: { priority: "low", category: "social" },
-  library_feature: { priority: "high", category: "achievement" },
-  library_entry: { priority: "normal", category: "social" },
-  commission_request: { priority: "high", category: "opportunity" },
-  commission_response: { priority: "high", category: "opportunity" },
-  skill_endorsement: { priority: "low", category: "social" },
-  collaboration_accepted: { priority: "high", category: "opportunity" },
-  collaboration_declined: { priority: "normal", category: "opportunity" },
-  post_approved: { priority: "normal", category: "system" },
-  post_rejected: { priority: "high", category: "system" },
-  digest: { priority: "low", category: "system" },
+const NOTIFICATION_CATEGORY_MAP: Record<NotificationType, string> = {
+  mention: "mention",
+  quote: "social",
+  reply: "social",
+  comment: "social",
+  comment_like: "social",
+  like: "social",
+  follow: "social",
+  poll_vote: "social",
+  appreciation: "social",
+  share: "social",
+  highlight: "social",
+  admin_action: "admin",
+  system: "system",
+  group_invite: "social",
+  milestone: "growth",
+  trending: "growth",
+  referral_reward: "growth",
+  achievement: "growth",
+  streak_milestone: "growth",
+  opportunity_nudge: "growth",
+  library_save: "social",
+  library_feature: "achievement",
+  library_entry: "social",
+  commission_request: "opportunity",
+  commission_response: "opportunity",
+  skill_endorsement: "social",
+  collaboration_accepted: "opportunity",
+  collaboration_declined: "opportunity",
+  post_approved: "system",
+  post_rejected: "system",
+  digest: "system",
 };
 
 const NOTIFICATION_TITLE_MAP: Partial<Record<NotificationType, string>> = {
@@ -128,7 +128,7 @@ export async function notify(opts: NotifyOpts): Promise<void> {
   if (actorId !== 0 && opts.userId === actorId) return;
   if (shouldDedup(opts)) return;
   try {
-    const meta = PRIORITY_MAP[opts.type] ?? { priority: "normal", category: "social" };
+    const category = NOTIFICATION_CATEGORY_MAP[opts.type] ?? "social";
     const [actor] = actorId
       ? await db
           .select({ id: usersTable.id, username: usersTable.username, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl })
@@ -145,8 +145,7 @@ export async function notify(opts: NotifyOpts): Promise<void> {
         message: opts.message,
         postId: opts.postId ?? null,
         groupId: opts.groupId ?? null,
-        priority: meta.priority,
-        category: meta.category,
+        category,
         digestGroup: opts.digestGroup ?? null,
         isRead: false,
       })
@@ -161,7 +160,7 @@ export async function notify(opts: NotifyOpts): Promise<void> {
     const prefs = (recipient?.notificationPrefs ?? {}) as Record<string, { inApp: boolean; push: boolean; email: boolean }>;
     const typePref = prefs[opts.type];
     const inAppEnabled = typePref?.inApp ?? true;
-    const pushEnabled = typePref?.push ?? (meta.priority === "high" || meta.priority === "urgent");
+    const pushEnabled = typePref?.push ?? false;
 
     if (inAppEnabled) {
       emitToUser(opts.userId, "notification:new", { ...notif, actor });

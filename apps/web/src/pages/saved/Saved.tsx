@@ -3,7 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PostCard } from '@/components/post/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Bookmark, Inbox, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 
 export default function Saved() {
@@ -19,7 +19,7 @@ export default function Saved() {
   useEffect(() => {
     const fetchSaved = async () => {
       try {
-        const res = await fetch(`/api/users/me/saved?page=${page}&limit=20`, {
+        const res = await fetch(apiUrl(`/api/users/me/saved?page=${page}&limit=20`), {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
@@ -39,7 +39,7 @@ export default function Saved() {
     const refreshSaved = () => void fetchSaved();
     window.addEventListener('quillhive:saved-changed', refreshSaved);
     return () => window.removeEventListener('quillhive:saved-changed', refreshSaved);
-  }, [page]);
+  }, [page, token]);
 
   return (
     <AppLayout>

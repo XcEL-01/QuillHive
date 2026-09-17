@@ -12,7 +12,6 @@ export const notificationsTable = pgTable("notifications", {
   groupId: integer("group_id"),
   message: text("message").notNull(),
   isRead: boolean("is_read").notNull().default(false),
-  priority: text("priority").notNull().default("normal"),
   category: text("category").notNull().default("social"),
   digestGroup: text("digest_group"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

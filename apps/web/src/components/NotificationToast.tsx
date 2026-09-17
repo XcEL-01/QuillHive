@@ -12,7 +12,6 @@ interface NotificationPayload {
   id: number;
   type: string;
   message: string;
-  priority: string;
   category: string;
   postId?: number | null;
   groupId?: number | null;
@@ -69,7 +68,6 @@ export function NotificationToast() {
       if (shouldSkip) return;
       if (!data || !data.type) return;
 
-      const icon = getNotifIcon(data.type);
       const link = getNotifLink(data);
       const actorName = data.actor?.displayName || data.actor?.username || "";
       const title = actorName ? `${actorName}` : "QuillHive";
@@ -77,7 +75,7 @@ export function NotificationToast() {
       toast({
         title,
         description: data.message,
-        duration: data.priority === "urgent" ? 8000 : data.priority === "high" ? 6000 : 4000,
+        duration: 4000,
         action: link
           ? {
               altText: "View",

@@ -16,25 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { clsx } from 'clsx';
 import { useT } from '@/lib/i18n';
 
-type Priority = 'all' | 'urgent' | 'high' | 'normal' | 'low';
-
-const PRIORITY_TAB_IDS: Priority[] = ['all', 'urgent', 'high', 'normal', 'low'];
-
-const PRIORITY_COLORS: Record<string, string> = {
-  urgent: 'text-rose-500',
-  high: 'text-amber-500',
-  normal: 'text-blue-500',
-  low: 'text-muted-foreground',
-};
-
-function getPriority(type: string): string {
-  if (type === 'mention' || type === 'system') return 'high';
-  if (type === 'admin_action') return 'urgent';
-  if (type === 'group_invite') return 'high';
-  if (type === 'like') return 'low';
-  return 'normal';
-}
-
 export default function Notifications() {
   usePageTitle('Notifications');
   const { data, isLoading } = useGetNotifications();
@@ -42,7 +23,6 @@ export default function Notifications() {
   const { toast } = useToast();
   const t = useT();
   const token = getStoredToken();
-  const [activeTab, setActiveTab] = useState<Priority>('all');
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   const { mutate: markRead, isPending } = useMarkNotificationsRead({
@@ -122,7 +102,6 @@ export default function Notifications() {
   };
 
   const allNotifs: any[] = Array.isArray(data) ? data : [];
-  const filtered = activeTab === 'all' ? allNotifs : allNotifs.filter(n => getPriority(n.type) === activeTab);
   const unreadCount = allNotifs.filter((n: any) => !n.isRead).length;
 
   return (
@@ -142,29 +121,6 @@ export default function Notifications() {
           )}
         </div>
 
-        {/* Priority Filter Tabs */}
-        <div className="flex gap-1.5 flex-wrap mb-4">
-          {PRIORITY_TAB_IDS.map(id => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={clsx(
-                'px-4 py-1.5 rounded-full text-sm font-medium transition-all border',
-                activeTab === id
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card text-muted-foreground border-border hover:border-primary/50'
-              )}
-            >
-              {t(`notifications.${id}` as any)}
-              {id !== 'all' && allNotifs.filter(n => getPriority(n.type) === id && !n.isRead).length > 0 && (
-                <Badge variant="destructive" className="ml-1.5 text-xs h-4 px-1 py-0">
-                  {allNotifs.filter(n => getPriority(n.type) === id && !n.isRead).length}
-                </Badge>
-              )}
-            </button>
-          ))}
-        </div>
-
         <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm divide-y divide-border/50">
           {isLoading && Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="p-5 flex gap-4">
@@ -173,16 +129,14 @@ export default function Notifications() {
             </div>
           ))}
 
-          {!isLoading && filtered.length === 0 && (
+          {!isLoading && allNotifs.length === 0 && (
             <div className="p-12 text-center text-muted-foreground">
               <Bell className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>{activeTab === 'all' ? t('notifications.allCaughtUp', "You're all caught up!") : t('notifications.noPriorityNotifs', `No ${activeTab} priority notifications.`)}</p>
+              <p>{t('notifications.allCaughtUp', "You're all caught up!")}</p>
             </div>
           )}
 
-          {filtered.map((notif: any) => {
-            const priority = getPriority(notif.type);
-            return (
+          {allNotifs.map((notif: any) => (
               <div
                 key={notif.id}
                 className={clsx(
@@ -229,11 +183,6 @@ export default function Notifications() {
                       <p className="text-xs text-muted-foreground font-medium">
                         {formatDistanceToNow(new Date(notif.createdAt))} ago
                       </p>
-                      {priority !== 'normal' && priority !== 'low' && (
-                        <span className={clsx('text-xs font-semibold capitalize', PRIORITY_COLORS[priority])}>
-                          {priority}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </Link>
@@ -250,8 +199,7 @@ export default function Notifications() {
                   </button>
                 </div>
               </div>
-            );
-          })}
+          ))}
         </div>
       </div>
     </AppLayout>

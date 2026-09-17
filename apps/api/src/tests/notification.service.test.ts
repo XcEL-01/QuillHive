@@ -8,7 +8,7 @@ vi.mock("@workspace/db", () => ({
     limit: vi.fn().mockResolvedValue([]),
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([{ id: 1, type: "like", message: "test", priority: "low", category: "social" }]),
+    returning: vi.fn().mockResolvedValue([{ id: 1, type: "like", message: "test", category: "social" }]),
   },
 }));
 vi.mock("@workspace/db/schema", () => ({

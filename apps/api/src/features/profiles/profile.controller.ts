@@ -419,7 +419,8 @@ export const getSuggestedUsers = async (req: Request, res: Response) => {
       .innerJoin(postTopicsTable, eq(postTopicsTable.postId, commentsTable.postId))
       .innerJoin(postsTable, eq(postsTable.id, commentsTable.postId))
       .where(and(eq(commentsTable.authorId, viewerId), eq(postsTable.isDeleted, false))),
-    db.select({
+
+      db.select({
       userId: userTrustScoresTable.userId,
       cvs: userTrustScoresTable.cvs,
       bcs: userTrustScoresTable.bcs,

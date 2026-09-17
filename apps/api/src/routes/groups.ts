@@ -7,6 +7,28 @@ import { enrichPost } from "../features/profiles/profile.service";
 
 const router = Router();
 
+export function normalizeGroupCreateInput(input: Record<string, any> = {}) {
+  const name = typeof input.name === "string" ? input.name.trim() : "";
+  const privacyValue = typeof input.privacy === "string" ? input.privacy.toLowerCase() : "public";
+  const privacy = privacyValue === "private" ? "private" : "open";
+
+  if (!name) throw new Error("Name is required");
+  if (privacyValue !== "public" && privacyValue !== "private") throw new Error("Invalid privacy");
+
+  const description = typeof input.description === "string" ? input.description.trim() || null : input.description ?? null;
+  const category = typeof input.category === "string" && input.category.trim() ? input.category.trim() : "general";
+
+  return {
+    name,
+    description,
+    category,
+    avatarUrl: input.avatarUrl || null,
+    coverUrl: input.coverUrl || null,
+    privacy,
+    rules: input.rules || null,
+  };
+}
+
 function getViewerId(req: any): number | null {
   const auth = req.headers.authorization;
   if (!auth?.startsWith("Bearer ")) return null;
@@ -71,25 +93,27 @@ router.post("/", async (req, res) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
 
-  const { name, description, category, avatarUrl, coverUrl, privacy, rules } = req.body;
-  if (!name || !category) return res.status(400).json({ error: "Name and category are required" });
-  if (privacy && !["open", "private"].includes(privacy)) return res.status(400).json({ error: "Invalid privacy" });
+  try {
+    const normalized = normalizeGroupCreateInput(req.body ?? {});
+    const [group] = await db.insert(groupsTable).values({
+      name: normalized.name,
+      description: normalized.description,
+      category: normalized.category,
+      avatarUrl: normalized.avatarUrl,
+      coverUrl: normalized.coverUrl,
+      creatorId: viewerId,
+      privacy: normalized.privacy,
+      rules: normalized.rules,
+    }).returning();
 
-  const [group] = await db.insert(groupsTable).values({
-    name,
-    description: description || null,
-    category,
-    avatarUrl: avatarUrl || null,
-    coverUrl: coverUrl || null,
-    creatorId: viewerId,
-    privacy: privacy || "open",
-    rules: rules || null,
-  }).returning();
+    await db.insert(groupMembersTable).values({ groupId: group.id, userId: viewerId, role: "admin" });
 
-  await db.insert(groupMembersTable).values({ groupId: group.id, userId: viewerId, role: "admin" });
-
-  const enriched = await enrichGroup(group, viewerId);
-  return res.status(201).json(enriched);
+    const enriched = await enrichGroup(group, viewerId);
+    return res.status(201).json(enriched);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid group payload";
+    return res.status(400).json({ error: message });
+  }
 });
 
 router.get("/:id", async (req, res) => {

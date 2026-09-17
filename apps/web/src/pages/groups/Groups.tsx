@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRoute } from 'wouter';
 import { 
   useGetGroups, useGetGroup, useJoinGroup, useCreateGroup, useGetGroupPosts 
@@ -23,6 +23,33 @@ import { useT } from '@/lib/i18n';
 import { GroupMembersList } from '@/components/groups/GroupMembersList';
 import { PinnedPosts } from '@/components/groups/PinnedPosts';
 import { useAuthStore } from '@/store/auth';
+import { apiUrl, mediaUrl } from '@/lib/api';
+
+async function uploadGroupCover(file: File, token: string | null): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = (reader.result as string).split(',')[1];
+        const res = await fetch(apiUrl('/api/upload'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ filename: file.name, mimeType: file.type, dataBase64: base64, category: 'group' }),
+        });
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+        resolve(mediaUrl(data.url ?? data.secure_url));
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = () => reject(new Error('File read failed'));
+    reader.readAsDataURL(file);
+  });
+}
 
 interface GroupView {
   id: number;
@@ -122,7 +149,6 @@ function GroupDetail({ id }: { id: number }) {
                     </span>
                   )}
                 </h1>
-                <Badge variant="outline" className="w-fit">{group.category}</Badge>
                 {(group as GroupView).isPromoted && (
                   <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[10px] uppercase tracking-wider gap-1" data-testid="badge-group-promoted">
                     <Megaphone className="w-3 h-3" /> {t('groups.promoted', 'Promoted')}
@@ -195,9 +221,12 @@ function GroupsList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const t = useT();
+  const { token } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', category: 'Fiction', coverUrl: '' });
+  const [form, setForm] = useState({ name: '', description: '', privacy: 'public', coverUrl: '' });
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const { data, isLoading } = useGetGroups({ search: search || undefined });
 
@@ -207,11 +236,27 @@ function GroupsList() {
         queryClient.invalidateQueries({ queryKey: ['/api/groups'] });
         toast({ title: t('groups.groupCreated', 'Group created!'), description: t('groups.groupCreatedDesc', 'Your community is live.') });
         setCreateOpen(false);
-        setForm({ name: '', description: '', category: 'Fiction', coverUrl: '' });
+        setForm({ name: '', description: '', privacy: 'public', coverUrl: '' });
+        if (fileInputRef.current) fileInputRef.current.value = '';
       },
       onError: () => toast({ title: t('groups.createFailed', 'Failed to create group'), variant: 'destructive' })
     }
   });
+
+  const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCover(true);
+    try {
+      const uploadedUrl = await uploadGroupCover(file, token);
+      setForm(current => ({ ...current, coverUrl: uploadedUrl }));
+    } catch {
+      toast({ title: 'Could not upload cover photo', variant: 'destructive' });
+    } finally {
+      setIsUploadingCover(false);
+      event.target.value = '';
+    }
+  };
 
   const { mutate: joinGroup } = useJoinGroup({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/groups'] }) }
@@ -274,7 +319,6 @@ function GroupsList() {
                     )}
                   </h3>
                   <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                    <Badge variant="outline" className="text-xs w-fit">{group.category}</Badge>
                     {(group as GroupView).isPromoted && (
                       <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[10px] uppercase tracking-wider gap-1">
                         <Megaphone className="w-2.5 h-2.5" /> {t('groups.promoted', 'Promoted')}
@@ -327,23 +371,23 @@ function GroupsList() {
                 placeholder={t('groups.descriptionPlaceholder', 'What is this group about?')} className="mt-1.5 rounded-xl resize-none" rows={3} />
             </div>
             <div>
-              <Label>{t('groups.category', 'Category')}</Label>
-              <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+              <Label>{t('groups.coverPhoto', 'Cover photo')}</Label>
+              <Input ref={fileInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="mt-1.5 rounded-xl file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm" />
+              {isUploadingCover && <p className="mt-2 text-xs text-muted-foreground">Uploading cover photo...</p>}
+              {form.coverUrl && <img src={form.coverUrl} alt="Cover preview" className="mt-3 h-28 w-full rounded-xl object-cover border border-border" />}
+            </div>
+            <div>
+              <Label>{t('groups.privacy', 'Privacy')}</Label>
+              <Select value={form.privacy} onValueChange={v => setForm(f => ({ ...f, privacy: v }))}>
                 <SelectTrigger className="mt-1.5 rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {['Fiction', 'Poetry', 'Art', 'Nonfiction', 'Screenwriting', 'Romance', 'Fantasy', 'Mystery', 'Horror', 'Science Fiction', 'Other'].map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>{t('groups.coverImageUrl', 'Cover Image URL')}</Label>
-              <Input value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))}
-                placeholder={t('groups.coverImagePlaceholder', 'https://example.com/cover.jpg')} className="mt-1.5 rounded-xl" />
-            </div>
             <Button
-              onClick={() => createGroup({ data: { name: form.name, description: form.description || null, category: form.category, coverUrl: form.coverUrl || null } })}
+              onClick={() => createGroup({ data: { name: form.name, description: form.description || null, category: 'general', privacy: form.privacy, coverUrl: form.coverUrl || null } })}
               disabled={isCreating || !form.name}
               className="w-full rounded-xl"
             >

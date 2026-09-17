@@ -10,7 +10,7 @@ export const groupsTable = pgTable("groups", {
   description: text("description"),
   avatarUrl: text("avatar_url"),
   coverUrl: text("cover_url"),
-  category: text("category").notNull(),
+  category: text("category").notNull().default("general"),
   creatorId: integer("creator_id").notNull().references(() => usersTable.id),
   privacy: text("privacy").notNull().default("open"),
   rules: text("rules"),

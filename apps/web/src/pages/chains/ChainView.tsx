@@ -128,7 +128,7 @@ function AddLinkDialog({
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const d = await res.json();
-      return (d?.posts ?? d ?? []) as UserPost[];
+      return (Array.isArray(d?.posts) ? d.posts : Array.isArray(d) ? d : []) as UserPost[];
     },
   });
 

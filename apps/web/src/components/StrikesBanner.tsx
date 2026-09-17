@@ -26,7 +26,7 @@ export function StrikesBanner() {
       });
       if (!res.ok) return;
       const data = (await res.json()) as { strikes: Strike[] };
-      setStrikes(data.strikes ?? []);
+      setStrikes(Array.isArray(data?.strikes) ? data.strikes : []);
     } catch { /* ignore */ }
   }, [token]);
 

@@ -68,7 +68,7 @@ export default function Drafts() {
       });
       if (!res.ok) throw new Error("Failed to load drafts");
       const data = await res.json();
-      setDrafts(data.drafts ?? []);
+      setDrafts(Array.isArray(data?.drafts) ? data.drafts : []);
     } catch {
       setError("Could not load your drafts. Please try again.");
     } finally {

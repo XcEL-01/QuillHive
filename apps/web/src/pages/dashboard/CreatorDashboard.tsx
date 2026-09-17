@@ -166,7 +166,12 @@ export default function CreatorDashboard() {
         })
         .catch(() => {}),
       fetch("/api/boost/my", { headers: authHeaders })
-        .then(async res => { if (res.ok) { const d = await res.json(); setBoosts(Array.isArray(d) ? d : d.requests ?? []); } })
+        .then(async res => {
+          if (res.ok) {
+            const d = await res.json();
+            setBoosts(Array.isArray(d) ? d : Array.isArray(d?.requests) ? d.requests : []);
+          }
+        })
         .catch(() => {}),
       fetch("/api/analytics/weekly-report", { headers: authHeaders })
         .then(async res => { if (res.ok) setWeeklyReport(await res.json()); })
@@ -184,7 +189,10 @@ export default function CreatorDashboard() {
   const reachMultiplier = analytics?.reachMultiplier ?? 1.0;
   const followerGrowth = analytics?.followerGrowth?.last30Days ?? 0;
   const followerGrowthPct = analytics?.followerGrowth?.percentage ?? 0;
-  const dailyGrowth = analytics?.dailyFollowerGrowth ?? [];
+  const dailyGrowth = Array.isArray(analytics?.dailyFollowerGrowth)
+    ? analytics.dailyFollowerGrowth
+    : [];
+  const topPosts = Array.isArray(analytics?.topPosts) ? analytics.topPosts : [];
 
   const cards = [
     { label: t("dashboard.totalViews", "Total Views"), value: totalViews.toLocaleString(), icon: Eye, color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -722,10 +730,10 @@ export default function CreatorDashboard() {
                 <CardTitle className="text-base font-semibold">{t("dashboard.topPerformingPosts", "Top Performing Posts")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {(analytics?.topPosts ?? []).length === 0 && (
+                {topPosts.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-6">{t("dashboard.noPostData", "No post data yet. Start creating!")}</p>
                 )}
-                {(analytics?.topPosts ?? []).map((post, idx) => (
+                {topPosts.map((post, idx) => (
                   <div key={post.id} className="flex items-center justify-between rounded-xl border border-border/60 p-4 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">

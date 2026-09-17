@@ -10,7 +10,7 @@ export default function AdminRevenue({ token, toast }: AdminProps) {
   const [loading, setLoading] = useState(true);
   const load = async () => {
     setLoading(true);
-    try { const data = await fetchAdmin("/api/boost/admin"); setBoosts(data.requests ?? []); }
+    try { const data = await fetchAdmin("/api/boost/admin"); setBoosts(Array.isArray(data?.requests) ? data.requests : []); }
     catch (err) { toast({ title: "Could not load boost requests", description: err instanceof Error ? err.message : "Request failed", variant: "destructive" }); }
     finally { setLoading(false); }
   };

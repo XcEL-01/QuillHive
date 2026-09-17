@@ -82,7 +82,7 @@ export default function InvitePage() {
   };
 
   const activeCode = data?.codes.find(c => c.isActive && !c.usedBy);
-  const usedCodes = data?.codes.filter(c => c.usedBy) ?? [];
+  const usedCodes = (Array.isArray(data?.codes) ? data.codes : []).filter(c => c.usedBy);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8 max-w-2xl mx-auto">

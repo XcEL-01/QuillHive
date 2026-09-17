@@ -77,7 +77,7 @@ function BestMatchesSection({ matchMap }: { matchMap: Map<number, { score: numbe
     fetch('/api/jobs/my-matches', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
-        const jobs: MatchedJob[] = data.matches ?? [];
+        const jobs: MatchedJob[] = Array.isArray(data?.matches) ? data.matches : [];
         jobs.forEach(j => matchMap.set(j.id, { score: j.matchScore, reasons: j.matchReasons }));
         setMatches(jobs.slice(0, 4));
       })
@@ -176,7 +176,7 @@ function AvailableCreatorsBoard() {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(r => r.json())
-      .then(data => setCreators(Array.isArray(data) ? data : data.creators ?? []))
+      .then(data => setCreators(Array.isArray(data) ? data : Array.isArray(data?.creators) ? data.creators : []))
       .catch(() => setCreators([]))
       .finally(() => setLoading(false));
   }, []);

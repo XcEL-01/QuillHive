@@ -32,7 +32,7 @@ export function StreakWidget() {
 
   const cells = useMemo(() => {
     const map = new Map<string, number>();
-    (data?.activity ?? []).forEach((a) => {
+    (Array.isArray(data?.activity) ? data.activity : []).forEach((a) => {
       // readDate is YYYY-MM-DD; normalize
       map.set(a.readDate.slice(0, 10), a.count);
     });

@@ -18,8 +18,8 @@ export default function ChainMine() {
     queryFn: () => (apiRequest('GET', '/api/chains/mine') as unknown) as Promise<MineChainsResponse>,
   });
 
-  const created = data?.created ?? [];
-  const participated = data?.participated ?? [];
+  const created = Array.isArray(data?.created) ? data.created : [];
+  const participated = Array.isArray(data?.participated) ? data.participated : [];
   const hasAny = created.length > 0 || participated.length > 0;
 
   return (

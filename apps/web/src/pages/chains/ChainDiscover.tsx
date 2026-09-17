@@ -31,7 +31,7 @@ export default function ChainDiscover() {
     },
   });
 
-  const chains = data?.chains ?? [];
+  const chains = Array.isArray(data?.chains) ? data.chains : [];
   const active = chains.filter((c) => !c.isComplete);
   const complete = chains.filter((c) => c.isComplete);
   const displayed = tab === 'active' ? active : tab === 'complete' ? complete : chains;

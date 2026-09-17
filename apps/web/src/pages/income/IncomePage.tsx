@@ -42,7 +42,7 @@ export default function IncomePage() {
       const res = await fetch('/api/income', { headers: authHeaders });
       if (res.ok) {
         const data = await res.json() as { logs?: IncomeEntry[] } | IncomeEntry[];
-        setEntries(Array.isArray(data) ? data : data.logs ?? []);
+        setEntries(Array.isArray(data) ? data : Array.isArray(data?.logs) ? data.logs : []);
       }
     } catch {
     } finally {

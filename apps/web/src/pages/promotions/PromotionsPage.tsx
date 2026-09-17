@@ -146,8 +146,8 @@ export default function PromotionsPage() {
         spendingTrend?: SpendPoint[];
       }) => {
         setOverview(data.overview ?? null);
-        setCampaigns(data.campaigns ?? []);
-        setTrend(data.spendingTrend ?? []);
+        setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : []);
+        setTrend(Array.isArray(data.spendingTrend) ? data.spendingTrend : []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -160,7 +160,7 @@ export default function PromotionsPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
-      .then((d: { posts?: PostOption[] }) => setMyPosts(d.posts ?? []))
+      .then((d: { posts?: PostOption[] }) => setMyPosts(Array.isArray(d?.posts) ? d.posts : []))
       .catch(() => {});
   }, [token]);
 

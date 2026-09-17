@@ -48,7 +48,8 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations, isLoading: isConvsLoading } = useGetConversations();
-  const visibleConversations = conversations?.filter((conversation) => (
+  const conversationList = Array.isArray(conversations) ? conversations : [];
+  const visibleConversations = conversationList.filter((conversation) => (
     conversationFilter === 'all' || conversation.unreadCount > 0
   ));
 
@@ -57,7 +58,7 @@ export default function Messages() {
   });
 
   useEffect(() => {
-    if (messages) setLocalMessages(messages as unknown as LocalMessage[]);
+    setLocalMessages(Array.isArray(messages) ? messages as unknown as LocalMessage[] : []);
   }, [messages]);
 
   useEffect(() => {
@@ -172,7 +173,7 @@ export default function Messages() {
     handleSelectConv(convId);
   };
 
-  const activeConv = conversations?.find((c) => (c as { id: number }).id === activeConvId) as { id: number; isGroup?: boolean; groupName?: string; participants: Array<{ id: number; displayName?: string; avatarUrl?: string | null; username?: string }> } | undefined;
+  const activeConv = conversationList.find((c) => (c as { id: number }).id === activeConvId) as { id: number; isGroup?: boolean; groupName?: string; participants: Array<{ id: number; displayName?: string; avatarUrl?: string | null; username?: string }> } | undefined;
   const otherUser = activeConv?.participants.find((p) => p.id !== currentUser?.id);
 
   return (

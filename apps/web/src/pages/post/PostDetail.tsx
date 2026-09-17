@@ -62,7 +62,7 @@ function CuratingExperts({ postId }: { postId: number }) {
     fetch(`/api/posts/${postId}/curators`, { headers })
       .then(r => r.ok ? r.json() : { curators: [], total: 0 })
       .then((d: { curators?: CuratorEntry[]; total?: number }) => {
-        setCurators(d.curators ?? []);
+        setCurators(Array.isArray(d?.curators) ? d.curators : []);
         setTotal(d.total ?? 0);
       })
       .catch(() => {})
@@ -138,7 +138,9 @@ function CommentNode({
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(comment.likeCount ?? 0);
   const [showReplies, setShowReplies] = useState(depth < 2);
-  const [replies, setReplies] = useState<CommentWithReplies[]>(comment.replies ?? []);
+  const [replies, setReplies] = useState<CommentWithReplies[]>(
+    Array.isArray(comment.replies) ? comment.replies : []
+  );
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [repliesLoaded, setRepliesLoaded] = useState(Array.isArray(comment.replies));
 
@@ -630,7 +632,7 @@ export default function PostDetail() {
             ) : (comments as any[])?.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">Be the first to comment!</p>
             ) : (
-              (comments as CommentWithReplies[] ?? []).map(comment => (
+              (Array.isArray(comments) ? comments as CommentWithReplies[] : []).map(comment => (
                 <CommentNode
                   key={comment.id}
                   comment={comment}

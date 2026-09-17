@@ -340,7 +340,8 @@ export default function Profile() {
         .then(r => r.ok ? r.json() : { endorsements: [] })
         .then((d: { endorsements: Array<{ skill: string; count: number }> }) => {
           const map: Record<string, number> = {};
-          (d.endorsements ?? []).forEach((e) => { map[e.skill] = e.count; });
+          const endorsements = Array.isArray(d?.endorsements) ? d.endorsements : [];
+          endorsements.forEach((e) => { map[e.skill] = e.count; });
           setEndorsements(map);
         })
         .catch(() => {});
@@ -368,7 +369,9 @@ export default function Profile() {
         setBoostsLoading(true);
         fetch('/api/boost/my', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
           .then(r => r.ok ? r.json() : null)
-          .then(d => setBoostRequests(Array.isArray(d) ? d : d?.requests ?? []))
+          .then(d => setBoostRequests(
+            Array.isArray(d) ? d : Array.isArray(d?.requests) ? d.requests : []
+          ))
           .catch(() => {})
           .finally(() => setBoostsLoading(false));
       }
@@ -508,7 +511,9 @@ export default function Profile() {
   }
 
   const { user, recentPosts, workHistory } = data;
-  const educationHistory: EducationEntry[] = data.educationHistory ?? [];
+  const educationHistory: EducationEntry[] = Array.isArray(data.educationHistory)
+    ? data.educationHistory
+    : [];
   const artworkPosts = recentPosts.filter(p => p.type === 'artwork');
   const sparkPosts = profileContentPosts.filter(post => post.type === 'spark');
   const motionPosts = profileContentPosts.filter(hasVideoAttachment);

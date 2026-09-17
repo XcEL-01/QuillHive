@@ -265,10 +265,10 @@ export default function Opportunities() {
       if (!res.ok) throw new Error('Failed to load');
       const data = await res.json();
       if (reset) {
-        setCreators(data.creators ?? []);
+        setCreators(Array.isArray(data.creators) ? data.creators : []);
         setOffset(LIMIT);
       } else {
-        setCreators(prev => [...prev, ...(data.creators ?? [])]);
+        setCreators(prev => [...prev, ...(Array.isArray(data.creators) ? data.creators : [])]);
         setOffset(prev => prev + LIMIT);
       }
       setTotal(data.total ?? 0);

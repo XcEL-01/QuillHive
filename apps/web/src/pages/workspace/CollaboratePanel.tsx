@@ -245,10 +245,10 @@ export function CollaboratePanel() {
         apiFetch("/api/services/commissions/received").then(r => r.json()).catch(() => ({ commissions: [] })),
         apiFetch("/api/services/commissions/sent").then(r => r.json()).catch(() => ({ commissions: [] })),
       ]);
-      setCollabReceived(cr.requests ?? []);
-      setCollabSent(cs.requests ?? []);
-      setCommReceived(cmr.commissions ?? []);
-      setCommSent(cms.commissions ?? []);
+      setCollabReceived(Array.isArray(cr?.requests) ? cr.requests : []);
+      setCollabSent(Array.isArray(cs?.requests) ? cs.requests : []);
+      setCommReceived(Array.isArray(cmr?.commissions) ? cmr.commissions : []);
+      setCommSent(Array.isArray(cms?.commissions) ? cms.commissions : []);
     } catch {
       toast({ title: "Failed to load collaborate data", variant: "destructive" });
     } finally {

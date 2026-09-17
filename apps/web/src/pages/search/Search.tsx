@@ -57,7 +57,9 @@ export default function Search() {
     return () => clearTimeout(timeout);
   }, [query, token]);
 
-  const filteredPosts = query ? serverPosts ?? [] : postsData?.posts;
+  const filteredPosts = query
+    ? (Array.isArray(serverPosts) ? serverPosts : [])
+    : (Array.isArray(postsData?.posts) ? postsData.posts : []);
 
   const searchPeople = useCallback(async () => {
     if (!query && !skillFilter && !countryFilter && !categoryFilter) {

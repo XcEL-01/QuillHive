@@ -129,13 +129,13 @@ export function MomentumCard({ report }: Props) {
           </div>
         )}
 
-        {(report.recommendations ?? []).length > 0 && (
+        {(Array.isArray(report.recommendations) ? report.recommendations : []).length > 0 && (
           <div className="rounded-xl bg-background/50 border border-border/40 p-3">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               {t("dashboard.insights", "Insights")}
             </p>
             <ul className="space-y-1.5">
-              {(report.recommendations ?? []).slice(0, 2).map((rec, i) => (
+              {(Array.isArray(report.recommendations) ? report.recommendations : []).slice(0, 2).map((rec, i) => (
                 <li key={i} className="text-xs text-foreground/80 flex items-start gap-1.5">
                   <span className="text-primary mt-0.5">→</span> {rec}
                 </li>

@@ -179,17 +179,17 @@ export default function CreatorAnalytics() {
     setRange(r);
   };
 
-  const trendData = (data?.spendingTrend ?? []).map((p) => ({
+  const trendData = (Array.isArray(data?.spendingTrend) ? data.spendingTrend : []).map((p) => ({
     date: fmtDate(p.date),
     amountCents: p.amountCents,
   }));
 
-  const typeData = (data?.spendByType ?? []).map((p) => ({
+  const typeData = (Array.isArray(data?.spendByType) ? data.spendByType : []).map((p) => ({
     type: PLAN_LABELS[p.type] ?? p.type,
     amountCents: p.amountCents,
   }));
 
-  const currencyData = (data?.spendByCurrency ?? []).map((p) => ({
+  const currencyData = (Array.isArray(data?.spendByCurrency) ? data.spendByCurrency : []).map((p) => ({
     currency: p.currency,
     amountCents: p.amountCents,
   }));

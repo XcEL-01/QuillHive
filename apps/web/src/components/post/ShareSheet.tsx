@@ -93,7 +93,7 @@ export function ShareSheet({ postId, title, trigger }: ShareSheetProps) {
         conversations: Array<{ id: number; otherUser?: { displayName?: string }; participantName?: string }>;
       };
       setConversations(
-        (data.conversations ?? []).map((c) => ({
+        (Array.isArray(data?.conversations) ? data.conversations : []).map((c) => ({
           id: c.id,
           participantName: c.participantName ?? c.otherUser?.displayName ?? "User",
         })),

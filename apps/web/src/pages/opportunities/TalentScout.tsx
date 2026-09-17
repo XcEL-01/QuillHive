@@ -284,7 +284,7 @@ export default function TalentScout() {
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const res  = await fetch(`/api/opportunities?${params}`, { headers });
       const data: { creators?: Creator[]; total?: number } = res.ok ? await res.json() : {};
-      const list: Creator[] = data.creators ?? [];
+      const list: Creator[] = Array.isArray(data?.creators) ? data.creators : [];
       setCreators(prev => reset ? list : [...prev, ...list]);
       setTotal(data.total ?? 0);
       if (reset) setOffset(0);

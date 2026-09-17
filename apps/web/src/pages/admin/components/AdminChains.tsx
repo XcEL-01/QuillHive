@@ -9,7 +9,7 @@ export default function AdminChains({ token, toast }: AdminProps) {
   const [loading, setLoading] = useState(true);
   const load = async () => {
     setLoading(true);
-    try { const data = await fetchAdmin("/api/chains?limit=50"); setChains(data.chains ?? []); }
+    try { const data = await fetchAdmin("/api/chains?limit=50"); setChains(Array.isArray(data?.chains) ? data.chains : []); }
     catch (err) { toast({ title: "Could not load chains", description: err instanceof Error ? err.message : "Request failed", variant: "destructive" }); }
     finally { setLoading(false); }
   };

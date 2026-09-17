@@ -41,7 +41,7 @@ export default function WritingStreakWidget({ username, compact }: Props) {
       .then((data: { streak: WritingStreak; activity: ActivityRow[] } | null) => {
         if (cancelled || !data) return;
         setStreak(data.streak);
-        setActivity(data.activity ?? []);
+        setActivity(Array.isArray(data?.activity) ? data.activity : []);
       })
       .catch(() => {});
     return () => {

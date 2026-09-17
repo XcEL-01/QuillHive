@@ -268,7 +268,9 @@ export default function Pricing() {
     query: { enabled: !!user?.username, queryKey: getGetUserPostsQueryKey(user?.username ?? '', { limit: 50 }) },
   });
 
-  const userPosts: UserPost[] = ((postsData as { posts?: UserPost[] })?.posts ?? []).filter(
+  const userPosts: UserPost[] = (Array.isArray((postsData as { posts?: UserPost[] })?.posts)
+    ? (postsData as { posts?: UserPost[] }).posts
+    : []).filter(
     (p: UserPost) => !!p.title,
   );
 

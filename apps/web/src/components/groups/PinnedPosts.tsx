@@ -19,7 +19,7 @@ export function PinnedPosts({ groupId, myRole }: PinnedPostsProps) {
       const res = await fetch(`/api/groups/${groupId}/pinned`);
       if (!res.ok) return;
       const data = await res.json() as { pinned: PinnedPost[] };
-      setPinned(data.pinned ?? []);
+      setPinned(Array.isArray(data?.pinned) ? data.pinned : []);
     } catch { /* ignore */ }
   };
 

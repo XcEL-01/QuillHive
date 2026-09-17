@@ -128,7 +128,8 @@ export default function Library() {
     if (res?.ok) {
       const data = await res.json();
       setTotal(data.total ?? 0);
-      setEntries(prev => isAppend ? [...prev, ...(data.entries ?? [])] : (data.entries ?? []));
+      const entries = Array.isArray(data?.entries) ? data.entries : [];
+      setEntries(prev => isAppend ? [...prev, ...entries] : entries);
     }
     if (isAppend) setLoadingMore(false);
     else setLoading(false);

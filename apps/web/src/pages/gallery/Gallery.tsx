@@ -66,7 +66,7 @@ export default function Gallery() {
     });
   };
 
-  const galleryPosts = data?.posts ?? [];
+  const galleryPosts = Array.isArray(data?.posts) ? data.posts : [];
 
   return (
     <AppLayout>

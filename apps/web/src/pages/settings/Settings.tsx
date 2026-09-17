@@ -234,7 +234,9 @@ export default function Settings() {
       const bufToB64u = (b: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       const credentialId = bufToB64u(cred.rawId);
       const publicKey = bufToB64u(cred.response.getPublicKey ? cred.response.getPublicKey() : cred.response.attestationObject);
-      const transports = (cred.response.getTransports?.() ?? []);
+      const transports = Array.isArray(cred.response.getTransports?.())
+        ? cred.response.getTransports()
+        : [];
       const deviceName = `${navigator.platform || 'Device'} · ${new Date().toLocaleDateString()}`;
       const reg = await fetch('/api/auth/passkey/register', {
         method: 'POST',
@@ -1427,7 +1429,7 @@ function WarningsSection() {
         const res = await fetch('/api/strikes/me', { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error();
         const json = await res.json() as { strikes: StrikeRecord[] };
-        setStrikes(json.strikes ?? []);
+        setStrikes(Array.isArray(json?.strikes) ? json.strikes : []);
       } catch {
         toast({ title: 'Could not load warnings', variant: 'destructive' });
       } finally {

@@ -31,7 +31,7 @@ export function TrendingWidget() {
           fetch("/api/feed/trending?limit=5").then((r) => (r.ok ? r.json() : { posts: [] })).catch(() => ({ posts: [] })),
         ]);
         if (cancelled) return;
-        const t = Array.isArray(topicsRes) ? topicsRes : (topicsRes.topics ?? []);
+        const t = Array.isArray(topicsRes) ? topicsRes : Array.isArray(topicsRes?.topics) ? topicsRes.topics : [];
         setTopics(t.slice(0, 5));
         setPosts(Array.isArray(postsRes?.posts) ? postsRes.posts.slice(0, 5) : []);
       } catch {

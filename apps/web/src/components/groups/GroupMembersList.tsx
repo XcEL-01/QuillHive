@@ -38,7 +38,7 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
         ]);
         if (membersRes.ok) {
           const data = await membersRes.json() as { members: Member[] };
-          setMembers(data.members ?? []);
+          setMembers(Array.isArray(data?.members) ? data.members : []);
         }
         if (roleRes && roleRes.ok) {
           const data = await roleRes.json() as { role: GroupRole | null };
@@ -54,7 +54,7 @@ export function GroupMembersList({ groupId }: GroupMembersListProps) {
     if (myRole !== "admin" || !token) return;
     void fetch(`/api/groups/${groupId}/join-requests`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.ok ? res.json() as Promise<{ requests?: typeof requests }> : { requests: [] })
-      .then(data => setRequests(data.requests ?? []));
+      .then(data => setRequests(Array.isArray(data?.requests) ? data.requests : []));
   }, [groupId, myRole, token]);
 
   const updateRole = async (userId: number, role: GroupRole) => {

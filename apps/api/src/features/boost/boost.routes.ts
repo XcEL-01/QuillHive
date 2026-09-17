@@ -281,35 +281,50 @@ boostRouter.post("/init-payment", requireAuth, async (req: Request, res: Respons
     .limit(1);
 
   const planInfo = BOOST_PLANS[plan as PlanKey];
-  const txRef = generateTxRef(`qh-boost-${userId}-${postId}`);
+  const isUniqueViolation = (err: unknown) => (
+    typeof err === "object" && err !== null && "code" in err && err.code === "23505"
+  );
 
-  if (existing.length > 0) {
-    await db
-      .update(boostRequestsTable)
-      .set({
-        plan,
-        durationHours: planInfo.durationHours,
-        flwTxRef: txRef,
-        reachMultiplier: planInfo.reachMultiplier,
-        placementPriority: planInfo.placementPriority,
-        targeting: targeting ?? null,
-      })
-      .where(eq(boostRequestsTable.id, existing[0].id));
-  } else {
-    await db
-      .insert(boostRequestsTable)
-      .values({
-        userId,
-        postId,
-        plan,
-        durationHours: planInfo.durationHours,
-        reachMultiplier: planInfo.reachMultiplier,
-        placementPriority: planInfo.placementPriority,
-        targeting: targeting ?? null,
-        status: "pending_payment",
-        flwTxRef: txRef,
-      } as any);
+  async function upsertBoostRequest(attempt = 1): Promise<string> {
+    const txRef = generateTxRef(`qh-boost-${userId}-${postId}`);
+
+    try {
+      if (existing.length > 0) {
+        await db
+          .update(boostRequestsTable)
+          .set({
+            plan,
+            durationHours: planInfo.durationHours,
+            flwTxRef: txRef,
+            reachMultiplier: planInfo.reachMultiplier,
+            placementPriority: planInfo.placementPriority,
+            targeting: targeting ?? null,
+          })
+          .where(eq(boostRequestsTable.id, existing[0].id));
+      } else {
+        await db
+          .insert(boostRequestsTable)
+          .values({
+            userId,
+            postId,
+            plan,
+            durationHours: planInfo.durationHours,
+            reachMultiplier: planInfo.reachMultiplier,
+            placementPriority: planInfo.placementPriority,
+            targeting: targeting ?? null,
+            status: "pending_payment",
+            flwTxRef: txRef,
+          } as any);
+      }
+
+      return txRef;
+    } catch (err) {
+      if (attempt < 2 && isUniqueViolation(err)) return upsertBoostRequest(attempt + 1);
+      throw err;
+    }
   }
+
+  const txRef = await upsertBoostRequest();
 
   const [freshUser] = await db
     .select({ email: usersTable.email, displayName: usersTable.displayName })

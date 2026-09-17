@@ -117,6 +117,7 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
   const [boostEndsAt, setBoostEndsAt] = useState<string>("");
   const [gateway, setGateway] = useState<Gateway>("flutterwave");
   const [availableGateways, setAvailableGateways] = useState<{ flutterwave: boolean; stripe: boolean }>({ flutterwave: true, stripe: false });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     void fetch(apiUrl("/api/boost/payment-methods"), { credentials: "include" })
@@ -157,8 +158,9 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
   }, [onSuccess]);
 
   const startPayment = useCallback(async () => {
-    if (!user) return;
+    if (!user || isSubmitting) return;
     const plan = PLANS.find(p => p.key === selectedPlan)!;
+    setIsSubmitting(true);
     setStep("processing");
 
     try {
@@ -245,8 +247,10 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to start payment. Please try again.");
       setStep("error");
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [user, selectedPlan, postId, postTitle, gateway, verifyPayment]);
+  }, [user, selectedPlan, postId, postTitle, gateway, verifyPayment, isSubmitting]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -342,10 +346,11 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
               )}
               <button
                 onClick={() => void startPayment()}
+                disabled={isSubmitting}
                 className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
               >
-                <Zap className="w-4 h-4" />
-                Pay ${PLANS.find(p => p.key === selectedPlan)?.price} · Boost Now
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                {isSubmitting ? "Starting payment..." : `Pay $${PLANS.find(p => p.key === selectedPlan)?.price} · Boost Now`}
               </button>
               <p className="text-center text-xs text-white/30 mt-3">
                 Secured by {gateway === "stripe" ? "Stripe" : "Flutterwave"} · Instant activation · Cancel anytime

@@ -13,6 +13,7 @@ import { Search as SearchIcon, Users, FileText, Hash, SlidersHorizontal, X } fro
 import { Link } from 'wouter';
 import { getStoredToken } from '@/lib/api';
 import { useT } from '@/lib/i18n';
+import { BackButton } from '@/components/ui/BackButton';
 
 const COUNTRIES = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'India', 'Brazil', 'Japan', 'Nigeria'];
 const CATEGORIES = ['developer', 'designer', 'writer', 'photographer', 'artist', 'musician', 'marketer', 'filmmaker'];
@@ -103,6 +104,7 @@ export default function Search() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 md:px-0 py-4">
+        <BackButton />
         <h1 className="text-3xl font-serif font-bold mb-6">{t('search.title')}</h1>
 
         <div className="relative mb-4">

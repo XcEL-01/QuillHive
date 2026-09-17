@@ -20,6 +20,7 @@ import { useI18n, useT, SUPPORTED_LANGS } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { CreatorModeToggle } from '@/components/settings/CreatorModeToggle';
 import { SessionsCard } from '@/components/settings/SessionsCard';
+import { BackButton } from '@/components/ui/BackButton';
 import {
   User, Lock, Bell, Palette, Shield, Trash2, Moon, Sun, ChevronRight, Save, Loader2, Eye, Globe, Link2,
   MessageCircle, GraduationCap, Briefcase, Plus, Pencil, X, Upload, Camera, Facebook, Linkedin,
@@ -547,6 +548,7 @@ export default function Settings() {
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto px-4 md:px-0 py-4">
+        <BackButton />
         <h1 className="text-3xl font-serif font-bold mb-8">{t('settings.title')}</h1>
 
         <div className="flex flex-col md:flex-row gap-6">

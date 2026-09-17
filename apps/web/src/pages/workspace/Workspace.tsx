@@ -6,6 +6,7 @@ import { Briefcase, Users2, Handshake } from "lucide-react";
 import { JobsPanel } from "./JobsPanel";
 import { TalentPanel } from "./TalentPanel";
 import { CollaboratePanel } from "./CollaboratePanel";
+import { BackButton } from "@/components/ui/BackButton";
 
 export default function Workspace() {
   const [location] = useLocation();
@@ -15,6 +16,7 @@ export default function Workspace() {
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
+        <BackButton />
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">Workspace</h1>
           <p className="text-sm text-muted-foreground mt-1">

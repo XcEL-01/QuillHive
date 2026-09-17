@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { BackButton } from '@/components/ui/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,7 @@ export default function Series() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 md:px-0 pb-20 space-y-6">
+        <BackButton />
         <div className="pt-4 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-serif font-bold flex items-center gap-2">

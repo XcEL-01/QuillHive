@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { getStoredToken } from '@/lib/api';
+import { BackButton } from '@/components/ui/BackButton';
 import {
   Briefcase, DollarSign, Tag, FileCheck, Plus, X,
   Globe, MapPin, Mail, Link as LinkIcon, ChevronRight, Loader2, Sparkles
@@ -107,6 +108,7 @@ export default function PostJob() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-8">
+        <BackButton fallback="/workspace?tab=work" />
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-1">

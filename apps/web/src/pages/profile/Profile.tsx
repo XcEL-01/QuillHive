@@ -33,6 +33,7 @@ import { ReputationTimeline } from '@/components/trust/ReputationTimeline';
 import { CreatorLevelBadge, CreatorLevelProgressPanel } from '@/components/trust/CreatorLevelBadge';
 import { CreatorMomentumHQ } from '@/components/profile/CreatorMomentumHQ';
 import { ProfileStrengthMeter } from '@/components/profile/ProfileStrengthMeter';
+import { BackButton } from '@/components/ui/BackButton';
 import { OpportunityPanel } from '@/components/dashboard/OpportunityPanel';
 
 interface PortfolioItem {
@@ -520,6 +521,9 @@ export default function Profile() {
 
   return (
     <AppLayout>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-4">
+        <BackButton />
+      </div>
       {/* Cover Photo */}
       <div className="w-full h-48 md:h-72 bg-muted relative md:rounded-b-3xl overflow-hidden shadow-sm">
         {user.coverUrl ? (

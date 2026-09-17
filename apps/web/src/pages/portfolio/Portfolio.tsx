@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { BackButton } from "@/components/ui/BackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,6 +132,9 @@ export default function Portfolio() {
   return (
     <AppLayout>
       <div className="bg-background" data-testid="portfolio-page">
+        <div className="max-w-5xl mx-auto px-6 pt-4">
+          <BackButton />
+        </div>
         {user.coverUrl && (
           <div
             className="h-48 md:h-64 w-full bg-gradient-to-br from-primary/20 via-primary/10 to-background bg-cover bg-center"

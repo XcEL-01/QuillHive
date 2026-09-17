@@ -1,6 +1,7 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { dmcaEmail as dmcaEmailGetter, appealsEmail as appealsEmailGetter } from "@/lib/contact";
 import { useT } from "@/lib/i18n";
+import { BackButton } from "@/components/ui/BackButton";
 
 export function ContentPolicy() {
   const dmcaEmail = dmcaEmailGetter();
@@ -10,6 +11,7 @@ export function ContentPolicy() {
   return (
     <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-12">
+        <BackButton />
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("legal.policy.title", "Content Policy")}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-8">{t("legal.effective", "Effective April 2026")}</p>
 

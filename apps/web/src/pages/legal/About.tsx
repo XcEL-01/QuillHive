@@ -4,12 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Feather, Heart, ShieldCheck, Users } from "lucide-react";
 import { Link } from "wouter";
 import { useAuthStore } from "@/store/auth";
+import { BackButton } from "@/components/ui/BackButton";
 
 export function About() {
   const { user } = useAuthStore();
   return (
     <PublicLayout>
       <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-20">
+        <BackButton />
         <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 px-6 py-14 text-center sm:px-12">
           <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative mx-auto max-w-3xl">

@@ -33,6 +33,7 @@ import { useT } from '@/lib/i18n';
 import { SeriesNavigation } from '@/components/post/SeriesNavigation';
 import { PollBlock } from '@/components/post/PollBlock';
 import { MoreLikeThis } from '@/components/post/MoreLikeThis';
+import { BackButton } from '@/components/ui/BackButton';
 import { useRecordRead } from '@/hooks/useReadingStreak';
 import { PollComposer, type DraftPoll } from '@/components/post/PollComposer';
 import { LiveReadCounter } from '@/components/post/LiveReadCounter';
@@ -426,6 +427,7 @@ export default function PostDetail() {
     <AppLayout>
       <ReadingProgressBar percent={progress} />
       <div className={`${widthClass} mx-auto px-4 md:px-0 pb-20 pt-6 transition-all`}>
+        <BackButton />
 
         {/* Post Header */}
         <div className="mb-8">

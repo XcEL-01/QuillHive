@@ -2,6 +2,7 @@ import { brandName, privacyEmail } from "@/lib/contact";
 import { useT } from "@/lib/i18n";
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { BackButton } from "@/components/ui/BackButton";
 
 export function Privacy() {
   const brand = brandName();
@@ -11,6 +12,7 @@ export function Privacy() {
   return (
     <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-12">
+        <BackButton />
         <div className="mb-10">
           <h1 className="text-4xl font-bold text-foreground mb-2">{t("legal.privacy.title", "Privacy Policy")}</h1>
           <p className="text-muted-foreground text-sm">Last updated May 2026 · Platform: {brand}</p>

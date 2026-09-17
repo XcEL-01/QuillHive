@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { Eye, UserPlus, Users } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { BackButton } from "@/components/ui/BackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +62,7 @@ export default function ProfileViewers() {
   return (
     <AppLayout>
       <main className="max-w-2xl mx-auto px-4 md:px-0 py-6">
+        <BackButton />
         <Card className="rounded-2xl border-border/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl font-serif">

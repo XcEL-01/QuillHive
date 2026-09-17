@@ -14,6 +14,7 @@ import { BookOpen, X, Plus, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getStoredToken } from "@/lib/api";
 import { ImageUploadField } from "@/components/media/ImageUploadField";
+import { BackButton } from "@/components/ui/BackButton";
 
 const CATEGORIES = [
   { key: "writing_literature", label: "📝 Writing & Literature" },
@@ -152,6 +153,7 @@ export default function AddToLibrary() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-8">
+        <BackButton fallback="/library" />
         <div className="flex items-center gap-3 mb-8">
           <div className="p-2 bg-primary/10 rounded-xl">
             <BookOpen className="w-5 h-5 text-primary" />

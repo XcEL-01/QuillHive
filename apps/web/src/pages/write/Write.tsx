@@ -28,6 +28,7 @@ import { Switch } from '@/components/ui/switch';
 import { AttachmentPicker } from '@/components/post/AttachmentPicker';
 import { useT } from '@/lib/i18n';
 import { ImageUploadField } from '@/components/media/ImageUploadField';
+import { BackButton } from '@/components/ui/BackButton';
 
 type AiPanel = 'assist' | 'caption' | 'improve' | 'ideas' | 'titles' | 'hashtags' | null;
 
@@ -559,6 +560,7 @@ export default function Write() {
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto px-4 md:px-0 pb-20">
+        <BackButton />
 
         {quotedPost && (
           <div className="mb-5 rounded-xl border border-border/70 bg-muted/20 p-4">

@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/auth';
 import { getStoredToken } from '@/lib/api';
 import { Plus, X, Loader2, BarChart2, ChevronDown } from 'lucide-react';
 import { AttachmentPicker, type Attachment } from '@/components/post/AttachmentPicker';
+import { BackButton } from '@/components/ui/BackButton';
 
 const DURATION_OPTIONS = [
   { value: '1', label: '1 hour' },
@@ -87,6 +88,7 @@ export default function PollNew() {
   return (
     <AppLayout>
       <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
+        <BackButton />
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
             <BarChart2 className="w-5 h-5 text-white" />

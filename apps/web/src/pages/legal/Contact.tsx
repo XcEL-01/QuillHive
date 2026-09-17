@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { contactEmail } from '@/lib/contact';
 import { useT } from '@/lib/i18n';
+import { BackButton } from '@/components/ui/BackButton';
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -40,6 +41,7 @@ export function Contact() {
   return (
     <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-12">
+        <BackButton />
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">{t("legal.contact.title", "Contact Us")}</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
           {t("legal.contact.intro", "Questions, feedback, or just want to say hello? We'd love to hear from you.")}

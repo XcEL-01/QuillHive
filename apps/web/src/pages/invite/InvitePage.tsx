@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Link2, Copy, Check, Users, Gift, Share2, ChevronRight } from "lucide-react";
+import { Link2, Copy, Check, Users, Gift, Share2, ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { getStoredToken } from "@/lib/api";
+import { BackButton } from "@/components/ui/BackButton";
 
 interface InviteCode {
   id: number;
@@ -86,17 +87,8 @@ export default function InvitePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8 max-w-2xl mx-auto">
-      <button
-        onClick={() => window.history.back()}
-        className="mb-6 flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Gift className="w-6 h-6 text-amber-400" />
-          Invite Friends
-        </h1>
+        <BackButton />
         <p className="text-white/50 text-sm mt-1">
           Invite creators to QuillHive. When they join, you both grow together.
         </p>

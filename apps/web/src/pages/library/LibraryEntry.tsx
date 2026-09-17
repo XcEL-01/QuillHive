@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store/auth";
 import { safeHtml } from "@/lib/sanitize";
 import { getStoredToken } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { BackButton } from "@/components/ui/BackButton";
 import { getInitials } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -189,6 +190,7 @@ export default function LibraryEntry() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-8">
+        <BackButton fallback="/library" />
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6">
           <Link href="/library" className="hover:text-foreground transition-colors">

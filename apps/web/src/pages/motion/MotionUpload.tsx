@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getStoredToken } from '@/lib/api';
 import { Film, Upload, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { ImageUploadField } from '@/components/media/ImageUploadField';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function MotionUpload() {
   const [, navigate] = useLocation();
@@ -117,6 +118,7 @@ export default function MotionUpload() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        <BackButton fallback="/motion" />
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-pink-500 flex items-center justify-center shrink-0">
             <Film className="w-5 h-5 text-white" />

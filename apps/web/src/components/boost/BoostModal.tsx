@@ -33,32 +33,32 @@ const PLANS: Plan[] = [
     key: "starter",
     label: "Starter Boost",
     price: 5,
-    duration: "24 hours",
+    duration: "2 days",
     icon: Zap,
     color: "from-blue-500 to-blue-600",
     border: "border-blue-500/40",
-    features: ["3.5× visibility boost", "Featured in feed", "24h campaign"],
+    features: ["3.5× visibility boost", "Featured in feed", "2-day campaign"],
   },
   {
     key: "growth",
     label: "Growth Boost",
     price: 15,
-    duration: "72 hours",
+    duration: "7 days",
     icon: TrendingUp,
     color: "from-purple-500 to-purple-600",
     border: "border-purple-500/40",
-    features: ["3.5× visibility boost", "Priority placement", "72h campaign", "Analytics tracking"],
+    features: ["3.5× visibility boost", "Priority placement", "7-day campaign", "Analytics tracking"],
     popular: true,
   },
   {
     key: "spotlight",
     label: "Spotlight",
     price: 30,
-    duration: "7 days",
+    duration: "15 days",
     icon: Star,
     color: "from-amber-500 to-amber-600",
     border: "border-amber-500/40",
-    features: ["3.5× visibility boost", "Top-tier placement", "7-day campaign", "Detailed analytics", "Creator badge on post"],
+    features: ["3.5× visibility boost", "Top-tier placement", "15-day campaign", "Detailed analytics", "Creator badge on post"],
   },
 ];
 
@@ -325,7 +325,7 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
                         onClick={() => setGateway("flutterwave")}
                         className={`rounded-lg border px-3 py-2 text-sm ${gateway === "flutterwave" ? "border-amber-400 bg-amber-400/10 text-white" : "border-white/10 text-white/60"}`}
                       >
-                        Flutterwave
+                        Pay with Flutterwave
                       </button>
                     )}
                     {availableGateways.stripe && (
@@ -334,7 +334,7 @@ export function BoostModal({ postId, postTitle, onClose, onSuccess, defaultPlan 
                         onClick={() => setGateway("stripe")}
                         className={`rounded-lg border px-3 py-2 text-sm ${gateway === "stripe" ? "border-amber-400 bg-amber-400/10 text-white" : "border-white/10 text-white/60"}`}
                       >
-                        Stripe
+                        Pay with Card (Stripe)
                       </button>
                     )}
                   </div>

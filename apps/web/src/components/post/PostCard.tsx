@@ -1151,9 +1151,9 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
           </DialogHeader>
           <div className="space-y-3 py-2">
             {([
-              { key: 'starter',   label: 'Starter Boost', duration: '24 hours', perk: 'Increased feed ranking',   emoji: '⚡', price: '$5'  },
-              { key: 'growth',    label: 'Growth Boost',  duration: '3 days',   perk: 'Featured in Explore',      emoji: '🚀', price: '$15' },
-              { key: 'spotlight', label: 'Spotlight',     duration: '7 days',   perk: 'Homepage + newsletter',    emoji: '🌟', price: '$30' },
+              { key: 'starter',   label: 'Starter Boost', duration: '2 days',  perk: 'Increased feed ranking',   emoji: '⚡', price: '$5'  },
+              { key: 'growth',    label: 'Growth Boost',  duration: '7 days',  perk: 'Featured in Explore',      emoji: '🚀', price: '$15' },
+              { key: 'spotlight', label: 'Spotlight',     duration: '15 days', perk: 'Homepage + newsletter',    emoji: '🌟', price: '$30' },
             ] as const).map(plan => (
               <button
                 key={plan.key}

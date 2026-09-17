@@ -36,12 +36,12 @@ const VISIBILITY_PLANS: VisibilityPlan[] = [
     icon: Zap,
     name: 'Starter Boost',
     label: 'Good for testing reach',
-    duration: '24 hours',
+    duration: '2 days',
     emoji: '⚡',
     color: 'from-orange-500 to-amber-500',
     description: 'Give your post an initial push to reach more people beyond your current followers.',
     perks: [
-      'Elevated feed ranking for 24h',
+      'Elevated feed ranking for 2 days',
       'Shown to non-followers',
       'Priority in Explore feed',
     ],
@@ -51,7 +51,7 @@ const VISIBILITY_PLANS: VisibilityPlan[] = [
     icon: Rocket,
     name: 'Growth Boost',
     label: 'Accelerate your growth',
-    duration: '3 days',
+    duration: '7 days',
     emoji: '🚀',
     color: 'from-violet-500 to-purple-500',
     featured: true,
@@ -59,7 +59,7 @@ const VISIBILITY_PLANS: VisibilityPlan[] = [
     perks: [
       'Everything in Starter',
       'Featured in Discover section',
-      '3-day elevated visibility',
+      '7-day elevated visibility',
       'Creator profile highlight',
     ],
   },
@@ -68,7 +68,7 @@ const VISIBILITY_PLANS: VisibilityPlan[] = [
     icon: Star,
     name: 'Spotlight',
     label: 'Maximum visibility',
-    duration: '7 days',
+    duration: '15 days',
     emoji: '🌟',
     color: 'from-rose-500 to-pink-500',
     description: 'Top placement across QuillHive with newsletter and social amplification for maximum impact.',
@@ -77,7 +77,7 @@ const VISIBILITY_PLANS: VisibilityPlan[] = [
       'Homepage featured slot',
       'Weekly newsletter mention',
       'Social media amplification',
-      'Manual admin review & approval',
+      'Instant activation after payment',
     ],
   },
 ];
@@ -146,7 +146,7 @@ function BoostRequestDialog({
       }
       toast({
         title: '🚀 Boost request submitted!',
-        description: 'Our team will review and activate your boost soon.',
+        description: 'Your boost will activate as soon as payment is verified.',
       });
       onOpenChange(false);
     } catch {
@@ -166,7 +166,7 @@ function BoostRequestDialog({
             <Rocket className="w-5 h-5 text-violet-500" /> Request a Boost
           </DialogTitle>
           <DialogDescription>
-            Select a post and boost type. Our team reviews every request personally.
+            Select a post and boost type. Once payment is verified, your boost activates instantly.
           </DialogDescription>
         </DialogHeader>
 
@@ -302,7 +302,7 @@ export default function Pricing() {
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Boost your content, reach more people, and unlock opportunities.
-            Every boost is reviewed by our team - no surprises, just real growth.
+            Pay once and your campaign goes live immediately after verification.
           </p>
         </div>
 
@@ -367,12 +367,12 @@ export default function Pricing() {
         <section className="mb-16">
           <h2 className="text-2xl font-serif font-bold mb-2">How boosting works</h2>
           <p className="text-muted-foreground mb-8">
-            Boosting is transparent and human-reviewed - no black-box algorithms.
+            Boosting is straightforward: choose a plan, pay, and your campaign starts without a manual approval gate.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {([
               { icon: Rocket, color: 'text-violet-500 bg-violet-500/10', title: 'You request', desc: 'Pick a post and a boost type. Add an optional note for our team.' },
-              { icon: Eye, color: 'text-blue-500 bg-blue-500/10', title: 'We review', desc: 'Our team personally reviews every request within 24 hours.' },
+              { icon: Eye, color: 'text-blue-500 bg-blue-500/10', title: 'Verification', desc: 'Secure payment verification confirms your campaign and starts the boost immediately.' },
               { icon: TrendingUp, color: 'text-emerald-500 bg-emerald-500/10', title: 'Boost activates', desc: 'Your post gets elevated placement in Discover, Trending, and Featured sections.' },
               { icon: Users, color: 'text-orange-500 bg-orange-500/10', title: 'You grow', desc: 'More eyes on your work means more followers, feedback, and opportunities.' },
             ] as const).map(({ icon: Icon, color, title, desc }) => (
@@ -498,8 +498,8 @@ export default function Pricing() {
         <div className="rounded-2xl bg-primary/5 border border-primary/20 p-8 text-center mb-12">
           <h3 className="text-xl font-serif font-bold mb-3">How does requesting work?</h3>
           <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-            Click "Request" on any plan and our team reviews it within 24 hours. We'll activate your boost
-            and notify you when it goes live. No payment is processed until we confirm your spot.
+            Click "Request" on any plan, complete payment, and your boost activates as soon as verification succeeds.
+            The admin review tools remain available for moderation, but they are not a blocker to campaign activation.
           </p>
           <a
             href={`mailto:${contactEmail()}?subject=Pricing Enquiry`}

@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import compression from "compression";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -8,7 +8,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { rateLimit } from "./middleware/rateLimit";
 import { securityHeaders } from "./middleware/securityHeaders";
-import { attachErrorHandler } from "./lib/sentry";
+import { captureError } from "./lib/sentry";
 import { sitemapRouter } from "./features/distribution/sitemap.routes";
 import { rssRouter } from "./features/distribution/rss.routes";
 import { activityPubRouter } from "./features/distribution/activitypub.routes";
@@ -425,6 +425,16 @@ if (existsSync(webDist)) {
   });
 }
 
-attachErrorHandler(app);
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  logger.error({ err, path: req.path, method: req.method }, "Unhandled request error");
+  captureError(err);
+  if (res.headersSent) return next(err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    error: status === 500
+      ? "Something went wrong on our end. Please try again."
+      : (err.message || "Request failed"),
+  });
+});
 
 export default app;

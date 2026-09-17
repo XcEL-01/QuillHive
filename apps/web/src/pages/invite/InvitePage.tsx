@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link2, Copy, Check, Users, Gift, Share2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Link2, Copy, Check, Users, Gift, Share2, ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { getStoredToken } from "@/lib/api";
 
@@ -19,6 +19,11 @@ interface InviteStats {
   activeCode?: string;
 }
 
+interface GenerateInviteResponse {
+  invite?: InviteCode;
+  error?: string;
+}
+
 export default function InvitePage() {
   const { user } = useAuthStore();
   const token = getStoredToken();
@@ -31,7 +36,7 @@ export default function InvitePage() {
   const appUrl = import.meta.env.VITE_PUBLIC_APP_URL as string | undefined ?? window.location.origin;
 
   useEffect(() => {
-    void fetch("/api/invites/my", {
+    void fetch("/api/invites/mine", {
       credentials: "include",
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     })
@@ -50,13 +55,14 @@ export default function InvitePage() {
         credentials: "include",
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
-      const d = await res.json() as { code?: string; error?: string };
-      if (d.code) {
+      const d = await res.json() as GenerateInviteResponse;
+      const invite = d.invite;
+      if (invite) {
         setData(prev => prev ? {
           ...prev,
-          codes: [{ id: Date.now(), code: d.code!, usedBy: null, usedAt: null, expiresAt: null, isActive: true, createdAt: new Date().toISOString() }, ...prev.codes],
-          activeCode: d.code!,
-        } : null);
+          codes: [invite, ...prev.codes.filter(code => code.id !== invite.id)],
+          activeCode: invite.code,
+        } : { codes: [invite], totalInvited: 0, activeCode: invite.code });
       } else {
         setError(d.error ?? "Failed to generate invite code.");
       }
@@ -80,6 +86,12 @@ export default function InvitePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8 max-w-2xl mx-auto">
+      <button
+        onClick={() => window.history.back()}
+        className="mb-6 flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <Gift className="w-6 h-6 text-amber-400" />

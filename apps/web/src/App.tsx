@@ -239,6 +239,8 @@ function MaintenanceNotice() {
 }
 
 function Router() {
+  const { user } = useAuthStore();
+
   return (
     <Switch>
       <Route path="/login"><GuestGuard><Auth /></GuestGuard></Route>
@@ -384,7 +386,10 @@ function Router() {
         <AuthGuard><PromotionsPage /></AuthGuard>
       </Route>
       <Route path="/carousel">
-        <AdminGuard><CarouselGenerator /></AdminGuard>
+        {user?.role === 'admin' || user?.role === 'super_admin'
+          ? <Suspense fallback={<PageLoader />}><CarouselGenerator /></Suspense>
+          : <Redirect to="/" />
+        }
       </Route>
       <Route path="/invite">
         <AuthGuard><InvitePage /></AuthGuard>

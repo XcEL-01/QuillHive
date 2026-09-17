@@ -5,7 +5,7 @@ import {
   Compass, PenLine, MessageCircle, User as UserIcon,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
   BarChart3, BookOpen, Users, Users2, Handshake,
-  Bookmark, Archive, Star, Sparkles, Layers, Link2,
+  Bookmark, Archive, Star, Sparkles, Link2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useTheme } from "@/hooks/use-theme";
@@ -290,11 +290,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/motion" className="cursor-pointer w-full flex items-center gap-2">
                       <Film className="w-4 h-4" /> Studio
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/carousel" className="cursor-pointer w-full flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-violet-400" />Carousel Generator
                     </Link>
                   </DropdownMenuItem>
                   {chainsEnabled && (

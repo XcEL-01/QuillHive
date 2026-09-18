@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { clsx } from 'clsx';
 import { safeHtml } from '@/lib/sanitize';
+import { linkifyHashtags } from '@/lib/hashtags';
 import { getStoredToken } from '@/lib/api';
 import { useI18n, useT } from '@/lib/i18n';
 import { CreatorLevelBadge } from '@/components/trust/CreatorLevelBadge';
@@ -76,6 +77,21 @@ type EnrichedPost = Post & {
     author?: { displayName: string; username: string; avatarUrl?: string | null } | null;
   } | null;
 };
+
+function renderHashtags(content: string) {
+  return content.split(/(#\w+)/g).map((part, index) => (
+    part.startsWith('#') ? (
+      <Link
+        key={index}
+        href={`/search?q=${encodeURIComponent(part)}`}
+        onClick={(event) => event.stopPropagation()}
+        className="text-primary hover:underline"
+      >
+        {part}
+      </Link>
+    ) : part
+  ));
+}
 
 function OfficialBadge({ isOfficial }: { isOfficial?: boolean }) {
   if (!isOfficial) return null;
@@ -852,7 +868,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
 
           {isSpark ? (
             <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed mb-2">
-              {showTranslated && translatedContent ? translatedContent : post.content}
+              {renderHashtags(showTranslated && translatedContent ? translatedContent : post.content || '')}
             </p>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground">
@@ -865,7 +881,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
                     exit={{ opacity: 0, y: -4 }}
                     className="line-clamp-3"
                   >
-                    {translatedContent}
+                    {renderHashtags(translatedContent)}
                   </motion.p>
                 ) : (
                   <motion.div
@@ -875,7 +891,9 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
                     exit={{ opacity: 0, y: -4 }}
                     className="line-clamp-3"
                   >
-                    {post.excerpt ? post.excerpt : <span dangerouslySetInnerHTML={{ __html: safeHtml(post.content ?? '') }} />}
+                    {post.excerpt
+                      ? renderHashtags(post.excerpt)
+                      : <span dangerouslySetInnerHTML={{ __html: linkifyHashtags(safeHtml(post.content ?? '')) }} />}
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -813,8 +813,20 @@ export const updateMyProfile = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
 
+  const [currentUser] = await db
+    .select({ username: usersTable.username, lastUsernameChangeAt: usersTable.lastUsernameChangeAt })
+    .from(usersTable)
+    .where(eq(usersTable.id, viewerId));
+  if (!currentUser) return res.status(404).json({ error: "User not found" });
+
   if (req.body.username !== undefined) {
     const username = String(req.body.username).trim();
+    if (username !== currentUser.username) {
+      const lastChange = currentUser.lastUsernameChangeAt;
+      if (lastChange && Date.now() - new Date(lastChange).getTime() < 14 * 24 * 60 * 60 * 1000) {
+        return res.status(429).json({ error: "You can only change your username once every 14 days." });
+      }
+    }
     if (RESERVED_USERNAMES.has(username.toLowerCase())) {
       return res.status(400).json({ error: "This username is reserved and cannot be used." });
     }
@@ -837,6 +849,9 @@ export const updateMyProfile = async (req: Request, res: Response) => {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   for (const field of fields) {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
+  }
+  if (typeof updates.username === "string" && updates.username !== currentUser.username) {
+    updates.lastUsernameChangeAt = new Date();
   }
 
   // Users commonly paste domains or handles without a scheme. Store a

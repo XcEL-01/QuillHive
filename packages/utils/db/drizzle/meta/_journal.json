@@ -43,6 +43,13 @@
       "when": 1789058000000,
       "tag": "0005_boost_requests_ranking",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789824000000,
+      "tag": "0007_username_change_cooldown",
+      "breakpoints": true
     }
   ]
 }

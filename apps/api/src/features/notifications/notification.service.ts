@@ -19,6 +19,7 @@ export type NotificationType =
   | "highlight"
   | "system"
   | "admin_action"
+  | "official_notice"
   | "group_invite"
   | "milestone"
   | "trending"
@@ -64,6 +65,7 @@ const NOTIFICATION_CATEGORY_MAP: Record<NotificationType, string> = {
   share: "social",
   highlight: "social",
   admin_action: "admin",
+  official_notice: "admin",
   system: "system",
   group_invite: "social",
   milestone: "growth",
@@ -94,6 +96,7 @@ const NOTIFICATION_TITLE_MAP: Partial<Record<NotificationType, string>> = {
   opportunity_nudge: "A new opportunity",
   digest: "Your QuillHive recap",
   system: "A QuillHive update",
+  official_notice: "A message from the QuillHive team",
 };
 
 /**

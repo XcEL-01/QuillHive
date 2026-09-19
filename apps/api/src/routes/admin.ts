@@ -9,6 +9,7 @@ import {
 import { eq, desc, and, count, ne, lt, sql, inArray, or, gt, gte } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin, requirePermission } from "../middleware/admin";
 import { getAllFeatureFlags, FEATURE_FLAG_KEYS, reloadFeatureFlags, type FeatureFlagKey } from "../lib/featureFlags";
+import { sendEmail } from "../features/email/email.service";
 
 const router = Router();
 router.use(requireAdmin);
@@ -71,6 +72,33 @@ router.get("/users", async (req, res) => {
     .limit(limit).offset((page - 1) * limit);
   const [total] = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.isDeleted, false));
   return res.json({ users, total: total?.count ?? 0, page, limit });
+});
+
+router.post("/users/:id/notice", async (req: any, res) => {
+  const id = parseInt(req.params.id);
+  const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+  if (!message) return res.status(400).json({ error: "message is required" });
+  if (message.length > 5000) return res.status(400).json({ error: "message must be 5000 characters or fewer" });
+  if (!checkRateLimit(req.currentUser.id, "official_notice")) {
+    return res.status(429).json({ error: "Too many notices. Try again in a minute." });
+  }
+
+  const [target] = await db
+    .select({ id: usersTable.id, email: usersTable.email })
+    .from(usersTable)
+    .where(and(eq(usersTable.id, id), eq(usersTable.isDeleted, false)));
+  if (!target) return res.status(404).json({ error: "User not found" });
+
+  const { notify } = await import("../features/notifications/notification.service");
+  await notify({ userId: id, actorId: req.currentUser.id, type: "official_notice", message });
+  const email = await sendEmail({
+    to: target.email,
+    subject: "A message from the QuillHive team",
+    text: message,
+  });
+  await auditLog(req.currentUser.id, "official_notice_sent", "user", id, message);
+
+  return res.status(201).json({ success: true, emailQueued: email.ok });
 });
 
 router.patch("/users/:id/role", requireSuperAdmin, async (req: any, res) => {

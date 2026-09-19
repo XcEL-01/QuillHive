@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, CheckCheck, Trash2, AlertCircle, Info, Zap } from 'lucide-react';
+import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, CheckCheck, Trash2, AlertCircle, Info, Zap, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'wouter';
 import { useSocketEvent } from '@/hooks/useSocket';
@@ -90,6 +90,7 @@ export default function Notifications() {
       case 'mention': return <div className={`${cls} bg-amber-500`}><AtSign className="w-3 h-3" /></div>;
       case 'group_invite': return <div className={`${cls} bg-emerald-500`}><Users className="w-3 h-3" /></div>;
       case 'admin_action': return <div className={`${cls} bg-rose-600`}><AlertCircle className="w-3 h-3" /></div>;
+      case 'official_notice': return <div className={`${cls} bg-amber-600`}><ShieldCheck className="w-3 h-3" /></div>;
       case 'system': return <div className={`${cls} bg-violet-500`}><Info className="w-3 h-3" /></div>;
       default: return <div className={`${cls} bg-muted-foreground`}><Zap className="w-3 h-3" /></div>;
     }
@@ -141,7 +142,8 @@ export default function Notifications() {
                 key={notif.id}
                 className={clsx(
                   'flex items-start gap-4 p-5 hover:bg-muted/50 transition-colors group',
-                  !notif.isRead && 'bg-primary/5'
+                  !notif.isRead && 'bg-primary/5',
+                  notif.type === 'official_notice' && 'border-l-4 border-l-amber-500 bg-amber-50/60 dark:bg-amber-950/20'
                 )}
               >
                 <Link
@@ -180,6 +182,7 @@ export default function Notifications() {
                       {notif.message}
                     </p>
                     <div className="flex items-center gap-2 mt-1.5">
+                      {notif.type === 'official_notice' && <Badge className="bg-amber-600 px-2 py-0 text-[10px] text-white hover:bg-amber-600">Official notice</Badge>}
                       <p className="text-xs text-muted-foreground font-medium">
                         {formatDistanceToNow(new Date(notif.createdAt))} ago
                       </p>

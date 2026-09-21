@@ -161,7 +161,8 @@ export default function CreatorDashboard() {
           if (res.status === 403 || res.status === 503) {
             setIncome([]);
           } else if (res.ok) {
-            setIncome(await res.json());
+            const data = await res.json();
+            setIncome(Array.isArray(data?.logs) ? data.logs : []);
           }
         })
         .catch(() => {}),

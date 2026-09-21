@@ -57,6 +57,13 @@
       "when": 1789996800000,
       "tag": "0008_admin_granted_boosts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790073600000,
+      "tag": "0009_reading_time",
+      "breakpoints": true
     }
   ]
 }

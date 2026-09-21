@@ -6,9 +6,28 @@ export function useReadingProgress(postId: number | null, opts?: { enabled?: boo
   const [percent, setPercent] = useState(0);
   const lastSentRef = useRef(0);
   const lastSentAtRef = useRef(0);
+  const startTime = useRef(Date.now());
+  const activeMs = useRef(0);
 
   useEffect(() => {
     if (!enabled || !postId) return;
+
+    startTime.current = Date.now();
+    let lastActive = startTime.current;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        lastActive = Date.now();
+      } else {
+        activeMs.current += Date.now() - lastActive;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    const sendProgress = (percent: number) => {
+      const currentlyActive = document.visibilityState === 'visible' ? Date.now() - lastActive : 0;
+      const elapsed = activeMs.current + currentlyActive;
+      apiRequest('PUT', `/api/reading-progress/${postId}`, { percent, readTimeMs: elapsed }).catch(() => {});
+    };
     let cancelled = false;
     apiRequest('GET', `/api/reading-progress/${postId}`)
       .then((r) => r.json())
@@ -36,7 +55,7 @@ export function useReadingProgress(postId: number | null, opts?: { enabled?: boo
       if (Math.abs(p - lastSentRef.current) >= 5 || now - lastSentAtRef.current > 15_000) {
         lastSentRef.current = p;
         lastSentAtRef.current = now;
-        apiRequest('PUT', `/api/reading-progress/${postId}`, { percent: p }).catch(() => {});
+        sendProgress(p);
       }
     };
 
@@ -53,7 +72,9 @@ export function useReadingProgress(postId: number | null, opts?: { enabled?: boo
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (raf) cancelAnimationFrame(raf);
-      apiRequest('PUT', `/api/reading-progress/${postId}`, { percent: lastSentRef.current }).catch(() => {});
+      if (document.visibilityState === 'visible') activeMs.current += Date.now() - lastActive;
+      document.removeEventListener('visibilitychange', onVisible);
+      sendProgress(lastSentRef.current);
     };
   }, [postId, enabled]);
 

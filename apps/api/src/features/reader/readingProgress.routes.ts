@@ -9,6 +9,7 @@ export const readingProgressRouter: Router = Router();
 
 const upsertSchema = z.object({
   percent: z.number().min(0).max(100),
+  readTimeMs: z.number().int().min(0).optional(),
 });
 
 readingProgressRouter.put("/:postId", async (req, res) => {
@@ -28,10 +29,14 @@ readingProgressRouter.put("/:postId", async (req, res) => {
 
   await db
     .insert(readingProgressTable)
-    .values({ userId, postId, percent: parsed.data.percent })
+    .values({ userId, postId, percent: parsed.data.percent, readTimeMs: parsed.data.readTimeMs ?? 0 })
     .onConflictDoUpdate({
       target: [readingProgressTable.userId, readingProgressTable.postId],
-      set: { percent: parsed.data.percent, lastReadAt: new Date() },
+      set: {
+        percent: parsed.data.percent,
+        ...(parsed.data.readTimeMs !== undefined ? { readTimeMs: parsed.data.readTimeMs } : {}),
+        lastReadAt: new Date(),
+      },
     });
 
   if (parsed.data.percent > 50) {
@@ -82,6 +87,7 @@ readingProgressRouter.get("/", async (req, res) => {
       id: readingProgressTable.id,
       postId: readingProgressTable.postId,
       percent: readingProgressTable.percent,
+      readTimeMs: readingProgressTable.readTimeMs,
       lastReadAt: readingProgressTable.lastReadAt,
       postIdJoin: postsTable.id,
       postTitle: postsTable.title,
@@ -112,6 +118,7 @@ readingProgressRouter.get("/", async (req, res) => {
       id: r.id,
       postId: r.postId,
       percent: r.percent,
+      readTimeMs: r.readTimeMs,
       lastReadAt: r.lastReadAt,
       post: {
         id: r.postIdJoin,

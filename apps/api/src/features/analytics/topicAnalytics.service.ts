@@ -123,7 +123,7 @@ export async function getReadDepthAnalytics(userId: number, limit = 20): Promise
 
   const results = await Promise.all(posts.map(async post => {
     const rows = await db
-      .select({ percent: readingProgressTable.percent })
+      .select({ percent: readingProgressTable.percent, readTimeMs: readingProgressTable.readTimeMs })
       .from(readingProgressTable)
       .where(eq(readingProgressTable.postId, post.id));
 
@@ -132,11 +132,15 @@ export async function getReadDepthAnalytics(userId: number, limit = 20): Promise
     const avgReadDepth = readerCount > 0
       ? Math.round(rows.reduce((acc, r) => acc + r.percent, 0) / readerCount * 10) / 10
       : 0;
+    const avgReadTimeMs = readerCount > 0
+      ? Math.round(rows.reduce((acc, r) => acc + r.readTimeMs, 0) / readerCount)
+      : 0;
 
     return {
       postId: post.id,
       title: post.title,
       avgReadDepth,
+      avgReadTimeMs,
       readerCount,
       fullReadsCount,
       fullReadRate: readerCount > 0 ? Math.round((fullReadsCount / readerCount) * 10000) / 100 : 0,

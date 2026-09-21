@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import type { Request } from "express";
 import { db } from "@workspace/db";
-import { commentsTable, followsTable, likesTable, postViewsTable, postsTable, usersTable } from "@workspace/db/schema";
+import { commentsTable, followsTable, likesTable, postViewsTable, postsTable, readingProgressTable, usersTable } from "@workspace/db/schema";
 import { and, count, eq, gte, inArray, sql, desc } from "drizzle-orm";
 import { emitToPost } from "../../lib/socket";
 
@@ -264,6 +264,13 @@ export async function getPostAnalytics(postId: number, viewerId: number) {
     .where(eq(postViewsTable.postId, postId));
   const [likes] = await db.select({ count: count() }).from(likesTable).where(eq(likesTable.postId, postId));
   const [comments] = await db.select({ count: count() }).from(commentsTable).where(eq(commentsTable.postId, postId));
+  const [reading] = await db
+    .select({
+      readerCount: sql<number>`count(*)::int`,
+      avgReadTimeMs: sql<number>`COALESCE(AVG(${readingProgressTable.readTimeMs}), 0)::float`,
+    })
+    .from(readingProgressTable)
+    .where(eq(readingProgressTable.postId, postId));
   const totalViews = numberValue(views?.count);
   const totalReach = numberValue(views?.reach);
   const totalLikes = numberValue(likes?.count);
@@ -274,6 +281,8 @@ export async function getPostAnalytics(postId: number, viewerId: number) {
     reach: totalReach,
     likes: totalLikes,
     comments: totalComments,
+    readerCount: numberValue(reading?.readerCount),
+    avgReadTimeMs: Math.round(numberValue(reading?.avgReadTimeMs)),
     engagementRate: engagementRate(totalLikes + totalComments, Math.max(totalReach, totalViews)),
   };
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "reading_progress" ADD COLUMN IF NOT EXISTS "read_time_ms" integer NOT NULL DEFAULT 0;

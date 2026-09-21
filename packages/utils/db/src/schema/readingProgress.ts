@@ -11,6 +11,7 @@ export const readingProgressTable = pgTable(
     userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     postId: integer("post_id").notNull().references(() => postsTable.id, { onDelete: "cascade" }),
     percent: real("percent").notNull().default(0),
+    readTimeMs: integer("read_time_ms").notNull().default(0),
     lastReadAt: timestamp("last_read_at").defaultNow().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

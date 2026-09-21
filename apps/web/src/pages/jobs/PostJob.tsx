@@ -314,14 +314,9 @@ export default function PostJob() {
             </div>
           </div>
 
-          {/* Zero-Commission Notice */}
-          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-4 flex items-start gap-3">
-            <Sparkles className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">0% Platform Commission</p>
-              <p className="text-xs text-muted-foreground mt-0.5">QuillHive charges no take-rate on creator earnings. Standard payment processor fees (typically 2.9% + $0.30) may apply depending on your chosen payment method.</p>
-            </div>
-          </div>
+          <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-3">
+            QuillHive helps you discover and connect with opportunities. Any payment arrangement is made directly between you and the other party — QuillHive does not process, hold, or guarantee any payment made outside the platform. Always verify who you're working with before sending money or sensitive information.
+          </p>
 
           {/* Submit */}
           <Button

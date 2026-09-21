@@ -113,7 +113,7 @@ export function SmartProjectDraft({ open, onOpenChange, defaultTitle = '', colla
             <div>
               <DialogTitle className="text-lg font-bold">Smart Project Draft</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                0% platform commission · Simulated escrow structure
+                Simulated escrow structure
               </DialogDescription>
             </div>
           </div>
@@ -276,14 +276,9 @@ export function SmartProjectDraft({ open, onOpenChange, defaultTitle = '', colla
             </div>
           </div>
 
-          {/* 0% Commission Notice */}
-          <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 flex items-start gap-2">
-            <ShieldCheck className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-violet-600 dark:text-violet-400">0% Platform Commission.</span>{' '}
-              QuillHive takes no cut of creator earnings. Payment processor fees (typically 2.9% + $0.30) are the only transaction cost. Funds are distributed directly between parties upon milestone sign-off.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-3">
+            QuillHive helps you discover and connect with opportunities. Any payment arrangement is made directly between you and the other party — QuillHive does not process, hold, or guarantee any payment made outside the platform. Always verify who you're working with before sending money or sensitive information.
+          </p>
 
           {/* Actions */}
           <div className="flex gap-2 pt-1">

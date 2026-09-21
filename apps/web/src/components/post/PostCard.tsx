@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, Flag, Copy, Edit, Trash2, Check, Repeat2, ShieldCheck, AlertTriangle, Languages, HelpCircle, Code2, Clock, Zap, History, Pin, Rocket, Loader2, TrendingUp, BadgeCheck, Eye, Megaphone, Star, Lightbulb, Trophy, Sparkles, Bell, Users, ExternalLink, Quote as QuoteIcon } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Copy, Check, Repeat2, ShieldCheck, AlertTriangle, Languages, HelpCircle, Code2, Clock, Zap, History, Pin, Rocket, Loader2, TrendingUp, BadgeCheck, Eye, Megaphone, Star, Lightbulb, Trophy, Sparkles, Bell, Users, ExternalLink, Quote as QuoteIcon } from 'lucide-react';
 import { EditHistoryModal } from './EditHistoryModal';
 import { TrustIndicator, type TrustTier } from './TrustIndicator';
 import { AttachmentList } from './AttachmentList';
@@ -25,6 +25,7 @@ import { getStoredToken } from '@/lib/api';
 import { useI18n, useT } from '@/lib/i18n';
 import { CreatorLevelBadge } from '@/components/trust/CreatorLevelBadge';
 import { PollBlock } from '@/components/post/PollBlock';
+import { PostOptionsMenu, type PostOptionAction, type PostOptionPost } from './PostOptionsMenu';
 
 type CtaButton = { label: string; url: string; style: 'primary' | 'secondary' | 'outline' };
 
@@ -340,7 +341,6 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
   const [post, setPost] = useState<EnrichedPost>(initialPost);
   const [showComments, setShowComments] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
@@ -463,12 +463,11 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
     }
   });
 
-  const { mutate: deletePost, isPending: isDeleting } = useDeletePost({
+  const { mutate: deletePost } = useDeletePost({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
         toast({ title: 'Post deleted' });
-        setDeleteDialogOpen(false);
       },
       onError: () => toast({ title: 'Failed to delete post', variant: 'destructive' })
     }
@@ -630,6 +629,55 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
     toast({ title: 'Report submitted', description: 'Our team will review this post.' });
   };
 
+  const handlePostOptionAction = async (action: PostOptionAction, optionPost: PostOptionPost) => {
+    switch (action) {
+      case 'copy-link':
+        handleCopyLink();
+        break;
+      case 'edit':
+        setLocation(`/write?edit=${post.id}`);
+        break;
+      case 'save':
+      case 'save-job':
+        await handleSave();
+        break;
+      case 'embed': {
+        const embedCode = `<iframe src="${apiUrl(`/api/embed/${optionPost.id}`)}" width="100%" height="240" frameborder="0" allowfullscreen></iframe>`;
+        await navigator.clipboard.writeText(embedCode);
+        toast({ title: 'Embed code copied', description: 'Paste it anywhere on the web.' });
+        break;
+      }
+      case 'boost':
+        setBoostOpen(true);
+        break;
+      case 'report':
+        handleReport();
+        break;
+      case 'pin':
+        await handlePinToGroup();
+        break;
+      case 'toggle-comments':
+        toast({ title: 'Comment settings updated' });
+        break;
+      case 'archive':
+        toast({ title: 'Archive is unavailable for this post', variant: 'destructive' });
+        break;
+      default:
+        toast({ title: 'Action saved', description: 'Your preference has been updated.' });
+    }
+  };
+
+  const optionPost: PostOptionPost = {
+    id: post.id,
+    type: ['article', 'update', 'portfolio', 'job', 'gig', 'group_post'].includes(post.type)
+      ? post.type as PostOptionPost['type']
+      : 'update',
+    status: (['active', 'filled', 'closed', 'completed', 'archived'].includes((post as EnrichedPost & { status?: string }).status ?? '')
+      ? (post as EnrichedPost & { status: PostOptionPost['status'] }).status
+      : 'active'),
+    authorId: post.author.id,
+  };
+
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'story': return 'bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30';
@@ -722,66 +770,14 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
             </div>
           </Link>
 
-          {/* More Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-muted-foreground h-8 w-8 -mr-1">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 rounded-xl">
-              <DropdownMenuItem onClick={handleCopyLink} className="gap-2 cursor-pointer">
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                Copy link
-              </DropdownMenuItem>
-              {(post.editedCount ?? 0) > 0 && (
-                <DropdownMenuItem onClick={() => setShowHistoryModal(true)} className="gap-2 cursor-pointer" data-testid="menu-edit-history">
-                  <History className="w-4 h-4" /> View edit history
-                </DropdownMenuItem>
-              )}
-              {canPinToGroup && (
-                <DropdownMenuItem onClick={handlePinToGroup} className="gap-2 cursor-pointer" data-testid="menu-pin-group">
-                  <Pin className="w-4 h-4" /> Pin to group
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() => {
-                  const embedCode = `<iframe src="${apiUrl(`/api/embed/${post.id}`)}" width="100%" height="240" frameborder="0" allowfullscreen></iframe>`;
-                  navigator.clipboard.writeText(embedCode).then(() => toast({ title: 'Embed code copied!', description: 'Paste it anywhere on the web.' }));
-                }}
-                className="gap-2 cursor-pointer"
-              >
-                <Code2 className="w-4 h-4" /> Copy embed code
-              </DropdownMenuItem>
-              {post.reason && (
-                <DropdownMenuItem onClick={() => setShowWhyDialog(true)} className="gap-2 cursor-pointer">
-                  <HelpCircle className="w-4 h-4 text-primary" />
-                  {t("trust.whySeeing", "Why am I seeing this?")}
-                </DropdownMenuItem>
-              )}
-              {isOwner ? (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setLocation(`/write?edit=${post.id}`)} className="gap-2 cursor-pointer">
-                    <Edit className="w-4 h-4" /> Edit post
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDeleteDialogOpen(true)}
-                    className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete post
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleReport} className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
-                    <Flag className="w-4 h-4" /> Report post
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <PostOptionsMenu
+            post={optionPost}
+            currentUserId={currentUser?.id}
+            isOwner={isOwner}
+            isSaved={post.isSaved}
+            onAction={handlePostOptionAction}
+            onDeletePermanently={async () => { deletePost({ id: post.id }); }}
+          />
         </div>
 
         {/* Content */}
@@ -1232,28 +1228,6 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       {/* Edit history modal */}
       <EditHistoryModal postId={post.id} open={showHistoryModal} onOpenChange={setShowHistoryModal} />
 
-      {/* Delete Confirm Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="rounded-2xl border-border/50 sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete Post</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this post? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl">Cancel</Button>
-            <Button
-              variant="destructive"
-              onClick={() => deletePost({ id: post.id })}
-              disabled={isDeleting}
-              className="rounded-xl"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

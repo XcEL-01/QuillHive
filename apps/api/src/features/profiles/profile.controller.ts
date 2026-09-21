@@ -562,7 +562,7 @@ export const getUserByUsername = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   const { username } = req.params;
 
-  const [profileUser] = await (db as any).select().from(usersTable).where(eq(usersTable.username, username as string));
+  const [profileUser] = await (db as any).select().from(usersTable).where(ilike(usersTable.username, username as string));
   if (!profileUser) return res.status(404).json({ error: "User not found" });
 
   // Non-blocking profile view tracking (never fails the request)

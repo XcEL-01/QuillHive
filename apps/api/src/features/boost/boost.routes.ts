@@ -49,12 +49,12 @@ interface AuthedReq extends Request {
 
 export const boostRouter: Router = Router();
 
-const BOOST_PLANS = {
+export const BOOST_PLANS = {
   starter:   { label: "Starter Boost",  durationHours: 48,  amountUsd: 5,  reachMultiplier: 3.5, placementPriority: 10 },
   growth:    { label: "Growth Boost",   durationHours: 168, amountUsd: 15, reachMultiplier: 3.5, placementPriority: 20 },
   spotlight: { label: "Spotlight",      durationHours: 360, amountUsd: 30, reachMultiplier: 3.5, placementPriority: 30 },
 } as const;
-type PlanKey = keyof typeof BOOST_PLANS;
+export type PlanKey = keyof typeof BOOST_PLANS;
 
 async function invalidateRankingCaches(): Promise<void> {
   await Promise.all([

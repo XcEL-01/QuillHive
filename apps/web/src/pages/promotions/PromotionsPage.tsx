@@ -19,6 +19,7 @@ interface CampaignRow {
   boostEndsAt: string | null;
   createdAt: string;
   paidAmountCents?: number;
+  grantedByAdminId?: number | null;
   adminNote?: string | null;
 }
 
@@ -428,6 +429,7 @@ function CampaignCard({
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${planClass}`}>
             {PLAN_LABELS[campaign.plan] ?? campaign.plan}
           </span>
+          {campaign.grantedByAdminId ? <span className="flex items-center gap-1 rounded-full bg-cyan-500/15 px-2 py-0.5 text-xs font-medium text-cyan-300"><Zap className="h-3 w-3" /> Admin boosted</span> : null}
           <StatusBadge status={campaign.status} endsAt={campaign.boostEndsAt} />
         </div>
         <p className="text-white font-medium text-sm line-clamp-1 mt-1">
@@ -442,7 +444,7 @@ function CampaignCard({
               {active ? "Ends" : "Ended"} {new Date(campaign.boostEndsAt).toLocaleDateString()}
             </span>
           )}
-          <span className="text-xs text-amber-400 font-medium">{spent}</span>
+          <span className={`text-xs font-medium ${campaign.grantedByAdminId ? "text-cyan-300" : "text-amber-400"}`}>{campaign.grantedByAdminId ? "Free" : spent}</span>
         </div>
       </div>
 

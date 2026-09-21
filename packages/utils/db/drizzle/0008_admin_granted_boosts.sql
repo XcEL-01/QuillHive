@@ -1,0 +1,1 @@
+ALTER TABLE "boost_requests" ADD COLUMN IF NOT EXISTS "granted_by_admin_id" integer REFERENCES "users"("id");

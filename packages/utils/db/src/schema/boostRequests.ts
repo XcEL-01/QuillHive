@@ -13,6 +13,7 @@ export const boostRequestsTable = pgTable("boost_requests", {
   targeting: jsonb("targeting").$type<Record<string, unknown> | null>(),
   status: text("status").notNull().default("pending"),
   adminNote: text("admin_note"),
+  grantedByAdminId: integer("granted_by_admin_id").references(() => usersTable.id),
   reviewedBy: integer("reviewed_by").references(() => usersTable.id),
   reviewedAt: timestamp("reviewed_at"),
   boostStartsAt: timestamp("boost_starts_at"),

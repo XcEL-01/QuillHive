@@ -10,6 +10,10 @@ import { eq, desc, and, count, ne, lt, sql, inArray, or, gt, gte } from "drizzle
 import { requireAdmin, requireSuperAdmin, requirePermission } from "../middleware/admin";
 import { getAllFeatureFlags, FEATURE_FLAG_KEYS, reloadFeatureFlags, type FeatureFlagKey } from "../lib/featureFlags";
 import { sendEmail } from "../features/email/email.service";
+import { notify } from "../features/notifications/notification.service";
+import { BOOST_PLANS, type PlanKey } from "../features/boost/boost.routes";
+import { deleteCachePattern } from "../lib/cache";
+import { memDeletePattern } from "../lib/memCache";
 
 const router = Router();
 router.use(requireAdmin);
@@ -155,6 +159,61 @@ router.get("/posts", async (req, res) => {
     .limit(limit).offset((page - 1) * limit);
   const [total] = await db.select({ count: count() }).from(postsTable).where(eq(postsTable.isDeleted, false));
   return res.json({ posts, total: total?.count ?? 0, page, limit });
+});
+
+router.post("/posts/:id/grant-boost", requirePermission("manage_boosts"), async (req: any, res) => {
+  const postId = parseInt(req.params.id, 10);
+  const plan = req.body?.plan as PlanKey | undefined;
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (!Number.isInteger(postId) || postId <= 0) return res.status(400).json({ error: "Invalid post id" });
+  if (!plan || !(plan in BOOST_PLANS)) return res.status(400).json({ error: "plan must be starter, growth, or spotlight" });
+  if (reason.length > 1_000) return res.status(400).json({ error: "reason must be 1000 characters or fewer" });
+
+  const [post] = await db
+    .select({ id: postsTable.id, title: postsTable.title, authorId: postsTable.authorId, authorDisplayName: usersTable.displayName })
+    .from(postsTable)
+    .leftJoin(usersTable, eq(usersTable.id, postsTable.authorId))
+    .where(and(eq(postsTable.id, postId), eq(postsTable.isDeleted, false)));
+  if (!post) return res.status(404).json({ error: "Post not found" });
+
+  const planInfo = BOOST_PLANS[plan];
+  const now = new Date();
+  const boostEndsAt = new Date(now.getTime() + planInfo.durationHours * 3_600_000);
+  const [boost] = await db.insert(boostRequestsTable).values({
+    userId: post.authorId,
+    postId: post.id,
+    plan,
+    durationHours: planInfo.durationHours,
+    reachMultiplier: planInfo.reachMultiplier,
+    placementPriority: planInfo.placementPriority,
+    status: "approved",
+    paidAmountCents: 0,
+    flwTxRef: null,
+    grantedByAdminId: req.currentUser.id,
+    reviewedBy: req.currentUser.id,
+    reviewedAt: now,
+    boostStartsAt: now,
+    boostEndsAt,
+    adminNote: reason || "Editorial boost",
+  }).returning();
+
+  await Promise.all([
+    deleteCachePattern("feed:*") ,
+    deleteCachePattern("trending:*") ,
+  ]);
+  memDeletePattern("trending:");
+  await notify({
+    userId: post.authorId,
+    actorId: req.currentUser.id,
+    type: "milestone",
+    title: "QuillHive boosted your post 🚀",
+    message: `Your post '${post.title ?? "Untitled"}' was selected for a free boost by the QuillHive team. Enjoy the extra reach!`,
+    url: "/promotions",
+    postId: post.id,
+  });
+  await auditLog(req.currentUser.id, "post_boost_granted", "post", post.id, `${plan}: ${reason || "Editorial boost"}`);
+
+  return res.status(201).json({ ok: true, boost, boostEndsAt });
 });
 
 router.delete("/posts/:id", async (req: any, res) => {

@@ -138,10 +138,10 @@ function landingPageHtml() {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>QuillHive - Your Voice. Your Hive.</title>
-<meta name="description" content="Your quill is your voice. Your hive is where it grows. QuillHive - grow, get discovered, and find real opportunities. For everyone." />
-<meta property="og:title" content="QuillHive - Your Voice. Your Hive." />
-<meta property="og:description" content="Your quill is your voice. Your hive is where it grows. For everyone with something to share." />
+<title>QuillHive — Where Work Speaks</title>
+<meta name="description" content="Proof over profile. QuillHive ranks creators by Trust Score, not follower count — built from streaks, real read time, and completed work. For talented people who are still invisible everywhere else." />
+<meta property="og:title" content="QuillHive — Where Work Speaks" />
+<meta property="og:description" content="Not famous. Trusted." />
 <meta property="og:image" content="${APP_URL}/opengraph.jpg" />
 <meta property="og:url" content="${APP_URL}" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -157,11 +157,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn:hover{opacity:.85}
 .btn-ghost{color:var(--muted);background:transparent}
 .btn-primary{background:var(--primary);color:#fff}
-.hero{max-width:860px;margin:0 auto;padding:6rem 2rem 4rem;text-align:center}
+.hero{max-width:860px;margin:0 auto;padding:6rem 2rem 4rem;text-align:center;background:linear-gradient(135deg, #0a0a1f 0%, #1e1040 50%, #2d1b4e 100%)}
 .badge{display:inline-block;padding:.25rem .875rem;border-radius:9999px;font-size:.75rem;font-weight:600;border:1px solid var(--primary);color:var(--primary-light);margin-bottom:2rem;letter-spacing:.04em;text-transform:uppercase}
 h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:1.5rem}
 h1 span{color:var(--primary-light)}
-.subtitle{font-size:1.125rem;color:var(--muted);max-width:540px;margin:0 auto 2.5rem;line-height:1.7}
+.hero-sub{font-size:1.125rem;color:var(--muted);max-width:650px;margin:0 auto 1.25rem;line-height:1.7}
+.hero-tagline{font-size:1rem;font-style:italic;color:#a78bfa;max-width:600px;margin:0 auto 2.5rem;line-height:1.7}
 .hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
 .btn-lg{padding:.875rem 2rem;font-size:1rem;border-radius:14px}
 .features{max-width:1000px;margin:5rem auto;padding:0 2rem}
@@ -192,24 +193,20 @@ footer{border-top:1px solid var(--border);padding:2rem;text-align:center}
 </nav>
 <section class="hero">
   <div class="badge">Now in early access</div>
-  <p style="font-size:1.125rem;font-style:italic;color:#a78bfa;margin-bottom:1.5rem;letter-spacing:-0.01em;">"Your quill is your voice. Your hive is where it grows."</p>
-  <h1>Grow, get <span>discovered</span>, and find real opportunities</h1>
-  <p class="subtitle">QuillHive is where everyone with something to share builds a presence, gets discovered, and finds real opportunities. Your work deserves an audience.</p>
+  <h1>Where work speaks.</h1>
+  <p class="hero-sub">Followers can be bought. A streak can't. QuillHive ranks you by what you actually show up and do — not who you know, not who you paid. For the writer, designer, and developer who's talented and still invisible everywhere else.</p>
+  <p class="hero-tagline">"Your quill is your voice. Your hive is where it grows." — free to join, always.</p>
   <div class="hero-actions">
-    <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Join QuillHive - it's free</a>
-    <a href="${APP_URL}/explore" class="btn btn-ghost btn-lg">Explore →</a>
+    <a href="${APP_URL}/register" class="btn btn-primary btn-lg">Start building proof — join free</a>
+    <a href="${APP_URL}/explore" class="btn btn-ghost btn-lg">See who's rising →</a>
   </div>
-  <p style="color:#737373;font-size:0.875rem;margin-top:0.75rem;">For everyone with something to share.</p>
 </section>
 <section class="features">
   <p class="features-label">What makes QuillHive different</p>
   <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon">🏆</div><div class="feature-title">Build Your Reputation</div><div class="feature-desc">Your Trust Score grows from consistent, genuine contributions - not just follower counts. Show the world you're serious.</div></div>
-    <div class="feature-card"><div class="feature-icon">🔍</div><div class="feature-title">Get Discovered</div><div class="feature-desc">Our discovery engine puts your work in front of the right people - readers, collaborators, clients, and employers looking for exactly what you do.</div></div>
-    <div class="feature-card"><div class="feature-icon">💼</div><div class="feature-title">Find Opportunities</div><div class="feature-desc">A built-in Workspace connects you to freelance gigs, collaborations, and career opportunities matched to your skills and reputation.</div></div>
-    <div class="feature-card"><div class="feature-icon">✨</div><div class="feature-title">Share Anything</div><div class="feature-desc">Posts, short Sparks, polls, or collaborative Chains - pick the format that fits what you want to say.</div></div>
-    <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Your Growth, Tracked</div><div class="feature-desc">Streaks, creator levels, analytics, and weekly reports show you exactly how your presence is growing.</div></div>
-    <div class="feature-card"><div class="feature-icon">🤝</div><div class="feature-title">Real Community</div><div class="feature-desc">Groups, direct messages, collaboration requests, and challenges connect you to people who share your interests.</div></div>
+    <div class="feature-card"><div class="feature-icon">🏆</div><div class="feature-title">You can't fake a Trust Score</div><div class="feature-desc">We don't rank you by likes or connections. Your score is built from your writing streak, how consistently you show up, and how many Workspace jobs you've actually finished. It's not a popularity contest. It's a track record.</div></div>
+    <div class="feature-card"><div class="feature-icon">🔍</div><div class="feature-title">We show what actually happened</div><div class="feature-desc">Instead of a like count, we show completion — how many people actually finished reading, not how many double-tapped. Serious readers and serious clients don't care about likes. Neither do we.</div></div>
+    <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Fair discovery, on purpose</div><div class="feature-desc">Our feed doesn't just push whoever already has the biggest following. We deliberately surface high-trust, low-follower creators doing real work. QuillHive is built to find you before you blow up — not after.</div></div>
   </div>
 </section>
 <section class="cta-section">

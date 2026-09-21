@@ -300,7 +300,7 @@ export default function Onboarding() {
               <div>
                 <h1 className="text-4xl font-serif font-bold text-foreground mb-3">Welcome to QuillHive</h1>
                   <p className="text-foreground/80 text-lg font-medium leading-snug">
-                  Build the kind of creative track record that gets you discovered, trusted, and hired.
+                  Welcome to QuillHive. Your Trust Score starts at zero — build it with real work, not followers.
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-3 text-left">

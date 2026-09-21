@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useGetPosts } from '@workspace/api-client-react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 import { PostCard } from '@/components/post/PostCard';
 import { SparkComposer } from '@/components/post/SparkComposer';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -346,6 +347,35 @@ function DailySparkPrompt({ userId }: { userId: number }) {
 }
 
 export default function Home() {
+  const { user } = useAuthStore();
+
+  if (!user) {
+    return (
+      <PublicLayout>
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+          <h1 className="text-4xl font-serif font-bold mb-4">
+            Where everyone grows, gets discovered, and finds real opportunities.
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            &quot;Your quill is your voice. Your hive is where it grows.&quot;
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Link href="/login" className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold">
+              Sign in
+            </Link>
+            <Link href="/login?mode=register" className="px-6 py-3 rounded-full border border-border font-semibold">
+              Join free
+            </Link>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  return <AuthenticatedHome />;
+}
+
+function AuthenticatedHome() {
   const t = useT();
   const { token, user } = useAuthStore();
   const initialSource: FeedSource = (() => {

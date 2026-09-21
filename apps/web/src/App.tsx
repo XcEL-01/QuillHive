@@ -151,7 +151,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      if (location !== "/login" && location !== "/explore" && !isPublicRoute(location)) {
+      if (location !== "/" && location !== "/login" && location !== "/explore" && !isPublicRoute(location)) {
         setLocation("/login");
       }
     }

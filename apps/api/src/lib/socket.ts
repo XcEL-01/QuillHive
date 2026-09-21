@@ -3,10 +3,39 @@ import { Server as SocketServer } from "socket.io";
 import { logger } from "./logger";
 import { getSessionUserId, isTokenBlacklisted } from "./auth";
 import { db } from "@workspace/db";
-import { usersTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { conversationsTable, conversationParticipantsTable, postsTable, supportTicketsTable, usersTable } from "@workspace/db/schema";
+import { and, eq } from "drizzle-orm";
 
 let io: SocketServer | null = null;
+
+async function isConversationParticipant(conversationId: number, userId: number): Promise<boolean> {
+  const [participant] = await db
+    .select({ id: conversationParticipantsTable.id })
+    .from(conversationParticipantsTable)
+    .where(and(eq(conversationParticipantsTable.conversationId, conversationId), eq(conversationParticipantsTable.userId, userId)))
+    .limit(1);
+  return Boolean(participant);
+}
+
+async function canJoinSupportTicket(ticketId: number, userId: number): Promise<boolean> {
+  const [ticket] = await db
+    .select({ ownerId: supportTicketsTable.userId })
+    .from(supportTicketsTable)
+    .where(eq(supportTicketsTable.id, ticketId))
+    .limit(1);
+  if (ticket?.ownerId === userId) return true;
+  const [user] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  return user?.role === "admin" || user?.role === "super_admin";
+}
+
+async function canJoinPost(postId: number): Promise<boolean> {
+  const [post] = await db
+    .select({ id: postsTable.id })
+    .from(postsTable)
+    .where(and(eq(postsTable.id, postId), eq(postsTable.isDeleted, false)))
+    .limit(1);
+  return Boolean(post);
+}
 
 export function setupSocket(httpServer: HttpServer): SocketServer {
   const appUrl = process.env.APP_URL ?? "";
@@ -58,27 +87,33 @@ export function setupSocket(httpServer: HttpServer): SocketServer {
       logger.info({ socketId: socket.id, userId }, "User joined their room");
     });
 
-    socket.on("join:conversation", (conversationId: number) => {
+    socket.on("join:conversation", async (conversationId: number) => {
+      if (!Number.isInteger(conversationId) || !(await isConversationParticipant(conversationId, socket.data.userId))) return;
       socket.join(`conversation:${conversationId}`);
     });
 
-    socket.on("message:send", (data: { conversationId: number; message: any }) => {
+    socket.on("message:send", async (data: { conversationId: number; message: any }) => {
+      if (!Number.isInteger(data?.conversationId) || !(await isConversationParticipant(data.conversationId, socket.data.userId))) return;
       io?.to(`conversation:${data.conversationId}`).emit("message:receive", data.message);
     });
 
-    socket.on("typing:start", (data: { conversationId: number; userId: number }) => {
+    socket.on("typing:start", async (data: { conversationId: number; userId: number }) => {
+      if (!Number.isInteger(data?.conversationId) || !(await isConversationParticipant(data.conversationId, socket.data.userId))) return;
       socket.to(`conversation:${data.conversationId}`).emit("typing:start", data);
     });
 
-    socket.on("typing:stop", (data: { conversationId: number; userId: number }) => {
+    socket.on("typing:stop", async (data: { conversationId: number; userId: number }) => {
+      if (!Number.isInteger(data?.conversationId) || !(await isConversationParticipant(data.conversationId, socket.data.userId))) return;
       socket.to(`conversation:${data.conversationId}`).emit("typing:stop", data);
     });
 
-    socket.on("join:support", (ticketId: number) => {
+    socket.on("join:support", async (ticketId: number) => {
+      if (!Number.isInteger(ticketId) || !(await canJoinSupportTicket(ticketId, socket.data.userId))) return;
       socket.join(`support:${ticketId}`);
     });
 
     socket.on("join:post", async (postId: number) => {
+      if (!Number.isInteger(postId) || !(await canJoinPost(postId))) return;
       socket.join(`post:${postId}`);
       // Count simultaneous readers in this post room
       try {

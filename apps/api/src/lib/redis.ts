@@ -3,6 +3,7 @@ import { logger } from "./logger";
 
 export type CompatRedis = {
   get(key: string): Promise<string | null>;
+  incr(key: string): Promise<number>;
   set(key: string, value: string, opts?: { ex?: number }): Promise<unknown>;
   setex(key: string, seconds: number, value: string): Promise<unknown>;
   del(...keys: string[]): Promise<unknown>;
@@ -26,6 +27,7 @@ function createClient(): CompatRedis | null {
     logger.info("Redis (Upstash REST) client initialised");
     return {
       get: (key) => upstash.get<string>(key),
+      incr: (key) => upstash.incr(key),
       set: (key, value, opts) =>
         opts?.ex
           ? upstash.set(key, value, { ex: opts.ex })

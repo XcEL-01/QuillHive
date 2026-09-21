@@ -4,8 +4,53 @@ import { db } from "@workspace/db";
 import { translationCacheTable } from "@workspace/db/schema";
 import { and, eq } from "drizzle-orm";
 import { createHash } from "crypto";
+import { getRedis } from "../lib/redis";
 
 const router = Router();
+const AI_DAILY_LIMIT = Number.parseInt(process.env.AI_DAILY_LIMIT ?? "50", 10);
+const memoryDailyCounts = new Map<string, { count: number; resetAt: number }>();
+
+async function aiDailyRateLimit(req: any, res: any, next: any) {
+  const viewerId = getViewerId(req);
+  const identity = viewerId ? `user:${viewerId}` : `ip:${req.ip ?? "unknown"}`;
+  const now = Date.now();
+  const resetAt = new Date();
+  resetAt.setUTCHours(24, 0, 0, 0);
+  const secondsUntilReset = Math.max(1, Math.ceil((resetAt.getTime() - now) / 1000));
+  const day = new Date(now).toISOString().slice(0, 10);
+  const key = `ai:daily:${day}:${identity}`;
+  const limit = Number.isFinite(AI_DAILY_LIMIT) && AI_DAILY_LIMIT > 0 ? AI_DAILY_LIMIT : 50;
+  let count: number;
+
+  try {
+    const redis = getRedis();
+    if (redis) {
+      count = await redis.incr(key);
+      if (count === 1) await redis.set(key, String(count), { ex: secondsUntilReset });
+    } else {
+      throw new Error("Redis unavailable");
+    }
+  } catch {
+    const bucket = memoryDailyCounts.get(identity);
+    if (!bucket || now >= bucket.resetAt) {
+      memoryDailyCounts.set(identity, { count: 1, resetAt: resetAt.getTime() });
+      count = 1;
+    } else {
+      bucket.count += 1;
+      count = bucket.count;
+    }
+  }
+
+  res.setHeader("X-RateLimit-Limit", String(limit));
+  res.setHeader("X-RateLimit-Remaining", String(Math.max(0, limit - count)));
+  if (count > limit) {
+    res.setHeader("Retry-After", String(secondsUntilReset));
+    return res.status(429).json({ error: "Daily AI limit reached. Please try again tomorrow.", retryAfter: secondsUntilReset });
+  }
+  return next();
+}
+
+router.use(aiDailyRateLimit);
 
 function getViewerId(req: any): number | null {
   const auth = req.headers.authorization;

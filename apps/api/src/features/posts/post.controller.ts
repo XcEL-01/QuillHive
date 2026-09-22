@@ -446,8 +446,10 @@ export const getFeed = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
   const offset = (page - 1) * limit;
+  const since = typeof req.query.since === "string" ? new Date(req.query.since) : null;
+  const hasSince = since && !Number.isNaN(since.getTime());
 
-  const cacheKey = `feed:${viewerId ?? "anon"}:${type}:${page}:${limit}`;
+  const cacheKey = `feed:${viewerId ?? "anon"}:${type}:${page}:${limit}:${hasSince ? since.toISOString() : "all"}`;
   const cached = await getCache<object>(cacheKey);
   if (cached) return res.json(cached);
 
@@ -458,6 +460,7 @@ export const getFeed = async (req: Request, res: Response) => {
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
       or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      ...(hasSince ? [gt(postsTable.createdAt, since)] : []),
     ))
     .orderBy(desc(postsTable.createdAt))
     .limit(type === "chronological" ? limit : Math.max(limit * 10, 200))

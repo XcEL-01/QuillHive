@@ -17,6 +17,7 @@ const feedQuerySchema = z.object({
   type: z.enum(["algorithmic", "chronological"]).optional(),
   page: z.coerce.number().int().positive().max(10_000).optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
+  since: z.string().datetime().optional(),
 });
 const trendingQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(50).optional(),

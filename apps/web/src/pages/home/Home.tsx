@@ -14,7 +14,7 @@ import { PenTool, UserPlus, BookOpen, Check, TrendingUp, Rocket, Sparkles } from
 import { Link, useLocation } from 'wouter';
 import { useAuthStore } from '@/store/auth';
 import { useSocketConnection } from '@/hooks/useSocket';
-import { getStoredToken } from '@/lib/api';
+import { apiUrl, getStoredToken } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useT } from '@/lib/i18n';
 import { StreakChip } from '@/components/profile/StreakWidget';
@@ -392,10 +392,12 @@ function AuthenticatedHome() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState(false);
   const [activeStoryGroup, setActiveStoryGroup] = useState<any>(null);
+  const [latestSeenTimestamp, setLatestSeenTimestamp] = useState<string | null>(null);
+  const [newPostsAvailable, setNewPostsAvailable] = useState(0);
 
   useSocketConnection();
 
-  const { data, isLoading, isError: error } = useGetPosts({
+  const { data, isLoading, isError: error, refetch } = useGetPosts({
     feed: feedSource === 'following' ? 'following' : undefined,
     limit: 20,
   });
@@ -426,17 +428,56 @@ function AuthenticatedHome() {
     if (feedSource === 'explore') fetchAlgorithmicFeed('algorithmic');
   }, [feedSource, token]);
 
-  const handleSourceChange = (val: FeedSource) => {
-    setFeedSource(val);
-    setFeedPosts(null);
-    setFeedError(false);
-  };
-
   const apiPosts = Array.isArray(data?.posts) ? data.posts : [];
   const displayPosts =
     feedSource === 'explore' ? (feedPosts ?? apiPosts) : apiPosts;
   const isDisplayLoading =
     feedSource === 'explore' ? (feedLoading || (feedPosts === null && isLoading)) : isLoading;
+
+  useEffect(() => {
+    if (isDisplayLoading || latestSeenTimestamp) return;
+    const newestPost = displayPosts.reduce<import('@workspace/api-client-react').Post | null>(
+      (newest, post) => !newest || new Date(post.createdAt).getTime() > new Date(newest.createdAt).getTime() ? post : newest,
+      null,
+    );
+    setLatestSeenTimestamp(newestPost?.createdAt ?? new Date().toISOString());
+  }, [displayPosts, isDisplayLoading, latestSeenTimestamp]);
+
+  useEffect(() => {
+    if (!latestSeenTimestamp) return;
+    const pollForNewPosts = async () => {
+      try {
+        const res = await fetch(apiUrl(`/api/feed?since=${encodeURIComponent(latestSeenTimestamp)}&limit=100`), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json() as { posts?: unknown };
+        setNewPostsAvailable(Array.isArray(data.posts) ? data.posts.length : 0);
+      } catch {
+        // Polling is non-critical and should not interrupt the feed.
+      }
+    };
+    const interval = window.setInterval(() => void pollForNewPosts(), 30_000);
+    return () => window.clearInterval(interval);
+  }, [latestSeenTimestamp, token]);
+
+  const handleSourceChange = (val: FeedSource) => {
+    setFeedSource(val);
+    setFeedPosts(null);
+    setFeedError(false);
+    setLatestSeenTimestamp(null);
+    setNewPostsAvailable(0);
+  };
+
+  const handleRefreshFeed = async () => {
+    setNewPostsAvailable(0);
+    if (feedSource === 'explore') {
+      await fetchAlgorithmicFeed(feedAlgorithm);
+    } else {
+      await refetch();
+    }
+    setLatestSeenTimestamp(null);
+  };
 
   return (
     <>
@@ -487,6 +528,16 @@ function AuthenticatedHome() {
         </motion.div>
 
         <div className="space-y-6">
+          {newPostsAvailable > 0 && (
+            <button
+              type="button"
+              onClick={() => void handleRefreshFeed()}
+              className="sticky top-16 z-10 mx-auto block rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg"
+            >
+              {newPostsAvailable} new post{newPostsAvailable > 1 ? 's' : ''} — tap to view
+            </button>
+          )}
+
           {isDisplayLoading && (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="bg-card border border-border/50 rounded-2xl p-5 space-y-4">

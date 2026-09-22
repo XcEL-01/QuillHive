@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'wouter';
 import { getStoredToken } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { formatAccountAge } from '@/lib/accountAge';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -363,8 +364,11 @@ export default function Jobs() {
                         )}
                       </div>
                       <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{job.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Posted by <Link href={`/profile/${job.author.username}`} className="text-foreground hover:underline font-medium">{job.author.displayName}</Link>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Posted by <Link href={`/profile/${job.author.username}`} className="text-foreground hover:underline font-medium">{job.author.displayName}</Link> · Member since {formatAccountAge(job.author.createdAt)} · Trust: {j.author.trustTier ?? 'new'}
+                        {j.author.trustTier === 'new' && (
+                          <span className="ml-2 font-medium text-amber-500">· New account — verify before paying anything</span>
+                        )}
                       </p>
                     </div>
                     <span className="text-xs font-medium text-muted-foreground flex items-center gap-1 shrink-0 bg-muted px-2.5 py-1 rounded-md">

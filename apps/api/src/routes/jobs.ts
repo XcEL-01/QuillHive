@@ -108,10 +108,17 @@ function getViewerId(req: any): number | null {
 
 async function enrichJob(job: any, viewerId: number | null) {
   const author = await getUserWithCounts(job.authorId, viewerId);
+  const [trust] = await db
+    .select({ tier: userTrustScoresTable.tier, uti: userTrustScoresTable.uti })
+    .from(userTrustScoresTable)
+    .where(eq(userTrustScoresTable.userId, job.authorId))
+    .limit(1);
+  const joinedAt = author?.createdAt ? new Date(author.createdAt).getTime() : 0;
+  const isNewAccount = joinedAt > 0 && Date.now() - joinedAt < 14 * 24 * 60 * 60 * 1000 && (trust?.uti ?? 50) <= 50;
   return {
     ...job,
     skills: JSON.parse(job.skills || "[]"),
-    author,
+    author: author ? { ...author, trustTier: isNewAccount ? "new" : (trust?.tier ?? "new"), trustScore: trust?.uti ?? 50 } : author,
   };
 }
 
@@ -254,6 +261,7 @@ router.get("/my-matches", async (req, res) => {
   const now = new Date();
   const jobs = await db.select().from(jobsTable)
     .where(and(eq(jobsTable.isActive, true), eq(jobsTable.isApproved, true),
+      eq(jobsTable.moderationStatus, "published"),
       or(isNull(jobsTable.expiresAt), gt(jobsTable.expiresAt, now))))
     .orderBy(desc(jobsTable.createdAt))
     .limit(50);

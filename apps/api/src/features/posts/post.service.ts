@@ -8,6 +8,7 @@ import {
   topicsTable,
   postTopicsTable,
   safetyPreferencesTable,
+  mutedUsersTable,
   usersTable,
   boostRequestsTable,
   userTrustScoresTable,
@@ -30,6 +31,15 @@ async function getBlockedUserIds(viewerId: number | null): Promise<number[]> {
     const ids = JSON.parse(pref.blockedUserIds);
     return Array.isArray(ids) ? ids.filter((n: any) => Number.isInteger(n)) : [];
   } catch { return []; }
+}
+
+export async function getMutedUserIds(viewerId: number | null): Promise<number[]> {
+  if (!viewerId) return [];
+  const rows = await db
+    .select({ mutedId: mutedUsersTable.mutedId })
+    .from(mutedUsersTable)
+    .where(eq(mutedUsersTable.muterId, viewerId));
+  return rows.map((row) => row.mutedId);
 }
 
 export { enrichPost };
@@ -170,18 +180,20 @@ export async function listPosts(
   }
 
   const blockedIds = await getBlockedUserIds(viewerId);
+  const mutedIds = await getMutedUserIds(viewerId);
+  const hiddenAuthorIds = [...new Set([...blockedIds, ...mutedIds])];
 
   const conds = [
     eq(postsTable.isPublished, true),
     or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
   ];
   if (feed === "following" && viewerId) {
-    const followingFiltered = followingIds.filter(id => !blockedIds.includes(id));
+    const followingFiltered = followingIds.filter(id => !hiddenAuthorIds.includes(id));
     if (followingFiltered.length === 0) return { posts: [], total: 0, page, limit };
     conds.push(inArray(postsTable.authorId, followingFiltered));
   }
   if (type) conds.push(eq(postsTable.type, type));
-  if (blockedIds.length > 0) conds.push(notInArray(postsTable.authorId, blockedIds));
+  if (hiddenAuthorIds.length > 0) conds.push(notInArray(postsTable.authorId, hiddenAuthorIds));
 
   // Pull a wider candidate set for multi-signal re-ranking.
   const candidates = await db.select(stablePostSelection).from(postsTable).where(and(

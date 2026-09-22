@@ -7,7 +7,7 @@ import {
   postSharesTable, repostsTable, savedPostsTable,
   commentLikesTable, userTrustScoresTable, usersTable, boostRequestsTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, inArray, sql, isNull, gte, lte, gt, or } from "drizzle-orm";
+import { eq, and, desc, inArray, notInArray, sql, isNull, gte, lte, gt, or } from "drizzle-orm";
 import { enrichPost } from "../profiles/profile.service";
 import { recordPostView } from "../analytics/analytics.service";
 import { updateUserTrustScoreSafe } from "../trust/trust.service";
@@ -448,8 +448,9 @@ export const getFeed = async (req: Request, res: Response) => {
   const offset = (page - 1) * limit;
   const since = typeof req.query.since === "string" ? new Date(req.query.since) : null;
   const hasSince = since && !Number.isNaN(since.getTime());
+  const mutedIds = await PostService.getMutedUserIds(viewerId);
 
-  const cacheKey = `feed:${viewerId ?? "anon"}:${type}:${page}:${limit}:${hasSince ? since.toISOString() : "all"}`;
+  const cacheKey = `feed:${viewerId ?? "anon"}:${type}:${page}:${limit}:${mutedIds.join(",")}:${hasSince ? since.toISOString() : "all"}`;
   const cached = await getCache<object>(cacheKey);
   if (cached) return res.json(cached);
 
@@ -460,6 +461,7 @@ export const getFeed = async (req: Request, res: Response) => {
       eq(postsTable.isPublished, true),
       eq(postsTable.isDeleted, false),
       or(eq(postsTable.type, "spark"), isNull(postsTable.expiresAt), gt(postsTable.expiresAt, new Date())),
+      ...(mutedIds.length > 0 ? [notInArray(postsTable.authorId, mutedIds)] : []),
       ...(hasSince ? [gt(postsTable.createdAt, since)] : []),
     ))
     .orderBy(desc(postsTable.createdAt))

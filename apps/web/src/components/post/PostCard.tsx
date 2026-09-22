@@ -676,6 +676,15 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       case 'report':
         handleReport();
         break;
+      case 'mute': {
+        const res = await fetch(apiUrl(`/api/blocks/mute/${optionPost.authorId}`), {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error('Could not mute author');
+        toast({ title: 'Author muted', description: 'Their posts will no longer appear in your feed.' });
+        break;
+      }
       case 'pin':
         await handlePinToGroup();
         break;
@@ -701,6 +710,8 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
     authorId: post.author.id,
   };
 
+  if (isHidden) return null;
+
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'story': return 'bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30';
@@ -713,7 +724,6 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       default: return 'bg-secondary text-secondary-foreground border-border';
     }
 
-    if (isHidden) return null;
   };
 
   const isSpark = (post.type as string) === 'spark';

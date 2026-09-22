@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
-import { safetyPreferencesTable } from "@workspace/db/schema";
-import { eq, or, sql } from "drizzle-orm";
+import { mutedUsersTable, safetyPreferencesTable } from "@workspace/db/schema";
+import { and, eq, or, sql } from "drizzle-orm";
 
 const cache = new Map<number, { ids: number[]; until: number }>();
 const TTL_MS = 30_000;
@@ -86,4 +86,21 @@ export async function unblockUser(viewerId: number, targetId: number): Promise<v
     .set({ blockedUserIds: JSON.stringify(ids), updatedAt: new Date() })
     .where(eq(safetyPreferencesTable.userId, viewerId));
   cache.delete(viewerId);
+}
+
+export async function getMutedByUser(userId: number): Promise<number[]> {
+  const rows = await db
+    .select({ mutedId: mutedUsersTable.mutedId })
+    .from(mutedUsersTable)
+    .where(eq(mutedUsersTable.muterId, userId));
+  return rows.map((row) => row.mutedId);
+}
+
+export async function muteUser(viewerId: number, targetId: number): Promise<void> {
+  if (viewerId === targetId) return;
+  await db.insert(mutedUsersTable).values({ muterId: viewerId, mutedId: targetId }).onConflictDoNothing();
+}
+
+export async function unmuteUser(viewerId: number, targetId: number): Promise<void> {
+  await db.delete(mutedUsersTable).where(and(eq(mutedUsersTable.muterId, viewerId), eq(mutedUsersTable.mutedId, targetId)));
 }

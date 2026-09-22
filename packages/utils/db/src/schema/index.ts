@@ -44,3 +44,4 @@ export * from "./userTasteProfiles";
 export * from "./library";
 export * from "./chains";
 export * from "./profileViews";
+export * from "./mutedUsers";

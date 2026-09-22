@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getViewerId } from "../../lib/auth-types";
-import { blockUser, unblockUser, getBlockedByUser } from "./blocks.service";
+import { blockUser, unblockUser, getBlockedByUser, muteUser, unmuteUser } from "./blocks.service";
 
 export const blocksRouter: Router = Router();
 
@@ -17,6 +17,27 @@ blocksRouter.get("/", async (req, res) => {
     .from(usersTable)
     .where(inArray(usersTable.id, ids));
   return res.json(users);
+});
+
+blocksRouter.post("/mute/:userId", async (req, res) => {
+  const viewerId = getViewerId(req);
+  if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
+  const targetId = Number(req.params.userId);
+  if (!Number.isInteger(targetId) || targetId <= 0) return res.status(400).json({ error: "Invalid id" });
+  if (targetId === viewerId) return res.status(400).json({ error: "Cannot mute yourself" });
+  const [target] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, targetId));
+  if (!target) return res.status(404).json({ error: "User not found" });
+  await muteUser(viewerId, targetId);
+  return res.json({ ok: true, muted: true });
+});
+
+blocksRouter.delete("/mute/:userId", async (req, res) => {
+  const viewerId = getViewerId(req);
+  if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
+  const targetId = Number(req.params.userId);
+  if (!Number.isInteger(targetId) || targetId <= 0) return res.status(400).json({ error: "Invalid id" });
+  await unmuteUser(viewerId, targetId);
+  return res.json({ ok: true, muted: false });
 });
 
 blocksRouter.post("/:userId", async (req, res) => {

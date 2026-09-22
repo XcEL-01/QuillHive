@@ -11,6 +11,7 @@ import {
 import { getStoredToken } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 interface Draft {
   id: number;
@@ -82,26 +83,37 @@ export default function Drafts() {
     setLocation(`/write?draftId=${draft.id}`);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (confirmDelete !== id) {
       setConfirmDelete(id);
       return;
     }
     setConfirmDelete(null);
-    setDeleting(prev => new Set(prev).add(id));
-    try {
-      const res = await fetch(`/api/posts/draft/${id}`, {
+    const draft = drafts.find((item) => item.id === id);
+    if (!draft) return;
+    setDrafts(prev => prev.filter(item => item.id !== id));
+    const timeoutId = window.setTimeout(() => {
+      void fetch(`/api/posts/draft/${id}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).then((res) => {
+        if (!res.ok) throw new Error();
+      }).catch(() => {
+        setDrafts(prev => [...prev, draft]);
+        toast({ title: "Failed to delete draft", variant: "destructive" });
       });
-      if (!res.ok) throw new Error();
-      setDrafts(prev => prev.filter(d => d.id !== id));
-      toast({ title: "Draft deleted" });
-    } catch {
-      toast({ title: "Failed to delete draft", variant: "destructive" });
-    } finally {
-      setDeleting(prev => { const s = new Set(prev); s.delete(id); return s; });
-    }
+    }, 5_000);
+    toast({
+      title: "Draft deleted",
+      action: (
+        <ToastAction altText="Undo draft deletion" onClick={() => {
+          window.clearTimeout(timeoutId);
+          setDrafts(prev => [...prev, draft]);
+        }}>
+          Undo
+        </ToastAction>
+      ),
+    });
   };
 
   const handleNewDraft = () => setLocation("/write");

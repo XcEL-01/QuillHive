@@ -26,6 +26,7 @@ import { useI18n, useT } from '@/lib/i18n';
 import { CreatorLevelBadge } from '@/components/trust/CreatorLevelBadge';
 import { PollBlock } from '@/components/post/PollBlock';
 import { PostOptionsMenu, type PostOptionAction, type PostOptionPost } from './PostOptionsMenu';
+import { ToastAction } from '@/components/ui/toast';
 
 type CtaButton = { label: string; url: string; style: 'primary' | 'secondary' | 'outline' };
 
@@ -340,6 +341,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
 
   const [post, setPost] = useState<EnrichedPost>(initialPost);
   const [showComments, setShowComments] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -469,9 +471,30 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
         queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
         toast({ title: 'Post deleted' });
       },
-      onError: () => toast({ title: 'Failed to delete post', variant: 'destructive' })
+      onError: () => {
+        setIsHidden(false);
+        toast({ title: 'Failed to delete post', variant: 'destructive' });
+      }
     }
   });
+
+  const handleDeleteWithUndo = () => {
+    setIsHidden(true);
+    const timeoutId = window.setTimeout(() => {
+      deletePost({ id: post.id });
+    }, 5_000);
+    toast({
+      title: 'Post deleted',
+      action: (
+        <ToastAction altText="Undo post deletion" onClick={() => {
+          window.clearTimeout(timeoutId);
+          setIsHidden(false);
+        }}>
+          Undo
+        </ToastAction>
+      ),
+    });
+  };
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/post/${post.id}`;
@@ -689,6 +712,8 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       case 'spark': return 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30';
       default: return 'bg-secondary text-secondary-foreground border-border';
     }
+
+    if (isHidden) return null;
   };
 
   const isSpark = (post.type as string) === 'spark';
@@ -776,7 +801,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
             isOwner={isOwner}
             isSaved={post.isSaved}
             onAction={handlePostOptionAction}
-            onDeletePermanently={async () => { deletePost({ id: post.id }); }}
+            onDeletePermanently={handleDeleteWithUndo}
           />
         </div>
 

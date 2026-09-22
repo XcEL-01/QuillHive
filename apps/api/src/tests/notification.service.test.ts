@@ -58,3 +58,34 @@ describe("notify() - deduplication", () => {
     expect(mockDb.insert).not.toHaveBeenCalled();
   });
 });
+
+describe("official notices", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("blocks official_notice through the generic notification helper", async () => {
+    const { notify } = await import("../features/notifications/notification.service");
+    const dbMod = await import("@workspace/db");
+    const mockDb = dbMod.db as unknown as { insert: ReturnType<typeof vi.fn> };
+
+    await notify({
+      userId: 9,
+      type: "official_notice",
+      message: "spoofed",
+    } as never);
+
+    expect(mockDb.insert).not.toHaveBeenCalled();
+  });
+
+  it("creates official notices only through the dedicated helper", async () => {
+    const { notifyOfficialNotice } = await import("../features/notifications/notification.service");
+    const dbMod = await import("@workspace/db");
+    const mockDb = dbMod.db as unknown as { values: ReturnType<typeof vi.fn> };
+
+    await notifyOfficialNotice({
+      userId: 9,
+      message: "verified staff message",
+    });
+
+    expect(mockDb.values).toHaveBeenCalledWith(expect.objectContaining({ type: "official_notice" }));
+  });
+});

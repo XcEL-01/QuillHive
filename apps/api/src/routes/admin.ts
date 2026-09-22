@@ -10,7 +10,7 @@ import { eq, desc, and, count, ne, lt, sql, inArray, or, gt, gte } from "drizzle
 import { requireAdmin, requireSuperAdmin, requirePermission } from "../middleware/admin";
 import { getAllFeatureFlags, FEATURE_FLAG_KEYS, reloadFeatureFlags, type FeatureFlagKey } from "../lib/featureFlags";
 import { sendEmail } from "../features/email/email.service";
-import { notify } from "../features/notifications/notification.service";
+import { notify, notifyOfficialNotice } from "../features/notifications/notification.service";
 import { BOOST_PLANS, type PlanKey } from "../features/boost/boost.routes";
 import { deleteCachePattern } from "../lib/cache";
 import { memDeletePattern } from "../lib/memCache";
@@ -93,11 +93,9 @@ router.post("/users/:id/notice", async (req: any, res) => {
     .where(and(eq(usersTable.id, id), eq(usersTable.isDeleted, false)));
   if (!target) return res.status(404).json({ error: "User not found" });
 
-  const { notify } = await import("../features/notifications/notification.service");
-  await notify({
+  await notifyOfficialNotice({
     userId: id,
     actorId: req.currentUser.id,
-    type: "official_notice",
     title: "A message from the QuillHive team",
     message,
     url: "/notifications",

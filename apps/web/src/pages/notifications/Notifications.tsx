@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, CheckCheck, Trash2, AlertCircle, Info, Zap, ShieldCheck } from 'lucide-react';
+import { Bell, Heart, MessageCircle, UserPlus, AtSign, Users, CheckCheck, Trash2, AlertCircle, Info, Zap, BadgeCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'wouter';
 import { useSocketEvent } from '@/hooks/useSocket';
@@ -15,6 +15,7 @@ import { apiUrl, getStoredToken } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { clsx } from 'clsx';
 import { useT } from '@/lib/i18n';
+import { OFFICIAL_NOTICE_WARNING } from '@/lib/official-notice';
 
 export default function Notifications() {
   usePageTitle('Notifications');
@@ -90,13 +91,14 @@ export default function Notifications() {
       case 'mention': return <div className={`${cls} bg-amber-500`}><AtSign className="w-3 h-3" /></div>;
       case 'group_invite': return <div className={`${cls} bg-emerald-500`}><Users className="w-3 h-3" /></div>;
       case 'admin_action': return <div className={`${cls} bg-rose-600`}><AlertCircle className="w-3 h-3" /></div>;
-      case 'official_notice': return <div className={`${cls} bg-amber-600`}><ShieldCheck className="w-3 h-3" /></div>;
+      case 'official_notice': return <div className={`${cls} bg-amber-600`}><BadgeCheck className="w-3 h-3" /></div>;
       case 'system': return <div className={`${cls} bg-violet-500`}><Info className="w-3 h-3" /></div>;
       default: return <div className={`${cls} bg-muted-foreground`}><Zap className="w-3 h-3" /></div>;
     }
   };
 
   const getLink = (notif: any) => {
+    if (notif.type === 'official_notice') return '/notifications';
     if (notif.postId) return `/post/${notif.postId}`;
     if (notif.groupId) return `/groups/${notif.groupId}`;
     return `/profile/${notif.actor?.username}`;
@@ -143,7 +145,7 @@ export default function Notifications() {
                 className={clsx(
                   'flex items-start gap-4 p-5 hover:bg-muted/50 transition-colors group',
                   !notif.isRead && 'bg-primary/5',
-                  notif.type === 'official_notice' && 'border-l-4 border-l-amber-500 bg-amber-50/60 dark:bg-amber-950/20'
+                   notif.type === 'official_notice' && 'border-l-4 border-l-amber-500 bg-amber-50/60 ring-1 ring-inset ring-amber-500/15 dark:bg-amber-950/20'
                 )}
               >
                 <Link
@@ -188,6 +190,11 @@ export default function Notifications() {
                         {formatDistanceToNow(new Date(notif.createdAt))} ago
                       </p>
                     </div>
+                      {notif.type === 'official_notice' && (
+                        <p className="mt-3 rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-950/80 dark:text-amber-100/80">
+                          {OFFICIAL_NOTICE_WARNING}
+                        </p>
+                      )}
                   </div>
                 </Link>
 

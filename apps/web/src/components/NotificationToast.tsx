@@ -5,8 +5,9 @@ import { useAuthStore } from "@/store/auth";
 import { useLocation } from "wouter";
 import {
   Heart, MessageCircle, UserPlus, AtSign, Users, AlertCircle,
-  Info, Zap, Trophy, TrendingUp, Bookmark, Star, BookOpen,
+  Info, Zap, Trophy, TrendingUp, Bookmark, Star, BookOpen, BadgeCheck,
 } from "lucide-react";
+import { OFFICIAL_NOTICE_WARNING } from "@/lib/official-notice";
 
 interface NotificationPayload {
   id: number;
@@ -33,6 +34,7 @@ function getNotifIcon(type: string): React.ReactNode {
     case "mention": return <AtSign className={`${cls} text-amber-500`} />;
     case "group_invite": return <Users className={`${cls} text-emerald-500`} />;
     case "admin_action": return <AlertCircle className={`${cls} text-rose-600`} />;
+    case "official_notice": return <BadgeCheck className={`${cls} text-amber-600`} />;
     case "system": return <Info className={`${cls} text-violet-500`} />;
     case "achievement":
     case "milestone":
@@ -70,11 +72,20 @@ export function NotificationToast() {
 
       const link = getNotifLink(data);
       const actorName = data.actor?.displayName || data.actor?.username || "";
-      const title = actorName ? `${actorName}` : "QuillHive";
+      const isOfficialNotice = data.type === "official_notice";
+      const title = isOfficialNotice
+        ? <span className="flex items-center gap-1.5 text-amber-800 dark:text-amber-100"><BadgeCheck className="h-4 w-4" /> Official QuillHive notice</span>
+        : actorName ? `${actorName}` : "QuillHive";
+      const description = isOfficialNotice
+        ? <div className="space-y-2"><p>{data.message}</p><p className="border-t border-amber-500/20 pt-2 text-xs text-amber-900/80 dark:text-amber-100/80">{OFFICIAL_NOTICE_WARNING}</p></div>
+        : data.message;
 
       toast({
         title,
-        description: data.message,
+        description,
+        className: isOfficialNotice
+          ? "border-amber-500/40 bg-amber-50 text-amber-950 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-50"
+          : undefined,
         duration: 4000,
         action: link
           ? {

@@ -40,11 +40,13 @@ export type NotificationType =
   | "post_rejected"
   | "digest";
 
+type StandardNotificationType = Exclude<NotificationType, "official_notice">;
+
 interface NotifyOpts {
   userId: number;
   /** actorId=0 (or omitted) means a system-generated notification - self-skip guard is bypassed */
   actorId?: number;
-  type: NotificationType;
+  type: StandardNotificationType;
   message: string;
   title?: string;
   url?: string;
@@ -111,7 +113,12 @@ const NOTIFICATION_TITLE_MAP: Partial<Record<NotificationType, string>> = {
 const recentNotifKeys = new Map<string, number>();
 const NOTIF_DEDUP_MS = 60 * 60_000; // 1 hour
 
-function shouldDedup(opts: NotifyOpts): boolean {
+function shouldDedup(opts: {
+  type: NotificationType;
+  actorId?: number;
+  userId: number;
+  postId?: number | null;
+}): boolean {
   if (opts.type !== "follow") return false;
   const key = `${opts.type}:${opts.actorId ?? 0}:${opts.userId}:${opts.postId ?? "_"}`;
   const now = Date.now();
@@ -128,7 +135,7 @@ function shouldDedup(opts: NotifyOpts): boolean {
   return false;
 }
 
-export async function notify(opts: NotifyOpts): Promise<void> {
+async function createNotification(opts: NotifyOpts & { type: NotificationType }): Promise<void> {
   const actorId = opts.actorId ?? 0;
   // Skip self-notifications (only when a real actor triggers it)
   if (actorId !== 0 && opts.userId === actorId) return;
@@ -207,10 +214,31 @@ export async function notify(opts: NotifyOpts): Promise<void> {
       void sendPushToUser(opts.userId, {
         title: notif.title ?? opts.title ?? NOTIFICATION_TITLE_MAP[opts.type] ?? "QuillHive",
         body: notif.title ?? (actorName ? `${actorName}: ${opts.message}` : opts.message),
+        type: opts.type,
         url: opts.url ?? (opts.postId ? `/post/${opts.postId}` : "/notifications"),
       });
     }
   } catch (err) {
     logger.error({ err, opts }, "notify_failed");
   }
+}
+
+/**
+ * Create a regular notification. Official notices must use notifyOfficialNotice
+ * so they cannot be created by an arbitrary notification caller.
+ */
+export async function notify(opts: NotifyOpts): Promise<void> {
+  if ((opts as { type: string }).type === "official_notice") {
+    logger.error({ userId: opts.userId }, "blocked unofficial official_notice creation");
+    return;
+  }
+  return createNotification(opts);
+}
+
+/**
+ * The only notification creation capability for official notices. This helper
+ * has one call site: the admin users/:id/notice endpoint.
+ */
+export async function notifyOfficialNotice(opts: Omit<NotifyOpts, "type">): Promise<void> {
+  return createNotification({ ...opts, type: "official_notice" });
 }

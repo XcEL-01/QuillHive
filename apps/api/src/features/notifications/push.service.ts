@@ -35,6 +35,7 @@ export function getPublicKey(): string | null {
 export interface PushPayload {
   title: string;
   body: string;
+  type?: string;
   url?: string;
 }
 

@@ -1,5 +1,6 @@
 const CACHE_NAME = 'quillhive-v3';
 const STATIC_ASSETS = ['/images/logo-icon.png', '/images/logo-icon-192.png'];
+const OFFICIAL_NOTICE_WARNING = "QuillHive staff will never ask you to pay money, share your password, or click a link to 'verify' your account through a notification or DM.";
 
 self.addEventListener('install', (event) => {
       event.waitUntil(
@@ -36,9 +37,12 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('push', (event) => {
       const data = event.data?.json() ?? {};
+        const isOfficialNotice = data.type === 'official_notice';
         event.waitUntil(
                 self.registration.showNotification(data.title || 'QuillHive', {
-                          body: data.body || 'You have a new notification',
+                          body: isOfficialNotice
+                                ? `${data.body || 'You have a new notification'}\n\n${OFFICIAL_NOTICE_WARNING}`
+                                : (data.body || 'You have a new notification'),
                                 icon: '/images/logo-icon.png',
                                       badge: '/images/logo-icon-192.png',
                                             data: { url: data.url || '/' },

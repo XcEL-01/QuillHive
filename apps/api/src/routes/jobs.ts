@@ -7,6 +7,17 @@ import {
 import { eq, desc, and, or, isNull, gt, sql, inArray, gte } from "drizzle-orm";
 import { getSessionUserId } from "../lib/auth";
 import { getUserWithCounts } from "../features/profiles/profile.service";
+import { notify } from "../features/notifications/notification.service";
+
+const SCAM_PATTERNS = [
+  /registration\s*fee/i,
+  /pay\s*(a\s*)?(small\s*)?(deposit|fee)\s*to\s*(apply|start|begin)/i,
+  /processing\s*fee/i,
+  /training\s*fee/i,
+  /send.*(money|payment|deposit).*before/i,
+  /application\s*fee/i,
+  /activation\s*fee/i,
+];
 
 // ── Match scoring ──────────────────────────────────────────────────────────────
 const IDENTITY_KEYWORDS: Record<string, string[]> = {
@@ -115,6 +126,7 @@ router.get("/", async (req, res) => {
   const conds = [
     eq(jobsTable.isActive, true),
     eq(jobsTable.isApproved, true),
+    eq(jobsTable.moderationStatus, "published"),
     or(isNull(jobsTable.expiresAt), gt(jobsTable.expiresAt, now)),
   ];
   if (type) conds.push(eq(jobsTable.type, type));
@@ -149,6 +161,7 @@ router.post("/", async (req, res) => {
   }
 
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000);
+  const isSuspicious = SCAM_PATTERNS.some((pattern) => pattern.test(`${title} ${description}`));
 
   const [job] = await db.insert(jobsTable).values({
     authorId: viewerId,
@@ -166,7 +179,24 @@ router.post("/", async (req, res) => {
     applyEmail: applyEmail || null,
     category: category || null,
     expiresAt,
+    isApproved: !isSuspicious,
+    moderationStatus: isSuspicious ? "under_review" : "published",
   }).returning();
+
+  if (isSuspicious) {
+    const admins = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(inArray(usersTable.role, ["admin", "super_admin"]));
+    await Promise.all(admins.map((admin) => notify({
+      userId: admin.id,
+      actorId: 0,
+      type: "admin_alert",
+      title: "Job listing needs review",
+      message: `Potential upfront-fee language was detected in job listing "${String(title).slice(0, 120)}" (job #${job.id}).`,
+      url: "/admin?tab=content",
+    })));
+  }
 
   const enriched = await enrichJob(job, viewerId);
   try {
@@ -177,7 +207,10 @@ router.post("/", async (req, res) => {
       data: { jobId: job.id, title: job.title, type: job.type, isPaid: job.isPaid },
     });
   } catch { /* webhook is best-effort */ }
-  return res.status(201).json(enriched);
+  return res.status(201).json({
+    ...enriched,
+    message: isSuspicious ? "Your listing is being reviewed" : undefined,
+  });
 });
 
 // ── GET /my-matches - top matched opportunities for the logged-in creator ──────

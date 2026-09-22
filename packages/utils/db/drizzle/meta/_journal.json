@@ -78,6 +78,13 @@
       "when": 1790246400000,
       "tag": "0011_muted_users",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790332800000,
+      "tag": "0012_job_scam_review",
+      "breakpoints": true
     }
   ]
 }

@@ -20,6 +20,7 @@ export const jobsTable = pgTable("jobs", {
   applyEmail: text("apply_email"),
   isActive: boolean("is_active").notNull().default(true),
   isApproved: boolean("is_approved").notNull().default(true),
+  moderationStatus: text("moderation_status").notNull().default("published"),
   isFeatured: boolean("is_featured").notNull().default(false),
   featuredUntil: timestamp("featured_until"),
   viewCount: integer("view_count").notNull().default(0),

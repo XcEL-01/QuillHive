@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" ADD COLUMN IF NOT EXISTS "moderation_status" text NOT NULL DEFAULT 'published';

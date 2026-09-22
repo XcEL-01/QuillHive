@@ -33,7 +33,7 @@ adminExtensionsRouter.get("/groups", async (_req: Request, res: Response) => {
 adminExtensionsRouter.patch("/jobs/:id/approve", async (req: Request, res: Response) => {
   const adminId = (req as AuthedReq).currentUser.id;
   const id = Number(req.params["id"]);
-  await db.update(jobsTable).set({ isApproved: true, isActive: true }).where(eq(jobsTable.id, id));
+  await db.update(jobsTable).set({ isApproved: true, isActive: true, moderationStatus: "published" }).where(eq(jobsTable.id, id));
   await audit(adminId, "job_approve", "job", id);
   res.json({ ok: true });
 });
@@ -50,7 +50,7 @@ adminExtensionsRouter.patch("/jobs/:id/feature", async (req: Request, res: Respo
 adminExtensionsRouter.patch("/jobs/:id/reject", async (req: Request, res: Response) => {
   const adminId = (req as AuthedReq).currentUser.id;
   const id = Number(req.params["id"]);
-  await db.update(jobsTable).set({ isActive: false }).where(eq(jobsTable.id, id));
+  await db.update(jobsTable).set({ isActive: false, moderationStatus: "rejected" }).where(eq(jobsTable.id, id));
   await audit(adminId, "job_reject", "job", id);
   res.json({ ok: true });
 });

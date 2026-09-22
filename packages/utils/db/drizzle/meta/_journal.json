@@ -85,6 +85,13 @@
       "when": 1790332800000,
       "tag": "0012_job_scam_review",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790332800001,
+      "tag": "0013_signup_abuse_tracking",
+      "breakpoints": true
     }
   ]
 }

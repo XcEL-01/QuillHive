@@ -39,6 +39,8 @@ export const usersTable = pgTable("users", {
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   onboardingGoals: text("onboarding_goals"),
   identityType: text("identity_type"),
+  signupIpHash: text("signup_ip_hash"),
+  signupUserAgent: text("signup_user_agent"),
   lastKnownIPHash: text("last_known_ip_hash"),
   lastKnownCountry: text("last_known_country"),
   lastKnownTimezone: text("last_known_timezone"),

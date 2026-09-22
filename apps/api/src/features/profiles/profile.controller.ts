@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { createHash } from "crypto";
 import { db } from "@workspace/db";
 import { usersTable, followsTable, postsTable, commentsTable, likesTable, postTopicsTable, userTrustScoresTable, workHistoryTable, educationHistoryTable, savedPostsTable, profileViewsTable } from "@workspace/db/schema";
 import { eq, and, sql, ilike, desc, or, inArray, notInArray } from "drizzle-orm";
@@ -145,12 +146,17 @@ export const register = async (req: Request, res: Response) => {
 
   const passwordHash = hashPassword(password);
   const loginMeta = getLoginMeta(req);
+  const signupIpHash = createHash("sha256")
+    .update((req.ip ?? "") + (process.env.JWT_SECRET ?? ""))
+    .digest("hex");
   const [user] = await db.insert(usersTable).values({
     username,
     email: emailCheck.email,
     passwordHash,
     displayName,
     emailVerified: false,
+    signupIpHash,
+    signupUserAgent: req.headers["user-agent"] ?? null,
     lastKnownIPHash: loginMeta.ipHash,
     lastKnownCountry: loginMeta.country,
     lastKnownTimezone: loginMeta.timezone,

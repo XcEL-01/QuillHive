@@ -27,6 +27,7 @@ import { CreatorLevelBadge } from '@/components/trust/CreatorLevelBadge';
 import { PollBlock } from '@/components/post/PollBlock';
 import { PostOptionsMenu, type PostOptionAction, type PostOptionPost } from './PostOptionsMenu';
 import { ToastAction } from '@/components/ui/toast';
+import { ImageLightbox } from './ImageLightbox';
 
 type CtaButton = { label: string; url: string; style: 'primary' | 'secondary' | 'outline' };
 
@@ -889,10 +890,11 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
 
           {post.imageUrl && (
             <div className="mb-4 rounded-xl overflow-hidden bg-muted aspect-video relative">
-              <img
+              <ImageLightbox
                 src={post.imageUrl}
                 alt={post.title || "Post image"}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                className="h-full w-full"
+                imageClassName="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>
           )}
@@ -949,7 +951,14 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
                 {post.quotedPost.author?.username && <span className="text-xs text-muted-foreground">@{post.quotedPost.author.username}</span>}
               </div>
               <p className="text-sm text-muted-foreground line-clamp-3">{post.quotedPost.excerpt || post.quotedPost.content}</p>
-              {post.quotedPost.imageUrl && <img src={post.quotedPost.imageUrl} alt="" className="mt-2 h-20 w-28 rounded-lg object-cover" />}
+              {post.quotedPost.imageUrl && (
+                <ImageLightbox
+                  src={post.quotedPost.imageUrl}
+                  alt="Quoted post image"
+                  className="mt-2 h-20 w-28 overflow-hidden rounded-lg"
+                  imageClassName="h-full w-full object-cover"
+                />
+              )}
             </Link>
           )}
         </Link>

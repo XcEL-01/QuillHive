@@ -33,6 +33,7 @@ import { useT } from '@/lib/i18n';
 import { SeriesNavigation } from '@/components/post/SeriesNavigation';
 import { PollBlock } from '@/components/post/PollBlock';
 import { MoreLikeThis } from '@/components/post/MoreLikeThis';
+import { ImageLightbox } from '@/components/post/ImageLightbox';
 import { BackButton } from '@/components/ui/BackButton';
 import { useRecordRead } from '@/hooks/useReadingStreak';
 import { PollComposer, type DraftPoll } from '@/components/post/PollComposer';
@@ -545,7 +546,12 @@ export default function PostDetail() {
           <div>
             {post.imageUrl && (
               <div className="mb-10 rounded-2xl overflow-hidden border border-border shadow-sm">
-                <img src={post.imageUrl} alt={post.title || 'Artwork'} className="w-full h-auto object-contain max-h-[70vh] bg-muted/50" />
+                <ImageLightbox
+                  src={post.imageUrl}
+                  alt={post.title || 'Artwork'}
+                  className="bg-muted/50"
+                  imageClassName="w-full h-auto max-h-[70vh] object-contain"
+                />
               </div>
             )}
 

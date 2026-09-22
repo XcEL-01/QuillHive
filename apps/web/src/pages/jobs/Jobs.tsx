@@ -16,6 +16,7 @@ import { Link } from 'wouter';
 import { getStoredToken } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { formatAccountAge } from '@/lib/accountAge';
+import { ReportDialog } from '@/components/report/ReportDialog';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -419,6 +420,7 @@ export default function Jobs() {
                           <FileCheck className="w-3.5 h-3.5" /> Apply with Proof-of-Work
                         </a>
                       )}
+                      <ReportDialog targetType="job" targetId={job.id} label="Report" className="min-h-[44px]" />
                     </div>
                   </div>
                 </div>

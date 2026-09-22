@@ -35,6 +35,7 @@ import { CreatorMomentumHQ } from '@/components/profile/CreatorMomentumHQ';
 import { ProfileStrengthMeter } from '@/components/profile/ProfileStrengthMeter';
 import { BackButton } from '@/components/ui/BackButton';
 import { OpportunityPanel } from '@/components/dashboard/OpportunityPanel';
+import { ReportDialog } from '@/components/report/ReportDialog';
 
 interface PortfolioItem {
   id: number; userId: number; title: string; description?: string | null;
@@ -633,6 +634,7 @@ export default function Profile() {
                 >
                   {user.isFollowing ? <><UserCheck className="w-4 h-4 mr-2" />{t('profile.following', 'Following')}</> : <><UserPlus className="w-4 h-4 mr-2" />{t('profile.follow', 'Follow')}</>}
                 </Button>
+                <ReportDialog targetType="user" targetId={user.id} label="Report" />
               </>
             )}
           </div>

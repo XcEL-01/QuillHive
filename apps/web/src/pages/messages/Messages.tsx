@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Users, Search, MessageCircle, PenSquare, Check, CheckCheck } from 'lucide-react';
 import NewConversationModal from '@/components/messages/NewConversationModal';
+import { ReportDialog } from '@/components/report/ReportDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { useSocketEvent, useJoinConversation } from '@/hooks/useSocket';
 import { getSocket } from '@/lib/socket';
@@ -412,6 +413,7 @@ export default function Messages() {
                               Seen {formatDistanceToNow(messageSeenAt, { addSuffix: true })}
                             </div>
                           )}
+                          {!isMine && <ReportDialog targetType="message" targetId={msg.id} label="Report" className="mt-2 h-7 px-2 text-[10px]" />}
                         </div>
                       </div>
                     );

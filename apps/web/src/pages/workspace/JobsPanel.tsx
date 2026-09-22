@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getStoredToken } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { formatAccountAge } from '@/lib/accountAge';
+import { ReportDialog } from '@/components/report/ReportDialog';
 
 type JobType = 'all' | 'job' | 'commission' | 'collaboration';
 
@@ -218,6 +219,7 @@ export function JobsPanel() {
                       Apply <ChevronRight className="w-3 h-3" />
                     </a>
                   )}
+                  <ReportDialog targetType="job" targetId={job.id} label="Report" />
                 </div>
 
                 <h4 className="font-semibold text-sm mb-0.5 line-clamp-1">{job.title}</h4>

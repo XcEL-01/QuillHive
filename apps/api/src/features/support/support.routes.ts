@@ -2,13 +2,14 @@ import { Router } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
 import { reportsTable, safetyPreferencesTable, supportMessagesTable, supportTicketsTable, usersTable } from "@workspace/db/schema";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { requireAuth } from "../../middleware/admin";
 import { preventSpam } from "../../middleware/abuseProtection";
 import { validateBody, validateParams } from "../../middleware/validate";
 import { emitToUser } from "../../lib/socket";
 import { logger } from "../../lib/logger";
 import { notify } from "../notifications/notification.service";
+import { sendEmail } from "../email/email.service";
 
 export const supportRouter = Router();
 supportRouter.use(requireAuth);
@@ -94,13 +95,15 @@ supportRouter.post("/tickets/:id/message", validateParams(z.object({ id: z.coerc
 });
 
 supportRouter.post("/report", preventSpam("reports", { max: 8, windowMs: 60_000, contentField: "reason" }), validateBody(z.object({
-  targetType: z.enum(["post", "comment", "user", "message", "upload", "other"]),
+  targetType: z.enum(["post", "comment", "user", "message", "job", "upload", "other"]),
   targetId: z.number().int().positive(),
   reason: z.string().min(3).max(1_000),
-  category: z.enum(["spam", "harassment", "csam", "self_harm", "violence", "ip_violation", "impersonation", "misinfo", "other"]).optional(),
+  details: z.string().max(2_000).optional(),
+  category: z.enum(["scam_fraud", "spam", "harassment", "csam", "self_harm", "violence", "ip_violation", "impersonation", "misinfo", "other"]).optional(),
   severity: z.enum(["low", "normal", "high", "urgent"]).optional(),
 })), async (req: any, res) => {
   const category = req.body.category ?? "other";
+  const details = typeof req.body.details === "string" ? req.body.details.trim() : "";
   // Auto-route critical categories to urgent priority
   const autoPriority = category === "csam" || category === "self_harm" || category === "violence"
     ? "urgent"
@@ -111,12 +114,35 @@ supportRouter.post("/report", preventSpam("reports", { max: 8, windowMs: 60_000,
     reporterId: req.currentUser.id,
     targetType: req.body.targetType,
     targetId: req.body.targetId,
-    reason: `[${req.body.severity ?? "normal"}] ${req.body.reason}`,
+    reason: `[${req.body.severity ?? "normal"}] ${req.body.reason}${details ? `: ${details}` : ""}`,
     category,
     priority: autoPriority,
     status: "pending",
   }).returning();
   res.status(201).json(report);
+
+  if (category === "scam_fraud") {
+    const admins = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(inArray(usersTable.role, ["admin", "super_admin"]));
+    await Promise.all(admins.map((admin) => notify({
+      userId: admin.id,
+      actorId: 0,
+      type: "admin_alert",
+      title: "Scam report needs review",
+      message: `A user reported ${req.body.targetType} #${req.body.targetId} for scam/fraud.`,
+      url: "/admin?tab=content",
+    })));
+    if (process.env.OWNER_EMAIL) {
+      await sendEmail({
+        to: process.env.OWNER_EMAIL,
+        subject: "🚨 Scam report on QuillHive — needs review",
+        html: `<p>A user reported ${req.body.targetType} #${req.body.targetId} for scam/fraud.</p><p>Details: ${details || "No additional details provided."}</p><p><a href="${process.env.APP_URL ?? ""}/admin">Review now →</a></p>`,
+        text: `A user reported ${req.body.targetType} #${req.body.targetId} for scam/fraud. Details: ${details || "No additional details provided."}`,
+      });
+    }
+  }
 
   // Fire-and-forget AI content moderation - does not block the response
   (async () => {

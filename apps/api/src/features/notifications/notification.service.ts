@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
 import { notificationsTable, usersTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { emitToUser } from "../../lib/socket";
 import { logger } from "../../lib/logger";
 import { sendPushToUser } from "./push.service";
@@ -109,7 +109,7 @@ const recentNotifKeys = new Map<string, number>();
 const NOTIF_DEDUP_MS = 60 * 60_000; // 1 hour
 
 function shouldDedup(opts: NotifyOpts): boolean {
-  if (opts.type !== "like" && opts.type !== "follow") return false;
+  if (opts.type !== "follow") return false;
   const key = `${opts.type}:${opts.actorId ?? 0}:${opts.userId}:${opts.postId ?? "_"}`;
   const now = Date.now();
   const last = recentNotifKeys.get(key);
@@ -139,20 +139,50 @@ export async function notify(opts: NotifyOpts): Promise<void> {
           .where(eq(usersTable.id, actorId))
       : [null];
 
-    const [notif] = await db
-      .insert(notificationsTable)
-      .values({
-        userId: opts.userId,
-        actorId: actorId,
-        type: opts.type,
-        message: opts.message,
-        postId: opts.postId ?? null,
-        groupId: opts.groupId ?? null,
-        category,
-        digestGroup: opts.digestGroup ?? null,
-        isRead: false,
-      })
-      .returning();
+    let notif: typeof notificationsTable.$inferSelect | undefined;
+    if (opts.type === "like" && opts.postId) {
+      const [existing] = await db
+        .select()
+        .from(notificationsTable)
+        .where(and(
+          eq(notificationsTable.userId, opts.userId),
+          eq(notificationsTable.type, "like"),
+          eq(notificationsTable.postId, opts.postId),
+          eq(notificationsTable.isRead, false),
+          gte(notificationsTable.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)),
+        ))
+        .orderBy(desc(notificationsTable.createdAt))
+        .limit(1);
+
+      if (existing) {
+        const groupCount = (existing.groupCount ?? 1) + 1;
+        const actorName = actor?.displayName || actor?.username || "Someone";
+        const title = `${actorName} and ${groupCount - 1} other${groupCount > 2 ? "s" : ""} liked your post`;
+        [notif] = await db
+          .update(notificationsTable)
+          .set({ actorId, title, groupCount, createdAt: new Date() })
+          .where(eq(notificationsTable.id, existing.id))
+          .returning();
+      }
+    }
+
+    if (!notif) {
+      [notif] = await db
+        .insert(notificationsTable)
+        .values({
+          userId: opts.userId,
+          actorId,
+          type: opts.type,
+          message: opts.message,
+          title: opts.title ?? null,
+          postId: opts.postId ?? null,
+          groupId: opts.groupId ?? null,
+          category,
+          digestGroup: opts.digestGroup ?? null,
+          isRead: false,
+        })
+        .returning();
+    }
 
     // Check per-type user preferences before delivering
     const [recipient] = await db
@@ -172,8 +202,8 @@ export async function notify(opts: NotifyOpts): Promise<void> {
     if (pushEnabled) {
       const actorName = actor?.displayName || actor?.username;
       void sendPushToUser(opts.userId, {
-        title: opts.title ?? NOTIFICATION_TITLE_MAP[opts.type] ?? "QuillHive",
-        body: actorName ? `${actorName}: ${opts.message}` : opts.message,
+        title: notif.title ?? opts.title ?? NOTIFICATION_TITLE_MAP[opts.type] ?? "QuillHive",
+        body: notif.title ?? (actorName ? `${actorName}: ${opts.message}` : opts.message),
         url: opts.url ?? (opts.postId ? `/post/${opts.postId}` : "/notifications"),
       });
     }

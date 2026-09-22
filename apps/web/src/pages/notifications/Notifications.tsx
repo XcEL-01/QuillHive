@@ -178,8 +178,9 @@ export default function Notifications() {
                   </div>
                   <div className="flex-1 min-w-0 pt-1">
                     <p className="text-sm text-foreground/90 leading-snug">
-                      <span className="font-bold text-foreground">{notif.actor?.displayName ?? 'System'}</span>{' '}
-                      {notif.message}
+                      {notif.type === 'like' && notif.groupCount > 1
+                        ? notif.title || `${notif.groupCount} people liked your post`
+                        : <><span className="font-bold text-foreground">{notif.actor?.displayName ?? 'System'}</span>{' '}{notif.message}</>}
                     </p>
                     <div className="flex items-center gap-2 mt-1.5">
                       {notif.type === 'official_notice' && <Badge className="bg-amber-600 px-2 py-0 text-[10px] text-white hover:bg-amber-600">Official notice</Badge>}

@@ -199,6 +199,7 @@ export default function Write() {
   const [aiTitleSuggestions, setAiTitleSuggestions] = useState<string[]>([]);
   const [aiHashtagSuggestions, setAiHashtagSuggestions] = useState<string[]>([]);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [content, setContent] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -207,6 +208,7 @@ export default function Write() {
       Placeholder.configure({ placeholder: t('write.editorPlaceholder') })
     ],
     content: '',
+    onUpdate: ({ editor: updatedEditor }) => setContent(updatedEditor.getHTML()),
     editorProps: {
       attributes: {
         class: 'prose prose-lg dark:prose-invert focus:outline-none min-h-[40vh] max-w-none px-4 py-8',
@@ -221,6 +223,7 @@ export default function Write() {
   const [hasDraft, setHasDraft] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
 
   // Load server draft from URL param ?draftId=X (used from /drafts page "Resume editing")
   useEffect(() => {
@@ -302,33 +305,45 @@ export default function Write() {
     return () => window.clearInterval(interval);
   }, [editor, title, type, tagsStr, imageUrl, DRAFT_KEY]);
 
-  useEffect(() => {
+  const saveDraftSilently = async () => {
     if (!editor || !token) return;
-    const interval = window.setInterval(async () => {
-      const content = editor.getHTML();
-      if (!content || content === '<p></p>') return;
-      try {
-        const body: Record<string, unknown> = {
-          title: title || undefined,
-          content,
-          type: type as any,
-          tags: tagsStr.split(',').map((t: string) => t.trim()).filter(Boolean),
-          imageUrl: imageUrl || undefined,
-        };
-        if (serverSaveRef.current) body.draftId = serverSaveRef.current;
-        const res = await fetch('/api/posts/draft', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(body),
-        });
-        if (res.ok) {
-          const data = await res.json() as { draftId?: number };
-          if (data.draftId && !serverSaveRef.current) setServerDraftId(data.draftId);
-        }
-      } catch { /* non-fatal */ }
-    }, 120_000);
-    return () => window.clearInterval(interval);
-  }, [editor, title, type, tagsStr, imageUrl, token]);
+    if (!content || content === '<p></p>' || (!title.trim() && !editor.getText().trim())) return;
+
+    const body: Record<string, unknown> = {
+      title: title || undefined,
+      content,
+      type: type as any,
+      tags: tagsStr.split(',').map((tag) => tag.trim()).filter(Boolean),
+      imageUrl: imageUrl || undefined,
+      isPublished: false,
+    };
+    if (serverSaveRef.current) body.draftId = serverSaveRef.current;
+
+    try {
+      const res = await fetch('/api/posts/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return;
+
+      const data = await res.json() as { draftId?: number };
+      if (data.draftId && !serverSaveRef.current) setServerDraftId(data.draftId);
+      setLastSavedAt(Date.now());
+      setShowSaved(true);
+      window.setTimeout(() => setShowSaved(false), 1800);
+    } catch {
+      // Silent autosave failures should never interrupt writing.
+    }
+  };
+
+  useEffect(() => {
+    if (!editor || !token || (!title.trim() && !editor.getText().trim())) return;
+    const timer = window.setTimeout(() => {
+      void saveDraftSilently();
+    }, 3_000);
+    return () => window.clearTimeout(timer);
+  }, [editor, title, content, tagsStr, type, imageUrl, token, serverDraftId]);
 
   const checkOriginality = async (content: string): Promise<{ ok: boolean; warning: string | null }> => {
     if (!token || content.replace(/<[^>]+>/g, '').trim().length < 100) return { ok: true, warning: null };
@@ -586,16 +601,11 @@ export default function Write() {
             </div>
           </div>
         )}
-        {lastSavedAt && (
-          <p className="text-xs text-muted-foreground mb-2">
-            {t('write.autoSavedAt', 'Auto-saved at')} {new Date(lastSavedAt).toLocaleTimeString()}
-          </p>
-        )}
-
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <h1 className="text-3xl font-serif font-bold">{t('write.newPiece')}</h1>
           <div className="flex items-center gap-3">
+            {showSaved && <span className="text-xs text-emerald-600 dark:text-emerald-400 animate-in fade-in duration-300">Saved</span>}
             <Button
               variant="outline"
               onClick={() => handlePublish(false)}

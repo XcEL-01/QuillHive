@@ -94,7 +94,14 @@ router.post("/users/:id/notice", async (req: any, res) => {
   if (!target) return res.status(404).json({ error: "User not found" });
 
   const { notify } = await import("../features/notifications/notification.service");
-  await notify({ userId: id, actorId: req.currentUser.id, type: "official_notice", message });
+  await notify({
+    userId: id,
+    actorId: req.currentUser.id,
+    type: "official_notice",
+    title: "A message from the QuillHive team",
+    message,
+    url: "/notifications",
+  });
   const email = await sendEmail({
     to: target.email,
     subject: "A message from the QuillHive team",

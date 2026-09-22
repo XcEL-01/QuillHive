@@ -10,6 +10,20 @@ describe('Auth Routes', () => {
     expect([400, 422]).toContain(res.status);
   });
 
+  it('rejects disposable email domains before creating an account', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        username: 'disposable-test-user',
+        email: 'person@mailinator.com',
+        password: 'a-strong-test-password',
+        displayName: 'Disposable Test User',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Please use a permanent email address to register.');
+  });
+
   it('POST /api/auth/login with wrong credentials returns 401 or 400', async () => {
     const res = await request(app)
       .post('/api/auth/login')

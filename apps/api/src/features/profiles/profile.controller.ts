@@ -71,6 +71,21 @@ const RESERVED_USERNAMES = new Set([
   "verified","certified","trusted","no-reply","noreply","donotreply",
 ]);
 
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com",
+  "10minutemail.com",
+  "guerrillamail.com",
+  "tempmail.com",
+  "throwawaymail.com",
+  "yopmail.com",
+  "temp-mail.org",
+  "fakeinbox.com",
+  "trashmail.com",
+  "getnada.com",
+  "sharklasers.com",
+  "dispostable.com",
+]);
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const register = async (req: Request, res: Response) => {
@@ -82,6 +97,12 @@ export const register = async (req: Request, res: Response) => {
   const inviteCode = typeof inviteCodeRaw === "string" ? inviteCodeRaw.slice(0, 32) : "";
   if (!username || !email || !password || !displayName) {
     return res.status(400).json({ error: "All fields are required" });
+  }
+  const emailDomain = normalizedEmail.split("@")[1];
+  if (emailDomain && DISPOSABLE_DOMAINS.has(emailDomain)) {
+    return res.status(400).json({
+      error: "Please use a permanent email address to register.",
+    });
   }
   // Only enforce Turnstile when the browser supplied a token. This makes a
   // partially configured deployment (secret present, widget/site key missing,

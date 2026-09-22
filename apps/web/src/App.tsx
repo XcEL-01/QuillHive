@@ -40,6 +40,7 @@ const UploadCenter = lazy(() => import("@/pages/upload/UploadCenter"));
 const SupportHub = lazy(() => import("@/pages/support/SupportHub"));
 const Terms = lazy(() => import("./pages/legal/Terms").then(m => ({ default: m.Terms })));
 const Privacy = lazy(() => import("./pages/legal/Privacy").then(m => ({ default: m.Privacy })));
+const Safety = lazy(() => import("./pages/legal/Safety").then(m => ({ default: m.Safety })));
 const ContentPolicy = lazy(() => import("./pages/legal/ContentPolicy").then(m => ({ default: m.ContentPolicy })));
 const About = lazy(() => import("./pages/legal/About").then(m => ({ default: m.About })));
 const Contact = lazy(() => import("./pages/legal/Contact").then(m => ({ default: m.Contact })));
@@ -90,6 +91,7 @@ const PUBLIC_ROUTES = [
   "/reset-password",
   "/signup",
   "/terms",
+  "/safety",
   "/verify-email",
   "/copyright",
   "/auth/oauth-complete",
@@ -424,6 +426,7 @@ function Router() {
       <Route path="/pricing"><Pricing /></Route>
       <Route path="/terms"><Terms /></Route>
       <Route path="/privacy"><Privacy /></Route>
+      <Route path="/safety"><Safety /></Route>
       <Route path="/content-policy"><ContentPolicy /></Route>
       <Route path="/community-guidelines"><CommunityGuidelines /></Route>
       <Route path="/copyright"><CopyrightPolicy /></Route>

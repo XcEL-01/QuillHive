@@ -70,6 +70,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.terms", "Terms")}</Link></li>
               <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.privacy", "Privacy")}</Link></li>
+              <li><Link href="/safety" className="text-sm text-muted-foreground hover:text-primary transition-colors">Safety</Link></li>
               <li><Link href="/content-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t("footer.contentPolicy", "Content Policy")}</Link></li>
             </ul>
           </div>

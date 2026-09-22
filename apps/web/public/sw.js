@@ -1,5 +1,5 @@
 const CACHE_NAME = 'quillhive-v3';
-const STATIC_ASSETS = ['/favicon.svg'];
+const STATIC_ASSETS = ['/images/logo-icon.png', '/images/logo-icon-192.png'];
 
 self.addEventListener('install', (event) => {
       event.waitUntil(
@@ -40,7 +40,7 @@ self.addEventListener('push', (event) => {
                 self.registration.showNotification(data.title || 'QuillHive', {
                           body: data.body || 'You have a new notification',
                                 icon: '/images/logo-icon.png',
-                                      badge: '/images/logo-icon.png',
+                                      badge: '/images/logo-icon-192.png',
                                             data: { url: data.url || '/' },
                 })
         );

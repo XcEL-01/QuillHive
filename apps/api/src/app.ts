@@ -325,7 +325,7 @@ app.get("/library/:slug", async (req, res, next) => {
         "@type": "Organization",
         name: "QuillHive Library",
         url: `${origin}/library`,
-        logo: { "@type": "ImageObject", url: `${origin}/favicon.svg` },
+        logo: { "@type": "ImageObject", url: `${origin}/images/logo-icon.png` },
       },
     });
     const inject = `

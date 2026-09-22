@@ -4,6 +4,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const API_URL = process.env.API_URL || "http://localhost:9000";
 const APP_URL = process.env.APP_URL || "http://localhost:5000";
+const LOGO_URL = `${APP_URL}/images/logo-icon.png`;
 
 function escapeHtml(str) {
   if (!str) return "";
@@ -17,7 +18,7 @@ function escapeHtml(str) {
 function htmlPage({ title, description, ogImage, ogUrl, ogType = "website", extra = "" }) {
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
-  const safeImg = escapeHtml(ogImage || `${APP_URL}/opengraph.jpg`);
+  const safeImg = escapeHtml(ogImage || LOGO_URL);
   const safeUrl = escapeHtml(ogUrl || APP_URL);
   return `<!DOCTYPE html>
 <html lang="en">
@@ -142,16 +143,19 @@ function landingPageHtml() {
 <meta name="description" content="Proof over profile. QuillHive ranks creators by Trust Score, not follower count — built from streaks, real read time, and completed work. For talented people who are still invisible everywhere else." />
 <meta property="og:title" content="QuillHive — Where Work Speaks" />
 <meta property="og:description" content="Not famous. Trusted." />
-<meta property="og:image" content="${APP_URL}/opengraph.jpg" />
+<meta property="og:image" content="${LOGO_URL}" />
 <meta property="og:url" content="${APP_URL}" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="${LOGO_URL}" />
+<link rel="icon" type="image/png" href="${LOGO_URL}" />
 <link rel="canonical" href="${APP_URL}" />
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0a0a0a;--surface:#111111;--border:#1f1f1f;--text:#f5f5f5;--muted:#737373;--primary:#8b5cf6;--primary-light:#a78bfa}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(12px);z-index:10}
-.logo{font-size:1.25rem;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-.02em}
+.logo{display:inline-flex;align-items:center;gap:.55rem;font-size:1.25rem;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-.02em}
+.logo img{width:2rem;height:2rem;border-radius:.55rem;object-fit:cover}
 .nav-actions{display:flex;gap:.75rem;align-items:center}
 .btn{display:inline-flex;align-items:center;padding:.5rem 1.25rem;border-radius:9999px;font-size:.875rem;font-weight:600;text-decoration:none;transition:opacity .15s;cursor:pointer;border:none}
 .btn:hover{opacity:.85}
@@ -185,7 +189,7 @@ footer{border-top:1px solid var(--border);padding:2rem;text-align:center}
 </head>
 <body>
 <nav class="nav">
-  <a href="/" class="logo">QuillHive</a>
+  <a href="/" class="logo"><img src="${LOGO_URL}" alt="" />QuillHive</a>
   <div class="nav-actions">
     <a href="${APP_URL}/login" class="btn btn-ghost">Sign in</a>
     <a href="${APP_URL}/register" class="btn btn-primary">Join free</a>

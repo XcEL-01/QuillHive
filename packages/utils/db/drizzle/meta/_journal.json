@@ -99,6 +99,13 @@
       "when": 1790332800002,
       "tag": "0014_posts_runtime_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790332800003,
+      "tag": "0015_users_schema_alignment",
+      "breakpoints": true
     }
   ]
 }

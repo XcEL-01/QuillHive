@@ -17,6 +17,7 @@ import { postsTable, usersTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import { emitEvent, recordRequest } from "./lib/events";
 import { recordError, recordRequestForAnomaly } from "./lib/alertEngine";
+import { getApiErrorMessage } from "./lib/api-errors";
 
 const app: Express = express();
 app.disable('x-powered-by');
@@ -163,7 +164,7 @@ app.use((err: Error & { statusCode?: number }, req: express.Request, res: expres
     });
   }
   if (res.headersSent) return next(err);
-  res.status(status).json({ error: err.message || "Internal server error" });
+  res.status(status).json({ error: getApiErrorMessage(status, err.message) });
 });
 
 // Public distribution endpoints served at the root for clean URLs

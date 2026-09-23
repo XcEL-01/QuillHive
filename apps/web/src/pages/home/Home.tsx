@@ -137,7 +137,16 @@ function SuggestedCreators() {
     }
   };
 
-  if (!loading && creators.length === 0) return null;
+  if (!loading && creators.length === 0) {
+    return (
+      <div className="flex flex-col items-center text-center py-16 px-4 mb-6 rounded-2xl border border-dashed border-border bg-card">
+        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3"><UserPlus className="w-5 h-5 text-muted-foreground" /></div>
+        <p className="text-sm font-medium">Your network is waiting</p>
+        <p className="text-xs text-muted-foreground mt-1">Explore creators and find voices worth following.</p>
+        <Link href="/explore"><Button size="sm" className="mt-4 rounded-xl"><UserPlus className="w-4 h-4 mr-1.5" />Explore creators</Button></Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card border border-border/60 rounded-2xl p-4 mb-6">
@@ -206,7 +215,16 @@ function NewVoicesSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (!loading && posts.length === 0) return null;
+  if (!loading && posts.length === 0) {
+    return (
+      <div className="flex flex-col items-center text-center py-16 px-4 mb-6 rounded-2xl border border-dashed border-border">
+        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3"><Sparkles className="w-5 h-5 text-muted-foreground" /></div>
+        <p className="text-sm font-medium">Fresh voices are on their way</p>
+        <p className="text-xs text-muted-foreground mt-1">Explore the hive to discover more creators.</p>
+        <Link href="/explore"><Button size="sm" variant="outline" className="mt-4 rounded-xl"><Sparkles className="w-4 h-4 mr-1.5" />Explore the hive</Button></Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6">

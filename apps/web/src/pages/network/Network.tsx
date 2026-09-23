@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { UserPlus, Users, UserRoundCheck } from "lucide-react";
+import { PenLine, UserPlus, Users, UserRoundCheck } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,7 @@ export default function Network() {
             <CardHeader><CardTitle className="text-lg">People you follow</CardTitle></CardHeader>
             <CardContent>
               {loading ? <div className="h-20 animate-pulse rounded-xl bg-muted" /> : following.length === 0 ? (
-                <p className="py-6 text-sm text-muted-foreground">You are not following anyone yet.</p>
+                <div className="flex flex-col items-center text-center py-16 px-4"><div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3"><UserPlus className="h-5 w-5 text-muted-foreground" /></div><p className="text-sm font-medium">You are not following anyone yet.</p><p className="text-xs text-muted-foreground mt-1">Find thoughtful creators to build your hive.</p><Link href="/explore"><Button size="sm" className="mt-4 rounded-xl"><UserPlus className="mr-1.5 h-4 w-4" />Explore creators</Button></Link></div>
               ) : <div className="divide-y divide-border/60">{following.map(person => <PersonRow key={person.id} user={person} />)}</div>}
             </CardContent>
           </Card>
@@ -113,7 +113,7 @@ export default function Network() {
             <CardHeader><CardTitle className="text-lg">People who follow you</CardTitle></CardHeader>
             <CardContent>
               {loading ? <div className="h-20 animate-pulse rounded-xl bg-muted" /> : followers.length === 0 ? (
-                <p className="py-6 text-sm text-muted-foreground">No one follows you yet.</p>
+                <div className="flex flex-col items-center text-center py-16 px-4"><div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3"><Users className="h-5 w-5 text-muted-foreground" /></div><p className="text-sm font-medium">No one follows you yet.</p><p className="text-xs text-muted-foreground mt-1">Share your work and let your audience find you.</p><Link href="/write"><Button size="sm" variant="outline" className="mt-4 rounded-xl"><PenLine className="mr-1.5 h-4 w-4" />Share your work</Button></Link></div>
               ) : <div className="divide-y divide-border/60">{followers.map(person => <PersonRow key={person.id} user={person} />)}</div>}
             </CardContent>
           </Card>
@@ -125,7 +125,7 @@ export default function Network() {
           </CardHeader>
           <CardContent>
             {loading ? <div className="space-y-3">{[1, 2, 3].map(row => <div key={row} className="h-14 animate-pulse rounded-xl bg-muted" />)}</div> : suggested.length === 0 ? (
-              <p className="py-6 text-sm text-muted-foreground">No new suggestions right now.</p>
+              <div className="flex flex-col items-center text-center py-16 px-4"><div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3"><UserRoundCheck className="h-5 w-5 text-muted-foreground" /></div><p className="text-sm font-medium">No new suggestions right now.</p><p className="text-xs text-muted-foreground mt-1">Try exploring topics to discover more people.</p><Link href="/explore"><Button size="sm" variant="outline" className="mt-4 rounded-xl"><Users className="mr-1.5 h-4 w-4" />Explore topics</Button></Link></div>
             ) : <div className="divide-y divide-border/60">{suggested.map(person => (
               <PersonRow
                 key={person.id}

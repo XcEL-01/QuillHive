@@ -251,7 +251,7 @@ function CreatorDiscovery() {
           </div>
         )}
         {!loading && recommended.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-8">{t('explore.allCaughtUp')}</p>
+          <div className="flex flex-col items-center text-center py-16 px-4"><div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3"><UserPlus className="w-5 h-5 text-muted-foreground" /></div><p className="text-sm font-medium">{t('explore.allCaughtUp')}</p><p className="text-xs text-muted-foreground mt-1">You are caught up for now. Explore topics to find more creators.</p><Link href="/explore"><Button size="sm" variant="outline" className="mt-4 rounded-xl"><Hash className="w-4 h-4 mr-1.5" />Explore topics</Button></Link></div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {recommended.map(creator => (

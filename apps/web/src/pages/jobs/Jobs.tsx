@@ -433,6 +433,7 @@ export default function Jobs() {
               <Briefcase className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="text-xl font-medium mb-2">No opportunities found</h3>
               <p className="text-muted-foreground">Check back later or post your own.</p>
+              <Link href="/jobs/post"><Button className="mt-5 rounded-xl"><Briefcase className="w-4 h-4 mr-2" />Post an opportunity</Button></Link>
             </div>
           )}
         </div>

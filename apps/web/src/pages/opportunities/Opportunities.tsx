@@ -71,7 +71,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
   };
 
   return (
-    <div className="group rounded-2xl border border-border bg-card hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden">
+    <div data-card className="group rounded-2xl border border-border bg-card hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-5 flex items-start gap-4">
         <Link href={`/profile/${user.username}`}>

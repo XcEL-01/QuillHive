@@ -150,6 +150,25 @@
   }
 }
 
+button, a, [role="button"] {
+  transition: transform 0.12s ease, opacity 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
+.card, [data-card] {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover, [data-card]:hover {
+    box-shadow: 0 4px 6px -1px var(--elevate-2), 0 2px 4px -2px var(--elevate-2);
+    transform: translateY(-0.125rem);
+  }
+}
+
 /* TipTap Editor Styles */
 .ProseMirror {
   > * + * {

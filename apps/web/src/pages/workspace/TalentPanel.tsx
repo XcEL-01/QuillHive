@@ -55,7 +55,7 @@ function CreatorCard({ creator, checkoutEnabled, onCheckout }: { creator: Creato
   };
 
   return (
-    <div className="group rounded-2xl border border-border bg-card hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col overflow-hidden">
+    <div data-card className="group rounded-2xl border border-border bg-card hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col overflow-hidden">
       <div className="p-4 flex items-start gap-3">
         <Link href={`/profile/${user.username}`}>
           <Avatar className="h-12 w-12 shrink-0 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">

@@ -114,7 +114,7 @@ function BestMatchesSection({ matchMap }: { matchMap: Map<number, { score: numbe
         {matches.map(job => {
           const applyHref = job.applyUrl || (job.applyEmail ? `mailto:${job.applyEmail}` : undefined);
           return (
-            <div key={job.id} className="bg-card border border-primary/20 rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm group flex flex-col gap-3">
+            <div key={job.id} data-card className="bg-card border border-primary/20 rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm group flex flex-col gap-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -212,7 +212,7 @@ function AvailableCreatorsBoard() {
           </div>
         ))}
         {!loading && creators.map(creator => (
-          <div key={creator.id} className="bg-card border border-border/60 rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors group">
+          <div key={creator.id} data-card className="bg-card border border-border/60 rounded-2xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors group">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${creator.username}`}>
                 <Avatar className="w-12 h-12 border border-border group-hover:border-primary/40 transition-colors">

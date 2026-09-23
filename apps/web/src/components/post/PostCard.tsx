@@ -755,6 +755,7 @@ export function PostCard({ post: initialPost, compact = false }: { post: Enriche
       <motion.article
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
+        data-card
         className={`bg-card border rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 ${
           post.isOfficialPost
             ? 'border-blue-500/30 hover:border-blue-400/50 shadow-blue-500/5'

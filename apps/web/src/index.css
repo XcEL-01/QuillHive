@@ -158,6 +158,24 @@ button:active, [role="button"]:active {
   transform: scale(0.97);
 }
 
+@keyframes landing-rise {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-rise {
+  animation: landing-rise 0.7s ease-out both;
+}
+
+.landing-rise-delay { animation-delay: 120ms; }
+.landing-rise-delay-1 { animation-delay: 80ms; }
+.landing-rise-delay-2 { animation-delay: 160ms; }
+.landing-rise-delay-3 { animation-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-rise { animation: none; }
+}
+
 .card, [data-card] {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }

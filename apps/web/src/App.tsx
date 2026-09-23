@@ -453,9 +453,9 @@ export default function App() {
 
 function AppShell() {
   const [location] = useLocation();
-  const showFooter = isPublicRoute(location) || location === "/explore";
-  const maintenanceMode = useFeature("maintenance_mode");
   const { user } = useAuthStore();
+  const showFooter = isPublicRoute(location) || location === "/explore" || (location === "/" && !user);
+  const maintenanceMode = useFeature("maintenance_mode");
   const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
   const blockedByMaintenance = maintenanceMode && !isAdminUser;
 

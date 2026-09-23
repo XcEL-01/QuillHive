@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { PenTool, UserPlus, BookOpen, Check, TrendingUp, Rocket, Sparkles, ArrowUpRight, BriefcaseBusiness, Users, Quote } from 'lucide-react';
+import { PenTool, UserPlus, BookOpen, Check, TrendingUp, Rocket, Sparkles, ArrowUpRight, BriefcaseBusiness, Users, Compass, Flame, Search, ShieldCheck, Feather } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuthStore } from '@/store/auth';
 import { useSocketConnection } from '@/hooks/useSocket';
@@ -368,84 +368,129 @@ export default function Home() {
   const { user } = useAuthStore();
 
   if (!user) {
+    const features = [
+      { icon: ShieldCheck, label: 'Trust and growth score', text: 'See the signals behind your creator profile: consistency, engagement, and the work you are building over time.' },
+      { icon: PenTool, label: 'Publish your thinking', text: 'Write posts, share sparks, and shape a public body of work that feels like more than a feed.' },
+      { icon: Compass, label: 'Be easier to discover', text: 'Explore topics, follow new voices, and give thoughtful work a better chance to travel.' },
+      { icon: BriefcaseBusiness, label: 'Turn proof into opportunity', text: 'Use your profile, portfolio, workspace, and collaboration tools to make your next brief easier to find.' },
+      { icon: Flame, label: 'Keep your practice visible', text: 'Build a writing streak, collect milestones, and make showing up part of your creative rhythm.' },
+    ];
+
     return (
       <PublicLayout>
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_85%_8%,hsl(263_70%_41%_/_0.12),transparent_30%),linear-gradient(180deg,hsl(0_0%_100%_/_0.4),transparent_35%)]">
           <section className="max-w-6xl mx-auto px-5 sm:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
-            <div className="grid lg:grid-cols-[1.05fr_.95fr] gap-14 lg:gap-20 items-center">
-              <div className="relative z-10">
+            <div className="grid lg:grid-cols-[1.04fr_.96fr] gap-14 lg:gap-20 items-center">
+              <div className="relative z-10 landing-rise">
                 <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary mb-7">
-                  <span className="h-px w-8 bg-primary" /> The creative network with momentum
+                  <span className="h-px w-8 bg-primary" /> For work still becoming
                 </p>
                 <h1 className="max-w-3xl text-5xl sm:text-6xl lg:text-7xl leading-[0.98] font-serif font-semibold tracking-[-0.04em] text-foreground">
-                  Make your work <span className="text-primary italic">impossible</span> to overlook.
+                  Your voice deserves a place to <span className="text-primary italic">grow.</span>
                 </h1>
                 <p className="max-w-xl mt-7 text-lg leading-relaxed text-muted-foreground">
-                  Publish the work you care about, build a visible body of proof, and meet the people looking for your exact point of view.
+                  Your quill is your voice. Your hive is where it grows. Publish your ideas, make your progress visible, and find the people and opportunities that fit your work.
                 </p>
                 <div className="flex flex-wrap items-center gap-3 mt-9">
                   <Link href="/login?mode=register" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform">
-                    Start building <ArrowUpRight className="w-4 h-4" />
+                    Get started <ArrowUpRight className="w-4 h-4" />
                   </Link>
-                  <Link href="/explore" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full border border-border bg-card/70 font-semibold hover:border-primary/50 transition-colors">
-                    Explore the hive
+                  <Link href="/login" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full border border-border bg-card/70 font-semibold hover:border-primary/50 transition-colors">
+                    Log in
                   </Link>
-                </div>
-                <div className="flex items-center gap-4 mt-10 text-sm text-muted-foreground">
-                  <div className="flex -space-x-2">
-                    {['/images/logo-icon.png', '/images/default-cover.png', '/images/logo-icon-192.png'].map((src) => (
-                      <img key={src} src={src} alt="" className="w-8 h-8 rounded-full border-2 border-background object-cover" />
-                    ))}
-                  </div>
-                  <span><strong className="text-foreground">10,000+</strong> creators are finding their next chapter.</span>
+                  <Link href="/explore" className="inline-flex items-center gap-2 px-5 py-3.5 text-primary font-semibold hover:gap-3 transition-all">
+                    Explore <Compass className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
 
-              <div className="relative min-h-[430px] lg:min-h-[520px]">
+              <div className="relative min-h-[410px] lg:min-h-[500px] landing-rise landing-rise-delay">
                 <div className="absolute inset-4 sm:inset-8 rounded-[2rem] overflow-hidden bg-[#25133d] shadow-2xl shadow-primary/20">
-                  <img src="/images/auth-bg.png" alt="Warm abstract ink and paint texture" className="absolute inset-0 h-full w-full object-cover opacity-80" />
+                  <img src="/images/auth-bg.png" alt="Ink and paint texture" className="absolute inset-0 h-full w-full object-cover opacity-80" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1a1028] via-[#33184d]/25 to-transparent" />
                   <div className="absolute top-6 left-6 right-6 flex items-center justify-between text-white/80 text-xs uppercase tracking-[0.14em]">
                     <span>Field notes / 01</span><span>QuillHive</span>
                   </div>
                   <div className="absolute left-7 right-7 bottom-8 text-white">
-                    <p className="text-sm text-white/70 mb-3">A place for unfinished ideas, sharp opinions, and the work after the work.</p>
-                    <p className="text-3xl sm:text-4xl font-serif leading-tight">Your next opportunity starts with being seen.</p>
+                    <p className="text-sm text-white/70 mb-3">A home for essays, experiments, questions, and the work after the work.</p>
+                    <p className="text-3xl sm:text-4xl font-serif leading-tight">Make something worth finding.</p>
                   </div>
                 </div>
-                <div className="absolute -left-1 sm:-left-5 top-14 bg-card border border-border/70 rounded-2xl p-4 shadow-xl max-w-[190px]">
-                  <div className="flex items-center gap-2 text-primary mb-2"><TrendingUp className="w-4 h-4" /><span className="text-xs font-semibold">Your momentum</span></div>
-                  <p className="text-2xl font-semibold">+42%</p><p className="text-xs text-muted-foreground mt-1">more profile discovery this month</p>
+                <div className="absolute -left-1 sm:-left-5 top-12 bg-card border border-border/70 rounded-2xl p-4 shadow-xl max-w-[200px]">
+                  <div className="flex items-center gap-2 text-primary mb-2"><Feather className="w-4 h-4" /><span className="text-xs font-semibold">Your body of work</span></div>
+                  <p className="text-sm leading-relaxed text-muted-foreground">A profile that grows as you publish, connect, and keep going.</p>
                 </div>
-                <div className="absolute -right-1 sm:-right-5 bottom-14 bg-[#fff9ee] text-[#2d2117] border border-[#eadbc2] rounded-2xl p-4 shadow-xl max-w-[205px]">
-                  <Quote className="w-5 h-5 text-[#e58a32] mb-2" /><p className="text-sm font-medium leading-relaxed">“This is where my portfolio finally feels like a living thing.”</p>
+                <div className="absolute -right-1 sm:-right-5 bottom-12 bg-[#fff9ee] text-[#2d2117] border border-[#eadbc2] rounded-2xl p-4 shadow-xl max-w-[205px]">
+                  <Search className="w-5 h-5 text-[#e58a32] mb-2" /><p className="text-sm font-medium leading-relaxed">Be found for the work you actually want to do.</p>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="border-y border-border/70 bg-card/50">
-            <div className="max-w-6xl mx-auto px-5 sm:px-8 py-14 grid sm:grid-cols-3 gap-10">
-              {[
-                { icon: PenTool, title: 'Publish with purpose', text: 'Turn notes, essays, projects, and experiments into a body of work people can follow.' },
-                { icon: Users, title: 'Find your people', text: 'Build a thoughtful network around shared interests, not noisy metrics.' },
-                { icon: BriefcaseBusiness, title: 'Get the right brief', text: 'Let opportunities find the evidence that makes you the right person for the work.' },
-              ].map(({ icon: Icon, title, text }) => (
-                <div key={title}>
-                  <Icon className="w-5 h-5 text-primary mb-4" />
-                  <h2 className="text-xl font-serif font-semibold mb-2">{title}</h2>
+          <section id="why" className="border-y border-border/70 bg-card/50">
+            <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 lg:py-20 grid lg:grid-cols-[.8fr_1.2fr] gap-12 lg:gap-24 items-start">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary mb-3">Why QuillHive exists</p>
+                <h2 className="text-3xl sm:text-4xl font-serif font-semibold leading-tight">The internet is full of noise. Your work needs a trail.</h2>
+              </div>
+              <div className="space-y-5 text-muted-foreground leading-relaxed">
+                <p>Early work is easy to lose: a draft in one place, a project in another, a useful conversation disappearing under a scroll. QuillHive brings those pieces into a public, growing record.</p>
+                <p>It is an early platform, still being shaped with the people who use it. There are no inflated numbers here. Just tools for publishing, discovery, trust, practice, and the next opportunity.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="features" className="max-w-6xl mx-auto px-5 sm:px-8 py-20 lg:py-24">
+            <div className="max-w-2xl mb-12">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">The working surface</p>
+              <h2 className="text-3xl sm:text-4xl font-serif font-semibold">Small signals. A stronger creative identity.</h2>
+              <p className="mt-4 text-muted-foreground leading-relaxed">QuillHive gives your practice somewhere to accumulate, so discovery is connected to what you make.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+              {features.map(({ icon: Icon, label, text }, index) => (
+                <article key={label} className={`landing-rise landing-rise-delay-${Math.min(index + 1, 3)}`}>
+                  <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-5"><Icon className="w-5 h-5" /></div>
+                  <h3 className="text-xl font-serif font-semibold mb-2">{label}</h3>
                   <p className="text-sm leading-relaxed text-muted-foreground">{text}</p>
-                </div>
+                </article>
               ))}
             </div>
           </section>
 
-          <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 lg:py-20 flex flex-col sm:flex-row sm:items-end justify-between gap-8">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">A better home for your signal</p>
-              <h2 className="text-3xl sm:text-4xl font-serif font-semibold max-w-xl">Make the archive. Build the reputation.</h2>
+          <section id="how-it-works" className="border-y border-border/70 bg-[#21112f] text-white">
+            <div className="max-w-6xl mx-auto px-5 sm:px-8 py-20 lg:py-24">
+              <div className="max-w-2xl mb-12">
+                <p className="text-xs uppercase tracking-[0.18em] text-violet-200 mb-3">How it works</p>
+                <h2 className="text-3xl sm:text-4xl font-serif font-semibold">Start with one honest signal.</h2>
+              </div>
+              <div className="grid md:grid-cols-3 gap-10 lg:gap-16">
+                {[
+                  { number: '01', title: 'Set your point of view', text: 'Create a profile that says what you care about, what you make, and where you are headed.' },
+                  { number: '02', title: 'Publish and connect', text: 'Share posts and sparks, follow thoughtful voices, and take part in conversations around real interests.' },
+                  { number: '03', title: 'Let the record compound', text: 'Keep publishing, use your workspace, and make it easier for the right people to discover your work.' },
+                ].map(({ number, title, text }) => (
+                  <div key={number} className="border-t border-white/20 pt-5">
+                    <span className="text-sm font-mono text-violet-200">{number}</span>
+                    <h3 className="text-xl font-serif font-semibold mt-5 mb-2">{title}</h3>
+                    <p className="text-sm leading-relaxed text-white/65">{text}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Link href="/login?mode=register" className="inline-flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all">Create your free profile <ArrowUpRight className="w-4 h-4" /></Link>
+          </section>
+
+          <section className="max-w-6xl mx-auto px-5 sm:px-8 py-20 lg:py-28">
+            <div className="relative overflow-hidden rounded-[2rem] border border-primary/20 bg-gradient-to-br from-primary/15 via-card to-amber-500/10 px-6 py-14 sm:px-12 sm:py-16 text-center">
+              <div className="relative max-w-2xl mx-auto">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary mb-4">Make the first mark</p>
+                <h2 className="text-4xl sm:text-5xl font-serif font-semibold leading-tight">Your next chapter can start small.</h2>
+                <p className="mt-5 text-muted-foreground leading-relaxed">Bring one idea, one project, or one question. Give it a place to grow.</p>
+                <div className="flex flex-wrap justify-center items-center gap-3 mt-8">
+                  <Link href="/login?mode=register" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform">Get started <ArrowUpRight className="w-4 h-4" /></Link>
+                  <Link href="/explore" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full border border-border bg-card/70 font-semibold hover:border-primary/50 transition-colors">Explore first</Link>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </PublicLayout>

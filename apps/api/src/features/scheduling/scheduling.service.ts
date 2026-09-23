@@ -333,7 +333,7 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
   const { db: _db } = await import("@workspace/db");
   const { usersTable } = await import("@workspace/db/schema");
   const { eq, and } = await import("drizzle-orm");
-  const { getPublicAppUrl, sendEmail } = await import("../email/email.service");
+  const { getPublicAppUrl, getEmailUnsubscribeUrl, sendEmail } = await import("../email/email.service");
   const { getWeeklyReport } = await import("../analytics/topicAnalytics.service");
 
   const creators = await _db
@@ -342,11 +342,13 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
       email: usersTable.email,
       displayName: usersTable.displayName,
       username: usersTable.username,
+      emailDigestEnabled: usersTable.emailDigestEnabled,
     })
     .from(usersTable)
     .where(
       and(
         eq(usersTable.emailVerified, true),
+        eq(usersTable.emailDigestEnabled, true),
         eq(usersTable.isDeleted, false),
       )
     )
@@ -387,9 +389,18 @@ async function sendWeeklyCreatorDigests(): Promise<void> {
         `- The QuillHive Team`,
         ``,
         `To unsubscribe from weekly digests, visit ${appUrl}/settings`,
+        `Unsubscribe now: ${getEmailUnsubscribeUrl(creator.id)}`,
       ].filter(line => line !== undefined).join("\n");
 
-      const result = await sendEmail({ to: creator.email, subject, text });
+        const result = await sendEmail({
+          to: creator.email,
+          subject,
+          text,
+          headers: {
+            "List-Unsubscribe": `<${getEmailUnsubscribeUrl(creator.id)}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
+        });
       if (result.ok) sent += 1;
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch { /* skip this creator on error */ }
@@ -404,6 +415,7 @@ async function sendNurtureEmails(): Promise<void> {
   const { sql: _sql, eq, and, count } = await import("drizzle-orm");
   const { sendEmail } = await import("../email/email.service");
   const { day3NurtureHtml, day7NurtureHtml } = await import("../email/email.templates");
+  const { getEmailUnsubscribeUrl } = await import("../email/email.service");
 
   const appUrl = (process.env.PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:5173").replace(/\/$/, "");
   let sent = 0;
@@ -413,6 +425,7 @@ async function sendNurtureEmails(): Promise<void> {
     SELECT id, email, display_name as "displayName", username
     FROM users
     WHERE email_verified = true
+      AND email_digest_enabled = true
       AND is_deleted = false
       AND created_at BETWEEN NOW() - INTERVAL '3 days 30 minutes' AND NOW() - INTERVAL '2 days 23 hours 30 minutes'
     LIMIT 200
@@ -423,8 +436,8 @@ async function sendNurtureEmails(): Promise<void> {
       const result = await sendEmail({
         to: u.email,
         subject: `${u.displayName}, day 3 check-in from QuillHive 👋`,
-        html: day3NurtureHtml({ displayName: u.displayName, username: u.username, appUrl }),
-        text: `Hi ${u.displayName},\n\nIt's been 3 days! Members who share in their first week are 3× more likely to build lasting connections.\n\nShare something today: ${appUrl}/write\n\n- QuillHive`,
+        html: day3NurtureHtml({ displayName: u.displayName, username: u.username, appUrl, unsubscribeUrl: getEmailUnsubscribeUrl(u.id) }),
+        text: `Hi ${u.displayName},\n\nIt's been 3 days! Members who share in their first week are 3× more likely to build lasting connections.\n\nShare something today: ${appUrl}/write\n\nUnsubscribe: ${getEmailUnsubscribeUrl(u.id)}\n\n- QuillHive`,
       });
       if (result.ok) sent += 1;
       await new Promise((r) => setTimeout(r, 80));
@@ -438,6 +451,7 @@ async function sendNurtureEmails(): Promise<void> {
            (SELECT COUNT(*) FROM follows f WHERE f.following_id = u.id) as follower_count
     FROM users u
     WHERE u.email_verified = true
+      AND u.email_digest_enabled = true
       AND u.is_deleted = false
       AND u.created_at BETWEEN NOW() - INTERVAL '7 days 30 minutes' AND NOW() - INTERVAL '6 days 23 hours 30 minutes'
     LIMIT 200
@@ -453,8 +467,9 @@ async function sendNurtureEmails(): Promise<void> {
           postCount: parseInt(u.post_count, 10) || 0,
           followerCount: parseInt(u.follower_count, 10) || 0,
           appUrl,
+          unsubscribeUrl: getEmailUnsubscribeUrl(u.id),
         }),
-        text: `One week in! You've published ${u.post_count} posts and earned ${u.follower_count} followers. Keep going: ${appUrl}/dashboard\n\n- QuillHive`,
+        text: `One week in! You've published ${u.post_count} posts and earned ${u.follower_count} followers. Keep going: ${appUrl}/dashboard\n\nUnsubscribe: ${getEmailUnsubscribeUrl(u.id)}\n\n- QuillHive`,
       });
       if (result.ok) sent += 1;
       await new Promise((r) => setTimeout(r, 80));

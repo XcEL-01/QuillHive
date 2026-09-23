@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import type { Request } from "express";
 import { db } from "@workspace/db";
 import { blockedEmailAttemptsTable, emailVerificationTokensTable, usersTable } from "@workspace/db/schema";
@@ -112,6 +112,28 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function getEmailPreferenceSecret(): string {
+  return process.env.EMAIL_PREFERENCE_SECRET || process.env.JWT_SECRET || "quillhive-development-email-preferences";
+}
+
+export function createEmailUnsubscribeToken(userId: number): string {
+  const payload = String(userId);
+  const signature = createHmac("sha256", getEmailPreferenceSecret()).update(payload).digest("hex");
+  return `${payload}.${signature}`;
+}
+
+export function getEmailUnsubscribeUrl(userId: number): string {
+  return `${getPublicAppUrl()}/api/email/unsubscribe?token=${createEmailUnsubscribeToken(userId)}`;
+}
+
+export function verifyEmailUnsubscribeToken(token: string): number | null {
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature || !/^\d+$/.test(payload) || !/^[a-f\d]{64}$/i.test(signature)) return null;
+  const expected = createHmac("sha256", getEmailPreferenceSecret()).update(payload).digest("hex");
+  if (!timingSafeEqual(Buffer.from(signature, "hex"), Buffer.from(expected, "hex"))) return null;
+  return Number(payload) > 0 ? Number(payload) : null;
+}
+
 export async function createEmailVerification(userId: number) {
   const token = randomBytes(32).toString("hex");
   await db.insert(emailVerificationTokensTable).values({
@@ -143,6 +165,7 @@ export interface SendEmailOptions {
   html?: string;
   text?: string;
   from?: string;
+  headers?: Record<string, string>;
 }
 
 export function getPublicAppUrl(): string {
@@ -164,7 +187,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ ok: boolean; 
       const r = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text }),
+        body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text, headers: opts.headers }),
       });
       if (!r.ok) return { ok: false, provider: "resend", error: `Resend rejected the email (HTTP ${r.status}).` };
       return { ok: true, provider: "resend" };
@@ -184,7 +207,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ ok: boolean; 
         secure: process.env.SMTP_SECURE === "true",
         auth: { user: smtpUser, pass: smtpPass },
       });
-      await transporter.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text });
+      await transporter.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text, headers: opts.headers });
       return { ok: true, provider: "smtp" };
     } catch (error) {
       return { ok: false, provider: "smtp", error: error instanceof Error ? `SMTP delivery failed: ${error.message}` : "SMTP delivery failed." };

@@ -2,7 +2,7 @@ const brand = process.env.BRAND_NAME || "QuillHive";
 const domain = process.env.MAIL_DOMAIN || "quillhive.app";
 const appUrl = process.env.PUBLIC_APP_URL || `https://${domain}`;
 
-function baseLayout(title: string, previewText: string, body: string): string {
+function baseLayout(title: string, previewText: string, body: string, unsubscribeUrl?: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,7 +28,7 @@ function baseLayout(title: string, previewText: string, body: string): string {
       <!-- Footer -->
       <tr><td style="padding:24px 0;text-align:center;">
         <p style="margin:0;font-size:12px;color:#71717a;">
-          © ${new Date().getFullYear()} ${brand} · <a href="${appUrl}/settings" style="color:#71717a;">Unsubscribe</a>
+          © ${new Date().getFullYear()} ${brand}${unsubscribeUrl ? ` · <a href="${unsubscribeUrl}" style="color:#71717a;">Unsubscribe from these emails</a>` : ""}
         </p>
       </td></tr>
     </table>
@@ -102,6 +102,7 @@ export function weeklyDigestEmailHtml(opts: {
   topPosts: Array<{ title: string; url: string; appreciationsCount: number; viewsCount: number }>;
   followingCount: number;
   profileUrl: string;
+  unsubscribeUrl?: string;
 }): string {
   const postRows = opts.topPosts
     .slice(0, 5)
@@ -124,7 +125,7 @@ export function weeklyDigestEmailHtml(opts: {
     </table>
     <div style="text-align:center;margin-top:24px;">${primaryButton(opts.profileUrl, "Open " + brand)}</div>
   `;
-  return baseLayout(`Your ${brand} weekly digest`, `Top posts from creators you follow on ${brand}`, body);
+  return baseLayout(`Your ${brand} weekly digest`, `Top posts from creators you follow on ${brand}`, body, opts.unsubscribeUrl);
 }
 
 export function welcomeEmailHtml(opts: { displayName: string; username: string; appUrl?: string; verificationUrl?: string }): string {
@@ -175,7 +176,7 @@ export function welcomeEmailText(opts: { displayName: string; username: string; 
   return `Welcome to ${brand}, ${opts.displayName}!\n\nPlease verify your email before signing in: ${opts.verificationUrl || `${url}/write`}\n\nYour quill is your voice. Your hive is where it grows. Grow, get discovered, and find real opportunities - for everyone.\n\n✍️  Publish your first post: ${url}/write\n🔥  Build your writing streak\n📊  Visit your dashboard: ${url}/dashboard\n🌐  Explore people: ${url}/explore\n\nYour profile: ${url}/profile/${opts.username}\n\n- The ${brand} team`;
 }
 
-export function day3NurtureHtml(opts: { displayName: string; username: string; appUrl?: string }): string {
+export function day3NurtureHtml(opts: { displayName: string; username: string; appUrl?: string; unsubscribeUrl?: string }): string {
   const url = opts.appUrl || appUrl;
   const body = `
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#fafafa;">Day 3 check-in, ${opts.displayName} 👋</h1>
@@ -190,10 +191,10 @@ export function day3NurtureHtml(opts: { displayName: string; username: string; a
     </ul>
     <div style="text-align:center;">${primaryButton(`${url}/write`, "Write something today")}</div>
   `;
-  return baseLayout(`Day 3: ${opts.displayName}, don't miss this window`, `Creators who post in week 1 grow 3× faster.`, body);
+  return baseLayout(`Day 3: ${opts.displayName}, don't miss this window`, `Creators who post in week 1 grow 3× faster.`, body, opts.unsubscribeUrl);
 }
 
-export function day7NurtureHtml(opts: { displayName: string; postCount: number; followerCount: number; appUrl?: string }): string {
+export function day7NurtureHtml(opts: { displayName: string; postCount: number; followerCount: number; appUrl?: string; unsubscribeUrl?: string }): string {
   const url = opts.appUrl || appUrl;
   const hasPosts = opts.postCount > 0;
   const body = `
@@ -212,5 +213,5 @@ export function day7NurtureHtml(opts: { displayName: string; postCount: number; 
     `}
     <div style="text-align:center;">${primaryButton(`${url}/dashboard`, "View your Growth Score")}</div>
   `;
-  return baseLayout(`Week 1 wrap-up - how are you doing?`, `Your first week on ${brand} - let's see your progress.`, body);
+  return baseLayout(`Week 1 wrap-up - how are you doing?`, `Your first week on ${brand} - let's see your progress.`, body, opts.unsubscribeUrl);
 }

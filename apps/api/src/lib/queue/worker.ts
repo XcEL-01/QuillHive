@@ -82,6 +82,7 @@ async function processJob(job: Job): Promise<void> {
           userTrustScoresTable, writingStreaksTable, notificationsTable,
         } = await import("@workspace/db/schema");
         const { eq, and, gte, gt, sql, desc, count } = await import("drizzle-orm");
+        const { getEmailUnsubscribeUrl } = await import("../../features/email/email.service");
 
         const [user] = await db
           .select({
@@ -193,6 +194,7 @@ async function processJob(job: Job): Promise<void> {
 
         const appUrl = process.env.APP_URL ?? "https://quillhive.app";
         const name = user.displayName ?? user.username;
+        const unsubscribeUrl = getEmailUnsubscribeUrl(user.id);
 
         const html = `<!DOCTYPE html>
 <html lang="en">
@@ -273,7 +275,7 @@ async function processJob(job: Job): Promise<void> {
   </div>
   <div class="footer">
     <p>You're receiving this because you have weekly reports enabled.<br />
-    <a href="${appUrl}/settings">Manage email preferences</a> · <a href="${appUrl}/profile/${user.username}">Your profile</a></p>
+    <a href="${unsubscribeUrl}">Unsubscribe from weekly reports</a> · <a href="${appUrl}/settings">Manage email preferences</a> · <a href="${appUrl}/profile/${user.username}">Your profile</a></p>
   </div>
 </div>
 </body>
@@ -284,6 +286,10 @@ async function processJob(job: Job): Promise<void> {
           to: user.email,
           subject: `Your QuillHive recap: ${weekViews} views${newFollowers > 0 ? `, ${newFollowers} new followers` : ""}`,
           html,
+          headers: {
+            "List-Unsubscribe": `<${unsubscribeUrl}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         logger.info({ userId, weekViews, newFollowers }, "Weekly report sent");

@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Send, ShieldAlert, Ban, ChevronDown, ChevronUp } from "lucide-react";
 import type { AdminProps } from "./types";
 import { useAdminFetch } from "../hooks/useAdminFetch";
 
@@ -17,7 +17,27 @@ export default function AdminUsers({ token, toast }: AdminProps) {
   const [noticeUser, setNoticeUser] = useState<any | null>(null);
   const [notice, setNotice] = useState("");
   const [sending, setSending] = useState(false);
+  const [clusters, setClusters] = useState<any[]>([]);
+  const [clustersLoading, setClustersLoading] = useState(true);
+  const [openCluster, setOpenCluster] = useState<string | null>(null);
+  const [banningCluster, setBanningCluster] = useState<string | null>(null);
   useEffect(() => { setLoading(true); void fetchAdmin(`/api/admin/users?page=${page}&limit=25`).then((d) => setUsers(d.users ?? d)).catch((err) => toast({ title: "Could not load users", description: err.message, variant: "destructive" })).finally(() => setLoading(false)); }, [fetchAdmin, toast, page]);
+  useEffect(() => { setClustersLoading(true); void fetchAdmin("/api/admin/suspicious-clusters").then((d) => setClusters(d.clusters ?? [])).catch((err) => toast({ title: "Could not load suspicious clusters", description: err.message, variant: "destructive" })).finally(() => setClustersLoading(false)); }, [fetchAdmin, toast]);
+
+  const banAll = async (cluster: any) => {
+    const activeAccounts = cluster.accounts.filter((account: any) => !account.isBanned);
+    if (!activeAccounts.length) return;
+    setBanningCluster(cluster.id);
+    try {
+      await Promise.all(activeAccounts.map((account: any) => fetchAdmin(`/api/admin/users/${account.id}/ban`, { method: "POST" })));
+      setClusters((current) => current.map((item) => item.id === cluster.id ? { ...item, accounts: item.accounts.map((account: any) => ({ ...account, isBanned: true })) } : item));
+      toast({ title: "Cluster accounts banned", description: `${activeAccounts.length} account${activeAccounts.length === 1 ? "" : "s"} banned.` });
+    } catch (err: any) {
+      toast({ title: "Could not ban cluster", description: err.message, variant: "destructive" });
+    } finally {
+      setBanningCluster(null);
+    }
+  };
   const sendNotice = async () => {
     if (!noticeUser || !notice.trim()) return;
     setSending(true);
@@ -34,6 +54,13 @@ export default function AdminUsers({ token, toast }: AdminProps) {
   };
   const filtered = users.filter((u) => `${u.displayName} ${u.username} ${u.email}`.toLowerCase().includes(search.toLowerCase()));
   return <>
+    <section className="space-y-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3"><ShieldAlert className="mt-0.5 h-5 w-5 text-amber-600" /><div><h2 className="text-sm font-semibold">Suspicious clusters</h2><p className="mt-1 text-xs text-muted-foreground">Three or more accounts sharing a signup IP hash within 24 hours.</p></div></div>
+        <Badge variant="outline" className="border-amber-500/40">{clusters.length} flagged</Badge>
+      </div>
+      {clustersLoading ? <div className="h-16 animate-pulse rounded-lg bg-muted" /> : clusters.length === 0 ? <p className="rounded-lg border border-dashed border-border p-5 text-center text-sm text-muted-foreground">No suspicious account clusters found.</p> : <div className="space-y-3">{clusters.map((cluster) => { const expanded = openCluster === cluster.id; return <div key={cluster.id} className="rounded-lg border border-border/70 bg-background"><div className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="text-sm font-semibold">{cluster.accountCount} accounts in one 24-hour window</p><p className="mt-1 text-xs text-muted-foreground">Started {new Date(cluster.firstCreatedAt).toLocaleString()}</p></div><div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={() => setOpenCluster(expanded ? null : cluster.id)}>{expanded ? <ChevronUp className="mr-1.5 h-4 w-4" /> : <ChevronDown className="mr-1.5 h-4 w-4" />}Review individually</Button><Button variant="destructive" size="sm" disabled={banningCluster === cluster.id || cluster.accounts.every((account: any) => account.isBanned)} onClick={() => void banAll(cluster)}><Ban className="mr-1.5 h-4 w-4" />{banningCluster === cluster.id ? "Banning..." : "Ban all"}</Button></div></div>{expanded && <div className="border-t border-border/70 divide-y divide-border/60">{cluster.accounts.map((account: any) => <div key={account.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"><div><p className="text-sm font-medium">{account.displayName || account.username}</p><p className="text-xs text-muted-foreground">@{account.username} · Joined {new Date(account.createdAt).toLocaleString()}</p></div><div className="flex items-center gap-2">{account.usedReferralCode && <Badge variant="outline" className="text-[10px]">Referral used</Badge>}<Badge variant={account.isBanned ? "destructive" : "secondary"} className="text-[10px]">{account.isBanned ? "Banned" : "Active"}</Badge></div></div>)}</div>}</div>; })}</div>}
+    </section>
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, handle, or email" className="pl-9" /></div>

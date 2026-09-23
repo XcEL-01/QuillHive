@@ -94,13 +94,52 @@ export async function consumeInvite(code: string, newUserId: number): Promise<nu
   void (async () => {
     try {
       const { notify } = await import("../notifications/notification.service");
-      const { usersTable, userTrustScoresTable } = await import("@workspace/db/schema");
-      const { eq: eqOp, count: countFn, avg: avgFn } = await import("drizzle-orm");
+      const { usersTable, userTrustScoresTable, loginEventsTable } = await import("@workspace/db/schema");
+      const { eq: eqOp, and: andOp, or: orOp, gte: gteFn, count: countFn, avg: avgFn } = await import("drizzle-orm");
       const [newUser] = await db
-        .select({ username: usersTable.username, displayName: usersTable.displayName })
+        .select({ username: usersTable.username, displayName: usersTable.displayName, signupIpHash: usersTable.signupIpHash })
         .from(usersTable)
         .where(eqOp(usersTable.id, newUserId));
       const name = newUser?.displayName || newUser?.username || "Someone";
+
+      const [inviter] = await db
+        .select({ signupIpHash: usersTable.signupIpHash })
+        .from(usersTable)
+        .where(eqOp(usersTable.id, invite.createdBy));
+      const recentLoginWindow = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      const [matchingLogin] = newUser?.signupIpHash
+        ? await db
+          .select({ id: loginEventsTable.id })
+          .from(loginEventsTable)
+          .where(andOp(
+            eqOp(loginEventsTable.userId, invite.createdBy),
+            eqOp(loginEventsTable.ipHash, newUser.signupIpHash),
+            gteFn(loginEventsTable.createdAt, recentLoginWindow),
+          ))
+          .limit(1)
+        : [];
+      const suspicious = Boolean(newUser?.signupIpHash) && (
+        inviter?.signupIpHash === newUser.signupIpHash || Boolean(matchingLogin)
+      );
+
+      if (suspicious) {
+        const admins = await db
+          .select({ id: usersTable.id })
+          .from(usersTable)
+          .where(orOp(
+            eqOp(usersTable.role, "admin"),
+            eqOp(usersTable.role, "super_admin"),
+          ));
+        await Promise.all(admins.map((admin) => notify({
+          userId: admin.id,
+          actorId: 0,
+          type: "admin_alert",
+          title: "Suspicious referral flagged",
+          message: `Referral from user ${invite.createdBy} matched the signup IP of the referred account. Reward withheld pending review.`,
+          url: "/admin",
+        })));
+        return;
+      }
 
       // Count users linked to this inviter and include their trust in the reward.
       const [{ total, averageTrust }] = await db

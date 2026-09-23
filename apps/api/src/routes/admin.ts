@@ -6,7 +6,7 @@ import {
   behaviorEventsTable, reputationEventsTable, blockedEmailAttemptsTable, translationCacheTable,
   boostRequestsTable, challengesTable,
 } from "@workspace/db/schema";
-import { eq, desc, and, count, ne, lt, sql, inArray, or, gt, gte } from "drizzle-orm";
+import { eq, desc, asc, and, count, ne, lt, sql, inArray, or, gt, gte, isNotNull } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin, requirePermission } from "../middleware/admin";
 import { getAllFeatureFlags, FEATURE_FLAG_KEYS, reloadFeatureFlags, type FeatureFlagKey } from "../lib/featureFlags";
 import { sendEmail } from "../features/email/email.service";
@@ -76,6 +76,73 @@ router.get("/users", async (req, res) => {
     .limit(limit).offset((page - 1) * limit);
   const [total] = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.isDeleted, false));
   return res.json({ users, total: total?.count ?? 0, page, limit });
+});
+
+router.get("/suspicious-clusters", requireAdmin, async (_req, res) => {
+  const candidates = await db
+    .select({
+      id: usersTable.id,
+      username: usersTable.username,
+      displayName: usersTable.displayName,
+      createdAt: usersTable.createdAt,
+      referredBy: usersTable.referredBy,
+      isBanned: usersTable.isBanned,
+      signupIpHash: usersTable.signupIpHash,
+    })
+    .from(usersTable)
+    .where(and(eq(usersTable.isDeleted, false), isNotNull(usersTable.signupIpHash)))
+    .orderBy(asc(usersTable.signupIpHash), asc(usersTable.createdAt));
+
+  const byHash = new Map<string, typeof candidates>();
+  for (const candidate of candidates) {
+    if (!candidate.signupIpHash) continue;
+    const group = byHash.get(candidate.signupIpHash) ?? [];
+    group.push(candidate);
+    byHash.set(candidate.signupIpHash, group);
+  }
+
+  const clusters: Array<{
+    id: string;
+    accountCount: number;
+    firstCreatedAt: Date;
+    accounts: Array<{
+      id: number;
+      username: string;
+      displayName: string;
+      createdAt: Date;
+      usedReferralCode: boolean;
+      isBanned: boolean;
+    }>;
+  }> = [];
+  let clusterIndex = 0;
+
+  for (const accounts of byHash.values()) {
+    for (let start = 0; start < accounts.length;) {
+      const firstCreatedAt = accounts[start].createdAt;
+      const windowEnd = firstCreatedAt.getTime() + 24 * 60 * 60 * 1000;
+      const matching = accounts.filter((account) => account.createdAt.getTime() <= windowEnd);
+      if (matching.length >= 3) {
+        clusters.push({
+          id: `cluster-${clusterIndex++}`,
+          accountCount: matching.length,
+          firstCreatedAt,
+          accounts: matching.map(({ id, username, displayName, createdAt, referredBy, isBanned }) => ({
+            id,
+            username,
+            displayName,
+            createdAt,
+            usedReferralCode: referredBy !== null,
+            isBanned,
+          })),
+        });
+        start += matching.length;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return res.json({ clusters });
 });
 
 router.post("/users/:id/notice", async (req: any, res) => {

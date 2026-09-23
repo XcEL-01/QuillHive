@@ -173,7 +173,10 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
       <div className="min-h-screen bg-background text-foreground">
         <header className="border-b border-border bg-background/95">
           <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4">
-            <Link href="/" className="font-serif text-lg font-bold text-primary">QuillHive</Link>
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/logo.png" alt="QuillHive" className="w-8 h-8 rounded-lg" />
+              <span className="font-serif text-lg font-bold"><span className="text-white">Quill</span><span className="text-primary">Hive</span></span>
+            </Link>
             <div className="flex items-center gap-3 text-sm">
               {user ? <Link href="/" className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground">Go to QuillHive</Link> : <>
                 <Link href="/login" className="text-muted-foreground hover:text-foreground">Sign in</Link>
@@ -195,19 +198,8 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
         <div className="h-full flex items-center gap-3 px-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-105 transition-transform">
-              <defs>
-                <linearGradient id="qh-logo-g" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#a855f7" />
-                </linearGradient>
-              </defs>
-              <path d="M16 2.5 L27.5 9.25 L27.5 22.75 L16 29.5 L4.5 22.75 L4.5 9.25 Z" fill="url(#qh-logo-g)" />
-              <path d="M16 8 L20.5 15.5 L16 24 L11.5 15.5 Z" fill="white" opacity="0.95" />
-              <path d="M14 15.5 L18 15.5" stroke="url(#qh-logo-g)" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="16" cy="8" r="1.8" fill="white" opacity="0.9" />
-            </svg>
-            <span className="font-serif font-bold text-lg text-primary tracking-tight hidden sm:block">QuillHive</span>
+            <img src="/logo.png" alt="QuillHive" className="w-8 h-8 rounded-lg group-hover:scale-105 transition-transform" />
+            <span className="font-serif font-bold text-lg tracking-tight hidden sm:block"><span className="text-white">Quill</span><span className="text-primary">Hive</span></span>
           </Link>
 
           {/* Search - fills centre */}

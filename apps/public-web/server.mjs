@@ -4,7 +4,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const API_URL = process.env.API_URL || "http://localhost:9000";
 const APP_URL = process.env.APP_URL || "http://localhost:5000";
-const LOGO_URL = `${APP_URL}/images/logo-icon.png`;
+const LOGO_URL = "https://quillhive.pages.dev/logo.png";
 
 function escapeHtml(str) {
   if (!str) return "";

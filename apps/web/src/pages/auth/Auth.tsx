@@ -105,7 +105,7 @@ export default function Auth() {
       if (tok) {
         setStoredToken(tok);
         if (ref) setStoredRefreshToken(ref);
-        fetch("/api/auth/me", { headers: { Authorization: `Bearer ${tok}` } })
+        fetch(apiUrl("/api/auth/me"), { headers: { Authorization: `Bearer ${tok}` } })
           .then((r) => r.ok ? r.json() : null)
           .then((u) => {
             if (u) { setAuth(u, tok); setLocation("/"); }
@@ -123,7 +123,7 @@ export default function Auth() {
       if (!token) { toast.error("Missing sign-in token."); return; }
       (async () => {
         try {
-          const res = await fetch("/api/auth/magic-link/consume", {
+          const res = await fetch(apiUrl("/api/auth/magic-link/consume"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token }),
@@ -149,7 +149,7 @@ export default function Auth() {
 
     setMagicLinkLoading(true);
     try {
-      const res = await fetch("/api/auth/magic-link/request", {
+      const res = await fetch(apiUrl("/api/auth/magic-link/request"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -184,7 +184,7 @@ export default function Auth() {
     const timeout = window.setTimeout(async () => {
       setIsCheckingEmail(true);
       try {
-        const res = await fetch(`/api/email/check?email=${encodeURIComponent(email)}`);
+        const res = await fetch(apiUrl(`/api/email/check?email=${encodeURIComponent(email)}`));
         const data = await res.json();
         setEmailStatus({ allowed: Boolean(data.allowed), reason: data.reason });
       } catch {
@@ -203,7 +203,7 @@ export default function Auth() {
   };
 
   const verifyEmail = async (token: string) => {
-    const res = await fetch("/api/auth/verify-email", {
+    const res = await fetch(apiUrl("/api/auth/verify-email"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
@@ -222,7 +222,7 @@ export default function Auth() {
     }
     setResendVerificationLoading(true);
     try {
-      const res = await fetch("/api/auth/resend-verification", {
+      const res = await fetch(apiUrl("/api/auth/resend-verification"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -246,7 +246,7 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const res = await fetch("/api/auth/login", {
+        const res = await fetch(apiUrl("/api/auth/login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -275,7 +275,7 @@ export default function Auth() {
           return;
         }
         const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value ?? "";
-        const res = await fetch("/api/auth/register", {
+        const res = await fetch(apiUrl("/api/auth/register"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

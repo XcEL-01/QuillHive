@@ -73,7 +73,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
   return (
     <div data-card className="group rounded-2xl border border-border bg-card hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-5 flex items-start gap-4">
+      <div className="p-4 md:p-5 flex items-start gap-4">
         <Link href={`/profile/${user.username}`}>
           <Avatar className="h-14 w-14 shrink-0 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
             {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.displayName} /> : null}
@@ -132,21 +132,21 @@ function CreatorCard({ creator }: { creator: Creator }) {
 
       {/* Bio */}
       {user.bio && (
-        <div className="px-5 pb-3">
+        <div className="px-4 md:px-5 pb-3">
           <p className="text-sm text-muted-foreground line-clamp-2">{user.bio}</p>
         </div>
       )}
 
       {/* Public note */}
       {availability.publicNote && (
-        <div className="mx-5 mb-3 p-3 rounded-xl bg-muted/50 border border-border">
+        <div className="mx-4 md:mx-5 mb-3 p-3 rounded-xl bg-muted/50 border border-border">
           <p className="text-xs text-foreground/80 italic">"{availability.publicNote}"</p>
         </div>
       )}
 
       {/* Available for */}
       {availability.availableFor.length > 0 && (
-        <div className="px-5 pb-3 flex flex-wrap gap-1.5">
+        <div className="px-4 md:px-5 pb-3 flex flex-wrap gap-1.5">
           {availability.availableFor.slice(0, 4).map((item) => (
             <span key={item} className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">
               {item}
@@ -157,7 +157,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
 
       {/* Top skills with endorsement counts */}
       {topSkills.length > 0 && (
-        <div className="px-5 pb-3 flex flex-wrap gap-1.5">
+        <div className="px-4 md:px-5 pb-3 flex flex-wrap gap-1.5">
           {topSkills.map(({ skill, endorsements }) => (
             <span key={skill} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-primary/8 text-primary border border-primary/20 font-medium">
               {skill}
@@ -174,7 +174,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
 
       {/* Featured listing */}
       {listing && (
-        <div className="mx-5 mb-4 p-3 rounded-xl border border-border bg-muted/30">
+        <div className="mx-4 md:mx-5 mb-4 p-3 rounded-xl border border-border bg-muted/30">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">{listing.title}</p>
@@ -188,7 +188,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
       )}
 
       {/* CTA */}
-      <div className="mt-auto px-5 pb-5 flex gap-2">
+      <div className="mt-auto px-4 md:px-5 pb-4 md:pb-5 flex gap-2">
         <Link href={`/profile/${user.username}`} className="flex-1">
           <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
             View Profile <ChevronRight className="w-3 h-3" />

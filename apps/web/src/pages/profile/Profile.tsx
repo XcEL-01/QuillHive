@@ -873,7 +873,7 @@ export default function Profile() {
         )}
 
         {isMe && (
-          <div className="mb-8 rounded-3xl border border-border/60 bg-card p-5 shadow-sm">
+          <div className="mb-8 rounded-2xl border border-border/60 bg-card p-4 md:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
                 <h2 className="text-xl font-serif font-semibold flex items-center gap-2">
@@ -1158,7 +1158,7 @@ export default function Profile() {
             ) : (
               <div className="space-y-4">
                 {workHistory.map((work) => (
-                  <div key={work.id} className="flex gap-4 p-5 bg-card border border-border/50 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <div key={work.id} className="flex gap-4 p-4 md:p-5 bg-card border border-border/50 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5"><Briefcase className="w-5 h-5" /></div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -1186,7 +1186,7 @@ export default function Profile() {
             ) : (
               <div className="space-y-4">
                 {educationHistory.map((edu) => (
-                  <div key={edu.id} className="flex gap-4 p-5 bg-card border border-border/50 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <div key={edu.id} className="flex gap-4 p-4 md:p-5 bg-card border border-border/50 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-950/30 text-violet-600 flex items-center justify-center shrink-0 mt-0.5"><GraduationCap className="w-5 h-5" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-lg text-foreground">{edu.school}</p>
@@ -1223,7 +1223,7 @@ export default function Profile() {
                   const skills = Array.isArray(listing.skills) ? listing.skills : (typeof listing.skills === 'string' ? JSON.parse(listing.skills as string) : []);
                   const totalEndorsements = Object.values(endorsements).reduce((sum, n) => sum + n, 0);
                   return (
-                    <div key={listing.id} className="border border-border rounded-2xl p-5 bg-card hover:shadow-lg hover:border-primary/30 transition-all">
+                    <div key={listing.id} className="border border-border rounded-2xl p-4 md:p-5 bg-card hover:shadow-lg hover:border-primary/30 transition-all">
                       {/* Creator identity strip */}
                       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/50">
                         <Avatar className="w-7 h-7 shrink-0">

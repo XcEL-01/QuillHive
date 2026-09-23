@@ -56,7 +56,7 @@ function CreatorCard({ creator, checkoutEnabled, onCheckout }: { creator: Creato
 
   return (
     <div data-card className="group rounded-2xl border border-border bg-card hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col overflow-hidden">
-      <div className="p-4 flex items-start gap-3">
+      <div className="p-4 md:p-5 flex items-start gap-3">
         <Link href={`/profile/${user.username}`}>
           <Avatar className="h-12 w-12 shrink-0 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
             {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt={user.displayName} /> : null}
@@ -106,13 +106,13 @@ function CreatorCard({ creator, checkoutEnabled, onCheckout }: { creator: Creato
       </div>
 
       {user.bio && (
-        <div className="px-4 pb-2">
+        <div className="px-4 md:px-5 pb-2">
           <p className="text-xs text-muted-foreground line-clamp-2">{user.bio}</p>
         </div>
       )}
 
       {topSkills.length > 0 && (
-        <div className="px-4 pb-3 flex flex-wrap gap-1">
+        <div className="px-4 md:px-5 pb-3 flex flex-wrap gap-1">
           {topSkills.map(({ skill, endorsements }) => (
             <span key={skill} className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/8 text-primary border border-primary/20 font-medium">
               {skill}
@@ -124,7 +124,7 @@ function CreatorCard({ creator, checkoutEnabled, onCheckout }: { creator: Creato
       )}
 
       {listing && (
-        <div className="mx-4 mb-3 p-2.5 rounded-xl border border-border bg-muted/30">
+        <div className="mx-4 md:mx-5 mb-3 p-3 rounded-xl border border-border bg-muted/30">
           <div className="flex items-start justify-between gap-2">
             <p className="text-xs font-semibold text-foreground truncate">{listing.title}</p>
             {formatPrice(listing) && <span className="text-[10px] font-semibold text-foreground shrink-0 whitespace-nowrap">{formatPrice(listing)}</span>}
@@ -132,7 +132,7 @@ function CreatorCard({ creator, checkoutEnabled, onCheckout }: { creator: Creato
         </div>
       )}
 
-      <div className="mt-auto px-4 pb-4 flex gap-2">
+      <div className="mt-auto px-4 md:px-5 pb-4 md:pb-5 flex gap-2">
         <Link href={`/profile/${user.username}`} className="flex-1">
           <Button variant="outline" size="sm" className="w-full gap-1 text-xs h-8">
             View Profile <ChevronRight className="w-3 h-3" />

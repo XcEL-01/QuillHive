@@ -90,7 +90,7 @@ function BestMatchesSection({ matchMap }: { matchMap: Map<number, { score: numbe
         {matches.map(job => {
           const applyHref = job.applyUrl || (job.applyEmail ? `mailto:${job.applyEmail}` : undefined);
           return (
-            <div key={job.id} data-card className="bg-card border border-primary/20 rounded-2xl p-4 hover:border-primary/50 transition-all shadow-sm group flex flex-col gap-3">
+            <div key={job.id} data-card className="bg-card border border-primary/20 rounded-2xl p-4 md:p-5 hover:border-primary/50 transition-all shadow-sm group flex flex-col gap-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -165,7 +165,7 @@ export function JobsPanel() {
 
       <div className="space-y-3">
         {isLoading && Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-card border border-border/50 rounded-2xl p-4 flex gap-3">
+            <div key={i} className="bg-card border border-border/50 rounded-2xl p-4 md:p-5 flex gap-3">
             <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
             <div className="space-y-2 w-full">
               <Skeleton className="h-4 w-1/3" />
@@ -184,7 +184,7 @@ export function JobsPanel() {
           return (
             <div
               key={job.id}
-              className={`bg-card border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all group flex gap-4 ${
+              className={`bg-card border rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-md transition-all group flex gap-4 ${
                 isFeatured
                   ? 'border-amber-500/40 ring-1 ring-amber-500/20'
                   : 'border-border/60 hover:border-primary/40'

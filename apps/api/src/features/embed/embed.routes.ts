@@ -1,11 +1,98 @@
 import { Router } from "express";
 import { z } from "zod";
+import { lookup } from "node:dns/promises";
 import { db } from "@workspace/db";
 import { postsTable, usersTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import { validateParams } from "../../middleware/validate";
+import { requireAuth } from "../../middleware/admin";
 
 export const embedRouter = Router();
+
+const linkPreviewQuery = z.object({ url: z.string().url().max(2048) });
+const MAX_HTML_BYTES = 1_000_000;
+
+function isPrivateAddress(address: string): boolean {
+  const normalized = address.toLowerCase();
+  if (normalized === "::1" || normalized.startsWith("fc") || normalized.startsWith("fd") || normalized.startsWith("fe80:")) return true;
+  const octets = normalized.split(".").map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) return true;
+  return octets[0] === 10
+    || octets[0] === 127
+    || (octets[0] === 169 && octets[1] === 254)
+    || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)
+    || (octets[0] === 192 && octets[1] === 168)
+    || octets[0] === 0;
+}
+
+async function assertSafeUrl(rawUrl: string): Promise<URL> {
+  const url = new URL(rawUrl);
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || (url.port && !['80', '443'].includes(url.port))) {
+    throw new Error('Unsupported URL');
+  }
+  const addresses = await lookup(url.hostname, { all: true });
+  if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address))) throw new Error('Blocked URL');
+  return url;
+}
+
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&#x([\da-f]+);?/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);?/g, (_, decimal: string) => String.fromCodePoint(parseInt(decimal, 10)))
+    .replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .trim();
+}
+
+function readMeta(html: string, property: string): string | null {
+  const tagPattern = /<meta\b[^>]*>/gi;
+  for (const tag of html.matchAll(tagPattern)) {
+    const content = tag[0].match(/\bcontent\s*=\s*["']([^"']*)["']/i)?.[1];
+    const name = tag[0].match(/\b(?:property|name)\s*=\s*["']([^"']*)["']/i)?.[1]?.toLowerCase();
+    if (name === property && content) return decodeHtml(content).slice(0, 500);
+  }
+  return null;
+}
+
+async function fetchLinkPreview(rawUrl: string) {
+  let url = await assertSafeUrl(rawUrl);
+  let response: Response | null = null;
+  for (let redirect = 0; redirect <= 3; redirect += 1) {
+    response = await fetch(url, {
+      redirect: 'manual',
+      headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': 'QuillHiveLinkPreview/1.0' },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.status < 300 || response.status >= 400) break;
+    const location = response.headers.get('location');
+    if (!location) break;
+    url = await assertSafeUrl(new URL(location, url).toString());
+  }
+  if (!response?.ok || !response.headers.get('content-type')?.includes('text/html')) throw new Error('Unsupported page');
+  const contentLength = Number(response.headers.get('content-length') || 0);
+  if (contentLength > MAX_HTML_BYTES) throw new Error('Page too large');
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength > MAX_HTML_BYTES) throw new Error('Page too large');
+  const html = new TextDecoder().decode(bytes);
+  const title = readMeta(html, 'og:title') || decodeHtml(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').slice(0, 200);
+  const image = readMeta(html, 'og:image');
+  const description = readMeta(html, 'og:description') || readMeta(html, 'description');
+  return {
+    url: url.toString(),
+    title: title || url.hostname,
+    image: image ? new URL(image, url).toString() : null,
+    description: description || null,
+  };
+}
+
+embedRouter.get('/link-preview', requireAuth, async (req, res) => {
+  const parsed = linkPreviewQuery.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: 'A valid URL is required.' });
+  try {
+    return res.json(await fetchLinkPreview(parsed.data.url));
+  } catch {
+    return res.status(422).json({ error: 'Unable to preview this URL.' });
+  }
+});
 
 const idParams = z.object({ id: z.coerce.number().int().positive() });
 

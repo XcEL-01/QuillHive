@@ -72,6 +72,21 @@ interface ChallengeContext {
   endsAt: string;
 }
 
+interface LinkPreview {
+  url: string;
+  title: string;
+  image: string | null;
+  description: string | null;
+}
+
+function findStandaloneUrl(text: string): string | null {
+  for (const line of text.split(/\r?\n/)) {
+    const candidate = line.trim();
+    if (/^https?:\/\/[^\s<>'"]+$/.test(candidate)) return candidate;
+  }
+  return null;
+}
+
 export default function Write() {
   usePageTitle('Write');
   const [location, setLocation] = useLocation();
@@ -200,6 +215,8 @@ export default function Write() {
   const [aiHashtagSuggestions, setAiHashtagSuggestions] = useState<string[]>([]);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [content, setContent] = useState('');
+  const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
+  const [isLinkPreviewLoading, setIsLinkPreviewLoading] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -215,6 +232,37 @@ export default function Write() {
       },
     },
   });
+
+  useEffect(() => {
+    const standaloneUrl = editor ? findStandaloneUrl(editor.getText()) : null;
+    if (!standaloneUrl || !token) {
+      setLinkPreview(null);
+      setIsLinkPreviewLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      setIsLinkPreviewLoading(true);
+      try {
+        const response = await fetch(apiUrl(`/api/embed/link-preview?url=${encodeURIComponent(standaloneUrl)}`), {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Preview unavailable');
+        setLinkPreview(await response.json() as LinkPreview);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') setLinkPreview(null);
+      } finally {
+        if (!controller.signal.aborted) setIsLinkPreviewLoading(false);
+      }
+    }, 450);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [content, editor, token]);
 
   const [showAdvancedTypes, setShowAdvancedTypes] = useState(false);
 
@@ -839,6 +887,23 @@ export default function Write() {
           {/* Editor */}
           <div className="bg-card cursor-text" onClick={() => editor.commands.focus()}>
             <EditorContent editor={editor} />
+            {(isLinkPreviewLoading || linkPreview) && (
+              <div className="mx-4 mb-5 overflow-hidden rounded-2xl border border-border/70 bg-background/80 shadow-sm">
+                {isLinkPreviewLoading ? (
+                  <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading link preview...</div>
+                ) : linkPreview && (
+                  <a href={linkPreview.url} target="_blank" rel="noreferrer" className="group flex min-h-24 items-stretch no-underline">
+                    {linkPreview.image && <img src={linkPreview.image} alt="" className="hidden w-28 object-cover sm:block" />}
+                    <div className="min-w-0 flex-1 p-4">
+                      <p className="line-clamp-2 text-sm font-semibold text-foreground group-hover:text-primary">{linkPreview.title}</p>
+                      {linkPreview.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{linkPreview.description}</p>}
+                      <p className="mt-2 truncate text-[11px] text-muted-foreground">{new URL(linkPreview.url).hostname}</p>
+                    </div>
+                    <ArrowUpRight className="m-4 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

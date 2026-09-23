@@ -1088,6 +1088,26 @@ export const updateSettings = async (req: Request, res: Response) => {
   return res.json(user);
 };
 
+export const requestVerification = async (req: Request, res: Response) => {
+  const viewerId = getViewerId(req);
+  if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
+  const kind = req.body?.kind === "phone" ? "phone" : req.body?.kind === "identity" ? "identity" : null;
+  if (!kind) return res.status(400).json({ error: "kind must be phone or identity" });
+
+  const { isFeatureEnabled } = await import("../../lib/featureFlags");
+  const flag = kind === "phone" ? "phone_verification_enabled" : "identity_verification_enabled";
+  if (!(await isFeatureEnabled(flag))) {
+    return res.status(403).json({ error: `${kind}_verification_disabled`, message: "This verification option is not enabled." });
+  }
+  const providerConfigured = kind === "phone"
+    ? Boolean(process.env.SMS_PROVIDER_API_KEY)
+    : Boolean(process.env.IDENTITY_VERIFICATION_PROVIDER_KEY);
+  if (!providerConfigured) {
+    return res.status(503).json({ error: "verification_not_configured", message: "Verification is enabled but its provider is not configured yet." });
+  }
+  return res.status(501).json({ error: "verification_provider_unavailable", message: "The configured verification provider is not available yet." });
+};
+
 export const toggleCreatorMode = async (req: Request, res: Response) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });

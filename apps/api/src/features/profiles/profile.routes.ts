@@ -106,6 +106,7 @@ usersRouter.patch("/me/settings", validateBody(z.object({
   topicNotificationEnabled: z.boolean().optional(),
   hireMeEnabled: z.boolean().optional(),
 })), ProfileController.updateSettings);
+usersRouter.post("/me/verification", validateBody(z.object({ kind: z.enum(["phone", "identity"]) })), ProfileController.requestVerification);
 usersRouter.patch("/me/creator", validateBody(creatorSchema), ProfileController.updateMyCreatorProfile);
 
 usersRouter.get("/me/profile-strength", ProfileController.getProfileStrength);

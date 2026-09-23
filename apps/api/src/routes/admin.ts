@@ -5,6 +5,7 @@ import {
   userTrustScoresTable, topicsTable, moderationRulesTable, adminNotesTable,
   behaviorEventsTable, reputationEventsTable, blockedEmailAttemptsTable, translationCacheTable,
   boostRequestsTable, challengesTable,
+  inviteCodesTable,
 } from "@workspace/db/schema";
 import { eq, desc, asc, and, count, ne, lt, sql, inArray, or, gt, gte, isNotNull } from "drizzle-orm";
 import { requireAdmin, requireSuperAdmin, requirePermission } from "../middleware/admin";
@@ -76,6 +77,38 @@ router.get("/users", async (req, res) => {
     .limit(limit).offset((page - 1) * limit);
   const [total] = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.isDeleted, false));
   return res.json({ users, total: total?.count ?? 0, page, limit });
+});
+
+router.get("/referrals", async (_req, res) => {
+  const { isFeatureEnabled } = await import("../lib/featureFlags");
+  const rewardsEnabled = await isFeatureEnabled("referral_rewards_enabled");
+  const referrers = await db.execute(sql`
+    SELECT u.id, u.username, u.display_name AS "displayName",
+           COUNT(r.id)::int AS "referredUserCount",
+           COUNT(DISTINCT i.id)::int AS "inviteCodeCount"
+    FROM users u
+    LEFT JOIN users r ON r.referred_by = u.id AND r.is_deleted = false
+    LEFT JOIN invite_codes i ON i.created_by = u.id
+    WHERE u.is_deleted = false
+    GROUP BY u.id, u.username, u.display_name
+    HAVING COUNT(r.id) > 0
+    ORDER BY COUNT(r.id) DESC, u.created_at ASC
+    LIMIT 100
+  `);
+  const inviteCodes = await db
+    .select({ createdBy: inviteCodesTable.createdBy, code: inviteCodesTable.code, usedBy: inviteCodesTable.usedBy, createdAt: inviteCodesTable.createdAt })
+    .from(inviteCodesTable)
+    .orderBy(desc(inviteCodesTable.createdAt))
+    .limit(200);
+  const sources = await db.execute(sql`
+    SELECT COALESCE(NULLIF(TRIM(referral_source), ''), 'unknown') AS source,
+           COUNT(*)::int AS count
+    FROM users
+    WHERE is_deleted = false AND referral_source IS NOT NULL
+    GROUP BY COALESCE(NULLIF(TRIM(referral_source), ''), 'unknown')
+    ORDER BY COUNT(*) DESC
+  `);
+  return res.json({ rewardsEnabled, referrers: referrers.rows, inviteCodes, referralSources: sources.rows });
 });
 
 router.get("/suspicious-clusters", requireAdmin, async (_req, res) => {

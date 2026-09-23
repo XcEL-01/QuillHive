@@ -47,8 +47,14 @@ Required for production:
 
 Recommended for production:
 - `RESEND_API_KEY` - email delivery (magic links, verification, digests)
+- `EMAIL_PREFERENCE_SECRET` - signing secret for one-click digest unsubscribe links
+- `BULLMQ_REDIS_URL` - Redis connection for weekly emails, notifications, and scheduled jobs
 - `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` - image CDN
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - GitHub OAuth
+
+Optional verification providers:
+- `IDENTITY_VERIFICATION_PROVIDER_KEY` - required only when `identity_verification_enabled` is enabled
+- `SMS_PROVIDER_API_KEY` - required only when `phone_verification_enabled` is enabled
 
 ## Services
 

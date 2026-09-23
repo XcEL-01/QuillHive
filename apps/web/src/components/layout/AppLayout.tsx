@@ -5,7 +5,7 @@ import {
   Compass, PenLine, MessageCircle, User as UserIcon,
   Bell, Moon, Sun, LogOut, Briefcase, Film, Settings, ShieldCheck,
   BarChart3, BookOpen, Users, Users2, Handshake,
-  Bookmark, Archive, Star, Sparkles, Link2,
+  Bookmark, Star, Sparkles, Link2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useTheme } from "@/hooks/use-theme";
@@ -291,11 +291,6 @@ export function AppLayout({ children, publicPage = false }: AppLayoutProps) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link href="/collections" className="cursor-pointer w-full flex items-center gap-2">
-                      <Archive className="w-4 h-4" /> Collections
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-3 py-1">Professional</DropdownMenuLabel>
                   <DropdownMenuItem asChild>

@@ -16,6 +16,16 @@ const FLAG_METADATA: Record<string, { label: string; description: string; catego
     description: "Award trust score bonuses to users based on how many valid people they've referred and those referrals' own trust scores. Off by default - enable when ready.",
     category: "Future",
   },
+  identity_verification_enabled: {
+    label: "Identity Verification",
+    description: "Expose identity verification when a supported provider is configured. Off by default.",
+    category: "Future",
+  },
+  phone_verification_enabled: {
+    label: "Phone Verification",
+    description: "Expose phone verification only when an SMS provider is configured. Off by default.",
+    category: "Future",
+  },
 };
 
 export default function AdminFeatureFlags({ token, toast }: AdminProps) {

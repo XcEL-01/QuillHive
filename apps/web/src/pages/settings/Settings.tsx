@@ -95,6 +95,7 @@ export default function Settings() {
     displayName: user?.displayName || '',
     bio: user?.bio || '',
     headline: (user as any)?.headline || '',
+    identityType: (user as any)?.identityType || null,
     location: user?.location || '',
     country: (user as any)?.country || '',
     website: user?.website || '',
@@ -627,6 +628,17 @@ export default function Settings() {
                       </div>
                     </div>
                     <div><Label>{t('settings.bio')}</Label><Textarea value={profileForm.bio} onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))} className="mt-1.5 rounded-xl resize-none" rows={3} placeholder={t('settings.bioPlaceholder')} /></div>
+                    <div>
+                      <Label>Professional identity</Label>
+                      <Select value={profileForm.identityType || 'none'} onValueChange={value => setProfileForm(f => ({ ...f, identityType: value === 'none' ? null : value }))}>
+                        <SelectTrigger className="mt-1.5 rounded-xl"><SelectValue placeholder="Choose how you want to be discovered" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Not specified</SelectItem>
+                          {['reader', 'writer', 'artist', 'professional', 'student', 'builder', 'community'].map((identity) => <SelectItem key={identity} value={identity}>{identity.charAt(0).toUpperCase() + identity.slice(1)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-1 text-xs text-muted-foreground">This appears on your profile and helps people understand your work.</p>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div><Label>{t('settings.locationLabel')}</Label><Input value={profileForm.location} onChange={e => setProfileForm(f => ({ ...f, location: e.target.value }))} className="mt-1.5 rounded-xl" placeholder={t('settings.locationPlaceholder')} /></div>
                       <div>

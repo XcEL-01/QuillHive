@@ -138,7 +138,11 @@ function shouldDedup(opts: {
 async function createNotification(opts: NotifyOpts & { type: NotificationType }): Promise<void> {
   const actorId = opts.actorId ?? 0;
   // Skip self-notifications (only when a real actor triggers it)
-  if (actorId !== 0 && opts.userId === actorId) return;
+  const allowSelfNotification = opts.type === "admin_action"
+    || opts.type === "admin_alert"
+    || opts.type === "official_notice"
+    || opts.type === "system";
+  if (actorId !== 0 && opts.userId === actorId && !allowSelfNotification) return;
   if (shouldDedup(opts)) return;
   try {
     const category = NOTIFICATION_CATEGORY_MAP[opts.type] ?? "social";

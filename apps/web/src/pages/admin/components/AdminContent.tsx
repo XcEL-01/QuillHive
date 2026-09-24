@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Zap } from "lucide-react";
+import { Link } from "wouter";
 
 export default function AdminContent({ token, toast, currentUser }: AdminProps) {
   const fetchAdmin = useAdminFetch(token);
@@ -48,5 +49,5 @@ export default function AdminContent({ token, toast, currentUser }: AdminProps) 
   </>;
 }
 function List({ title, rows, label, actionLabel, onAction }: { title: string; rows: any[]; label: (row: any) => string; actionLabel?: string; onAction?: (row: any) => void }) {
-  return <section className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"><div className="border-b border-border/70 px-5 py-4"><h2 className="text-sm font-semibold">{title}</h2></div><div className="divide-y divide-border/60">{rows.length === 0 ? <p className="p-8 text-center text-sm text-muted-foreground">Nothing needs attention here.</p> : rows.slice(0, 8).map((row) => <div key={row.id} className="flex items-center gap-3 px-5 py-3.5"><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{label(row)}</p><p className="truncate text-xs text-muted-foreground">{row.authorDisplayName || row.category || "Awaiting review"}</p></div><Badge variant={row.status === "pending" ? "secondary" : "outline"} className="text-[10px] capitalize">{row.status || "published"}</Badge>{actionLabel && onAction && <Button variant="outline" size="sm" onClick={() => onAction(row)}><Zap className="mr-1.5 h-3.5 w-3.5" />{actionLabel}</Button>}</div>)}</div></section>;
+  return <section className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"><div className="border-b border-border/70 px-5 py-4"><h2 className="text-sm font-semibold">{title}</h2></div><div className="divide-y divide-border/60">{rows.length === 0 ? <p className="p-8 text-center text-sm text-muted-foreground">Nothing needs attention here.</p> : rows.slice(0, 8).map((row) => { const href = row.targetType === "post" ? `/post/${row.targetId}` : row.targetType === "user" && row.target?.username ? `/profile/${row.target.username}` : `/post/${row.id}`; return <div key={row.id} className="flex items-center gap-3 px-5 py-3.5"><Link href={href} className="min-w-0 flex-1 hover:underline"><p className="truncate text-sm font-medium">{label(row)}</p><p className="truncate text-xs text-muted-foreground">{row.authorDisplayName || row.category || "Awaiting review"}</p></Link><Badge variant={row.status === "pending" ? "secondary" : "outline"} className="text-[10px] capitalize">{row.status || "published"}</Badge>{actionLabel && onAction && <Button variant="outline" size="sm" onClick={() => onAction(row)}><Zap className="mr-1.5 h-3.5 w-3.5" />{actionLabel}</Button>}</div>; })}</div></section>;
 }

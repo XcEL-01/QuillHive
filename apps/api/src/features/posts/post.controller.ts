@@ -16,6 +16,7 @@ import { memGet, memSet, memDeletePattern } from "../../lib/memCache";
 import { addReputationEvent } from "../trust/reputation.service";
 import { calculateRankingScore } from "./ranking.service";
 import { logger } from "../../lib/logger";
+import { isFeatureEnabled } from "../../lib/featureFlags";
 
 function refreshTrustForUsers(...userIds: Array<number | null | undefined>) {
   for (const userId of [...new Set(userIds.filter(Boolean) as number[])]) {
@@ -288,6 +289,15 @@ export const createPost = async (req: Request, res: Response) => {
 
   const { title, titleA, titleB, content, excerpt, type, imageUrl, attachments, tags, isPublished, groupId, seriesId, quotedPostId, scheduledAt } = req.body;
   if (!content || !type) return res.status(400).json({ error: "Content and type are required" });
+  if (!(await isFeatureEnabled("post_creation_enabled"))) {
+    return res.status(403).json({ error: "post_creation_disabled", message: "Post creation is temporarily disabled." });
+  }
+  if (type === "spark" && !(await isFeatureEnabled("quick_posts_enabled"))) {
+    return res.status(403).json({ error: "quick_posts_disabled", message: "Quick posts are temporarily disabled." });
+  }
+  if (type === "poll" && !(await isFeatureEnabled("polls_enabled"))) {
+    return res.status(403).json({ error: "polls_disabled", message: "Polls are temporarily disabled." });
+  }
 
   try {
     const post = await PostService.createPost(viewerId, { title, titleA, titleB, content, excerpt, type, imageUrl, attachments, tags, isPublished, groupId, seriesId, quotedPostId, scheduledAt });

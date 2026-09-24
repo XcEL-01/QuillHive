@@ -49,9 +49,9 @@ trustRouter.get("/:userId", async (req, res) => {
   if (isNaN(targetId)) return res.status(400).json({ error: "Invalid user id" });
 
   const score = await getUserTrustScore(targetId);
-  if (!score) return res.json({ tier: "normal", userId: targetId, creatorLevel: "new_voice" });
+  if (!score) return res.json({ tier: "restricted", userId: targetId, uti: 0, cvs: 0, bcs: 0, cts: 0, avgCis: 0, creatorLevel: "new_voice", visibilityMultiplier: 0.3 });
 
-  return res.json({ tier: score.tier, userId: targetId, uti: Math.round(score.uti), creatorLevel: score.creatorLevel ?? "new_voice" });
+  return res.json({ tier: score.tier, userId: targetId, uti: Math.round(score.uti), cvs: score.cvs, bcs: score.bcs, cts: score.cts, avgCis: score.avgCis, creatorLevel: score.creatorLevel ?? "new_voice", visibilityMultiplier: score.visibilityMultiplier });
 });
 
 trustRouter.post("/recalculate", async (req, res) => {

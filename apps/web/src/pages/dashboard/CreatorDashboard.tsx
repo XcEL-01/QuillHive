@@ -27,6 +27,7 @@ type TrustScore = {
   avgCis: number;
   tier: string;
   visibilityMultiplier: number;
+  creatorLevel: string;
 };
 
 type DailyPoint = { date: string; count: number };
@@ -97,11 +98,12 @@ function SparkLine({ data, color = "#8b5cf6" }: { data: DailyPoint[]; color?: st
   );
 }
 
-const TIER_LABELS: Record<string, { label: string; color: string; description: string }> = {
-  trusted: { label: "trusted", color: "text-emerald-500", description: "recognized as a high-value contributor" },
-  normal: { label: "active member", color: "text-blue-500", description: "active community member" },
-  limited: { label: "building", color: "text-amber-500", description: "building contribution history" },
-  restricted: { label: "under review", color: "text-rose-500", description: "account under review" },
+const LEVEL_LABELS: Record<string, { label: string; color: string; description: string }> = {
+  new_voice: { label: "New Voice", color: "text-slate-500", description: "starting without an earned track record" },
+  rising: { label: "Rising Creator", color: "text-amber-500", description: "building consistent contribution and community trust" },
+  established: { label: "Established Creator", color: "text-blue-500", description: "showing a sustained, trusted contribution history" },
+  featured: { label: "Featured Creator", color: "text-violet-500", description: "demonstrating strong quality and community value" },
+  luminary: { label: "Luminary", color: "text-emerald-500", description: "an exceptional, consistently trusted contributor" },
 };
 
 export default function CreatorDashboard() {
@@ -585,7 +587,7 @@ export default function CreatorDashboard() {
 
             {/* Trust Score Card */}
             {trust && (() => {
-              const tierInfo = TIER_LABELS[trust.tier] ?? TIER_LABELS.normal;
+              const tierInfo = LEVEL_LABELS[trust.creatorLevel] ?? LEVEL_LABELS.new_voice;
               const tips = trust.uti < 50
                 ? [
                     t("dashboard.tip1a", "Write longer, more thoughtful content"),
@@ -633,7 +635,22 @@ export default function CreatorDashboard() {
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+                      <div className="bg-muted/30 rounded-xl p-3">
+                        <p className="font-medium text-foreground mb-1">Content Value</p>
+                        <p className="text-lg font-bold text-violet-500">{Math.round(trust.cvs)}</p>
+                        <p>quality and meaningful engagement</p>
+                      </div>
+                      <div className="bg-muted/30 rounded-xl p-3">
+                        <p className="font-medium text-foreground mb-1">Community Trust</p>
+                        <p className="text-lg font-bold text-rose-500">{Math.round(trust.cts)}</p>
+                        <p>reciprocity and contribution</p>
+                      </div>
+                      <div className="bg-muted/30 rounded-xl p-3">
+                        <p className="font-medium text-foreground mb-1">Content Impact</p>
+                        <p className="text-lg font-bold text-emerald-500">{Math.round(trust.avgCis)}</p>
+                        <p>post-level engagement</p>
+                      </div>
                       <div className="bg-muted/30 rounded-xl p-3">
                         <p className="font-medium text-foreground mb-1">{t("dashboard.visibility", "Visibility")}</p>
                         <p className="text-lg font-bold text-primary">{(trust.visibilityMultiplier * 100).toFixed(0)}%</p>

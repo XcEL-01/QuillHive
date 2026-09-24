@@ -46,7 +46,7 @@ interface NotifyOpts {
   userId: number;
   /** actorId=0 (or omitted) means a system-generated notification - self-skip guard is bypassed */
   actorId?: number;
-  type: StandardNotificationType;
+  type: NotificationType;
   message: string;
   title?: string;
   url?: string;

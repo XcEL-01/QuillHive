@@ -13,17 +13,23 @@ import {
 } from "@workspace/db/schema";
 import { eq, and, gte, sql, count } from "drizzle-orm";
 
+/**
+ * Trust Score (UTI) is earned evidence, not a measure of account age.
+ * A user with no posts or activity has no track record, so every component
+ * starts at zero. Creator Level is the human-facing interpretation of UTI.
+ */
 const DEFAULT_SCORES = {
-  cvs: 50,
-  bcs: 100,
-  cts: 50,
-  avgCis: 50,
-  uti: 60,
-  tier: "normal",
-  visibilityMultiplier: 1,
+  cvs: 0,
+  bcs: 0,
+  cts: 0,
+  avgCis: 0,
+  uti: 0,
+  tier: "restricted",
+  creatorLevel: "new_voice",
+  visibilityMultiplier: 0.3,
 };
 
-function clamp(value: unknown, min = 0, max = 100, fallback = 50): number {
+function clamp(value: unknown, min = 0, max = 100, fallback = 0): number {
   const num = Number(value);
   if (!Number.isFinite(num) || Number.isNaN(num)) return fallback;
   return Math.min(max, Math.max(min, num));
@@ -40,10 +46,10 @@ function safeCount(value: unknown): number {
   return Math.max(0, Number(value) || 0);
 }
 
-function tierFromUti(uti: number): string {
-  if (uti >= 80) return "trusted";
-  if (uti >= 50) return "normal";
-  if (uti >= 20) return "limited";
+function legacyTierFromLevel(level: string): string {
+  if (level === "luminary" || level === "featured") return "trusted";
+  if (level === "established") return "normal";
+  if (level === "rising") return "limited";
   return "restricted";
 }
 
@@ -69,7 +75,7 @@ function postIdsSql(postIds: number[]) {
 export async function calculateCVS(userId: number): Promise<number> {
   try {
     const postIds = await postIdsForUser(userId);
-    if (postIds.length === 0) return DEFAULT_SCORES.cvs;
+    if (postIds.length === 0) return 0;
 
     const [savedCount] = await db.select({ c: count() }).from(savedPostsTable).where(sql`${savedPostsTable.postId} = ${postIdsSql(postIds)}`);
     const [likeCount] = await db.select({ c: count() }).from(likesTable).where(sql`${likesTable.postId} = ${postIdsSql(postIds)}`);
@@ -86,13 +92,13 @@ export async function calculateCVS(userId: number): Promise<number> {
     const impressions = Math.max(1, likes + comments + saves);
 
     const saveRate = Math.min(1, safeRatio(saves, impressions));
-    const depthRate = comments > 0 ? Math.min(1, safeRatio(deepComments, comments)) : 0.5;
-    const retention = 0.5;
+    const depthRate = comments > 0 ? Math.min(1, safeRatio(deepComments, comments)) : 0;
+    const retention = impressions > 1 ? 0.5 : 0;
     const discussionRate = Math.min(1, safeRatio(comments, impressions));
 
-    return clamp((retention * 0.35 + saveRate * 0.25 + depthRate * 0.2 + discussionRate * 0.2) * 100, 0, 100, DEFAULT_SCORES.cvs);
+    return clamp((retention * 0.35 + saveRate * 0.25 + depthRate * 0.2 + discussionRate * 0.2) * 100);
   } catch {
-    return DEFAULT_SCORES.cvs;
+    return 0;
   }
 }
 
@@ -114,6 +120,9 @@ export async function calculateBCS(userId: number): Promise<number> {
       .from(postsTable)
       .where(and(eq(postsTable.authorId, userId), gte(postsTable.createdAt, oneDayAgo)));
 
+    const [allPosts] = await db.select({ c: count() }).from(postsTable).where(eq(postsTable.authorId, userId));
+    if (safeCount(allPosts?.c) === 0) return 0;
+
     const texts = dayPosts.map(p => (p.title || p.content || "").toLowerCase().replace(/\s+/g, " ").trim()).filter(Boolean);
     let duplicateCount = 0;
     for (let i = 0; i < texts.length; i++) {
@@ -127,9 +136,9 @@ export async function calculateBCS(userId: number): Promise<number> {
     }
 
     const repeatPenalty = safeRatio(duplicateCount, Math.max(1, texts.length)) * 100;
-    return clamp(100 - (frequencyPenalty + repeatPenalty), 0, 100, DEFAULT_SCORES.bcs);
+    return clamp(100 - (frequencyPenalty + repeatPenalty));
   } catch {
-    return DEFAULT_SCORES.bcs;
+    return 0;
   }
 }
 
@@ -145,16 +154,16 @@ export async function calculateCTS(userId: number): Promise<number> {
       .from(likesTable)
       .where(sql`EXISTS (SELECT 1 FROM ${postsTable} WHERE ${postsTable.id} = ${likesTable.postId} AND ${postsTable.authorId} = ${userId})`);
 
-    const appreciationRate = safeCount(totalReactionsRow?.c) > 0 ? clamp(safeRatio(appreciationsRow?.c, totalReactionsRow?.c), 0, 1, 0.5) : 0.5;
+    const appreciationRate = safeCount(totalReactionsRow?.c) > 0 ? clamp(safeRatio(appreciationsRow?.c, totalReactionsRow?.c), 0, 1) : 0;
 
     const posts = await db.select({ type: postsTable.type }).from(postsTable).where(eq(postsTable.authorId, userId));
     const uniqueCategories = new Set(posts.map(p => p.type).filter(Boolean));
-    const categoryDiversity = posts.length > 0 ? Math.min(1, safeRatio(uniqueCategories.size, posts.length) * 2) : 0.5;
-    const peerSignal = 0.5;
+    const categoryDiversity = posts.length > 0 ? Math.min(1, safeRatio(uniqueCategories.size, posts.length) * 2) : 0;
+    const peerSignal = 0;
 
-    return clamp((appreciationRate * 0.4 + categoryDiversity * 0.3 + peerSignal * 0.3) * 100, 0, 100, DEFAULT_SCORES.cts);
+    return clamp((appreciationRate * 0.4 + categoryDiversity * 0.3 + peerSignal * 0.3) * 100);
   } catch {
-    return DEFAULT_SCORES.cts;
+    return 0;
   }
 }
 
@@ -180,13 +189,13 @@ export async function calculateCIS(postId: number): Promise<number> {
     const spread = Math.min(1, safeRatio(shares, impressions));
     const discussion = Math.min(1, safeRatio(comments, impressions));
 
-    return clamp((engagementDepth * 0.25 + longevity * 0.2 + spread * 0.25 + discussion * 0.3) * 100, 0, 100, DEFAULT_SCORES.avgCis);
+    return clamp((engagementDepth * 0.25 + longevity * 0.2 + spread * 0.25 + discussion * 0.3) * 100);
   } catch {
-    return DEFAULT_SCORES.avgCis;
+    return 0;
   }
 }
 
-export async function calculateUTI(userId: number): Promise<{ uti: number; cvs: number; bcs: number; cts: number; avgCis: number; tier: string; visibilityMultiplier: number }> {
+export async function calculateUTI(userId: number): Promise<{ uti: number; cvs: number; bcs: number; cts: number; avgCis: number; tier: string; creatorLevel: string; visibilityMultiplier: number }> {
   try {
     const [cvs, bcs, cts] = await Promise.all([calculateCVS(userId), calculateBCS(userId), calculateCTS(userId)]);
     const userPosts = await db
@@ -195,17 +204,18 @@ export async function calculateUTI(userId: number): Promise<{ uti: number; cvs: 
       .where(and(eq(postsTable.authorId, userId), eq(postsTable.isPublished, true)))
       .limit(20);
 
-    let avgCis = DEFAULT_SCORES.avgCis;
+    let avgCis = 0;
     if (userPosts.length > 0) {
       const cisScores = await Promise.all(userPosts.map(p => calculateCIS(p.id)));
-      avgCis = clamp(safeRatio(cisScores.reduce((sum, score) => sum + clamp(score), 0), cisScores.length), 0, 100, DEFAULT_SCORES.avgCis);
+      avgCis = clamp(safeRatio(cisScores.reduce((sum, score) => sum + clamp(score), 0), cisScores.length));
     }
 
-    const uti = clamp(cvs * 0.35 + bcs * 0.25 + cts * 0.2 + avgCis * 0.2, 0, 100, DEFAULT_SCORES.uti);
-    const tier = tierFromUti(uti);
+    const uti = clamp(cvs * 0.35 + bcs * 0.25 + cts * 0.2 + avgCis * 0.2);
+    const creatorLevel = getCreatorLevel(uti);
+    const tier = legacyTierFromLevel(creatorLevel);
     const visibilityMultiplier = visibilityForTier(uti, tier);
 
-    return { uti, cvs: clamp(cvs), bcs: clamp(bcs), cts: clamp(cts), avgCis, tier, visibilityMultiplier };
+    return { uti, cvs: clamp(cvs), bcs: clamp(bcs), cts: clamp(cts), avgCis, tier, creatorLevel, visibilityMultiplier };
   } catch {
     return { ...DEFAULT_SCORES };
   }
@@ -261,7 +271,7 @@ export async function updateUserTrustScore(userId: number) {
     return updated;
   }
 
-  const [created] = await db.insert(userTrustScoresTable).values({ userId, creatorLevel: newLevel, ...scores }).returning();
+  const [created] = await db.insert(userTrustScoresTable).values({ userId, ...scores, creatorLevel: newLevel }).returning();
   return created;
 }
 
@@ -293,11 +303,12 @@ export async function getUserTrustScore(userId: number) {
   return score ?? null;
 }
 
+// UTI is the Trust Score shown as /100. Creator Level is its canonical label.
 const LEVEL_THRESHOLDS: Array<{ level: string; min: number }> = [
   { level: "luminary",    min: 85 },
   { level: "featured",    min: 70 },
   { level: "established", min: 55 },
-  { level: "rising",      min: 35 },
+  { level: "rising",      min: 30 },
   { level: "new_voice",   min: 0  },
 ];
 

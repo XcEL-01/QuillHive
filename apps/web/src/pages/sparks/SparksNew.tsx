@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { getStoredToken } from '@/lib/api';
 import { Loader2, Zap, Wand2 } from 'lucide-react';
 import { AttachmentPicker, type Attachment } from '@/components/post/AttachmentPicker';
+import { BackButton } from '@/components/ui/BackButton';
 
 const MAX_CHARS = 280;
 
@@ -72,6 +73,7 @@ export default function SparksNew() {
   return (
     <AppLayout>
       <div className="max-w-xl mx-auto px-4 py-6">
+        <BackButton />
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
             <Zap className="w-5 h-5 text-white" />

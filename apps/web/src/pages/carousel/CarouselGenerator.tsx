@@ -16,6 +16,7 @@ import {
   Search, Zap, CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/ui/BackButton";
 
 type SlideImage = {
   url: string;
@@ -131,6 +132,9 @@ export default function CarouselGenerator() {
 
   return (
     <AppLayout>
+      <div className="mx-auto max-w-6xl px-4 pt-5">
+        <BackButton fallback="/admin" />
+      </div>
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
         {/* Header */}
         <div className="flex items-start gap-4">

@@ -229,7 +229,7 @@ export default function Write() {
     onUpdate: ({ editor: updatedEditor }) => setContent(updatedEditor.getHTML()),
     editorProps: {
       attributes: {
-        class: 'prose prose-lg dark:prose-invert focus:outline-none min-h-[40vh] max-w-none px-4 py-8',
+        class: 'qh-editor focus:outline-none min-h-[40vh] max-w-none px-4 py-8',
       },
     },
   });

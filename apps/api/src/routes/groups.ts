@@ -40,7 +40,7 @@ async function enrichGroup(group: any, viewerId: number | null) {
     .from(groupMembersTable).where(eq(groupMembersTable.groupId, group.id));
 
   const [postsResult] = await db.select({ count: sql<number>`count(*)::int` })
-    .from(postsTable).where(and(eq(postsTable.groupId, group.id), eq(postsTable.isPublished, true)));
+    .from(postsTable).where(and(eq(postsTable.groupId, group.id), eq(postsTable.isPublished, true), eq(postsTable.isDeleted, false)));
 
   let isMember = false;
   let memberRole: string | null = null;
@@ -93,27 +93,29 @@ router.post("/", async (req, res) => {
   const viewerId = getViewerId(req);
   if (!viewerId) return res.status(401).json({ error: "Unauthorized" });
 
+  let normalized;
   try {
-    const normalized = normalizeGroupCreateInput(req.body ?? {});
-    const [group] = await db.insert(groupsTable).values({
-      name: normalized.name,
-      description: normalized.description,
-      category: normalized.category,
-      avatarUrl: normalized.avatarUrl,
-      coverUrl: normalized.coverUrl,
-      creatorId: viewerId,
-      privacy: normalized.privacy,
-      rules: normalized.rules,
-    }).returning();
-
-    await db.insert(groupMembersTable).values({ groupId: group.id, userId: viewerId, role: "admin" });
-
-    const enriched = await enrichGroup(group, viewerId);
-    return res.status(201).json(enriched);
+    normalized = normalizeGroupCreateInput(req.body ?? {});
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid group payload";
     return res.status(400).json({ error: message });
   }
+
+  const [group] = await db.insert(groupsTable).values({
+    name: normalized.name,
+    description: normalized.description,
+    category: normalized.category,
+    avatarUrl: normalized.avatarUrl,
+    coverUrl: normalized.coverUrl,
+    creatorId: viewerId,
+    privacy: normalized.privacy,
+    rules: normalized.rules,
+  }).returning();
+
+  await db.insert(groupMembersTable).values({ groupId: group.id, userId: viewerId, role: "admin" });
+
+  const enriched = await enrichGroup(group, viewerId);
+  return res.status(201).json(enriched);
 });
 
 router.get("/:id", async (req, res) => {
@@ -178,7 +180,7 @@ router.get("/:id/posts", async (req, res) => {
   }
 
   const posts = await db.select().from(postsTable)
-    .where(and(eq(postsTable.groupId, id), eq(postsTable.isPublished, true)))
+    .where(and(eq(postsTable.groupId, id), eq(postsTable.isPublished, true), eq(postsTable.isDeleted, false)))
     .orderBy(desc(postsTable.createdAt))
     .limit(limit).offset((page - 1) * limit);
 

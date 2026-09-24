@@ -106,6 +106,13 @@
       "when": 1790332800003,
       "tag": "0015_users_schema_alignment",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790332800004,
+      "tag": "0016_groups_jobs_schema_alignment",
+      "breakpoints": true
     }
   ]
 }

@@ -22,13 +22,14 @@ import {
   Bold, Italic, Underline as UnderlineIcon,
   Heading1, Heading2, List, ListOrdered, Quote, Loader2, X,
   Lightbulb, Wand2, MessageSquare, ChevronRight, Clock, FlaskConical, Calendar, Rocket,
-  Video, Zap, ChevronDown, ChevronUp, Newspaper, Type, Hash, Copy, Check, BookOpen
+  Video, Zap, ChevronDown, ChevronUp, Newspaper, Type, Hash, Copy, Check, BookOpen, ArrowUpRight
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { AttachmentPicker } from '@/components/post/AttachmentPicker';
 import { useT } from '@/lib/i18n';
 import { ImageUploadField } from '@/components/media/ImageUploadField';
 import { BackButton } from '@/components/ui/BackButton';
+import { apiUrl } from '@/lib/api';
 
 type AiPanel = 'assist' | 'caption' | 'improve' | 'ideas' | 'titles' | 'hashtags' | null;
 
@@ -289,7 +290,7 @@ export default function Write() {
         if (!data?.draft) return;
         const d = data.draft;
         if (d.title) setTitle(d.title);
-        if (d.type) setType(d.type);
+        if (d.type) setType(d.type === 'blog' || d.type === 'note' ? 'post' : d.type);
         if (d.tags) {
           try { setTagsStr(JSON.parse(d.tags).join(', ')); } catch { setTagsStr(d.tags); }
         }
@@ -373,15 +374,24 @@ export default function Write() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const error = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(error?.error || 'Draft could not be saved');
+      }
 
       const data = await res.json() as { draftId?: number };
       if (data.draftId && !serverSaveRef.current) setServerDraftId(data.draftId);
       setLastSavedAt(Date.now());
       setShowSaved(true);
       window.setTimeout(() => setShowSaved(false), 1800);
-    } catch {
-      // Silent autosave failures should never interrupt writing.
+    } catch (error) {
+      console.error('[write] draft autosave failed', error);
+      setShowSaved(false);
+      toast({
+        title: 'Draft could not be saved',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 

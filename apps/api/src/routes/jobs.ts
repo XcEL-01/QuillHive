@@ -19,6 +19,17 @@ const SCAM_PATTERNS = [
   /activation\s*fee/i,
 ];
 
+function normalizeSkills(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((skill): skill is string => typeof skill === "string" && skill.trim().length > 0);
+  if (typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? normalizeSkills(parsed) : [];
+  } catch {
+    return value.trim() ? [value.trim()] : [];
+  }
+}
+
 // ── Match scoring ──────────────────────────────────────────────────────────────
 const IDENTITY_KEYWORDS: Record<string, string[]> = {
   writer:       ["writing", "content", "copy", "blog", "article", "fiction", "editorial", "poet", "author", "script"],
@@ -40,7 +51,7 @@ function scoreJobForCreator(
 ): { score: number; reasons: string[] } {
   let score = 0;
   const reasons: string[] = [];
-  const jobSkillsArr: string[] = JSON.parse(job.skills || "[]");
+  const jobSkillsArr = normalizeSkills(job.skills);
   const jobText = `${job.title} ${job.description} ${job.category ?? ""} ${jobSkillsArr.join(" ")}`.toLowerCase();
 
   // 1. Skill overlap (max 40 pts)
@@ -117,7 +128,7 @@ async function enrichJob(job: any, viewerId: number | null) {
   const isNewAccount = joinedAt > 0 && Date.now() - joinedAt < 14 * 24 * 60 * 60 * 1000 && (trust?.uti ?? 50) <= 50;
   return {
     ...job,
-    skills: JSON.parse(job.skills || "[]"),
+    skills: normalizeSkills(job.skills),
     author: author ? { ...author, trustTier: isNewAccount ? "new" : (trust?.tier ?? "new"), trustScore: trust?.uti ?? 50 } : author,
   };
 }
@@ -175,7 +186,7 @@ router.post("/", async (req, res) => {
     title,
     description,
     type,
-    skills: JSON.stringify(skills || []),
+    skills: JSON.stringify(normalizeSkills(skills)),
     compensation: compensation || null,
     remote: remote ?? true,
     location: location || null,

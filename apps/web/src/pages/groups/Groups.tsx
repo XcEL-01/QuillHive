@@ -88,13 +88,22 @@ function GroupDetail({ id }: { id: number }) {
   }, [group]);
 
   const { mutate: toggleJoin, isPending: isJoining } = useJoinGroup({
-    mutation: { onSuccess: () => refetch() }
+    mutation: {
+      onSuccess: () => refetch(),
+      onError: (error) => toast({ title: 'Could not update membership', description: error instanceof Error ? error.message : 'Please try again.', variant: 'destructive' }),
+    }
   });
 
   const removePost = async (postId: number) => {
     if (!token) return;
     const res = await fetch(`/api/groups/${id}/posts/${postId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) { toast({ title: 'Post removed' }); void queryClient.invalidateQueries({ queryKey: ['/api/groups', id, 'posts'] }); }
+    if (res.ok) {
+      toast({ title: 'Post removed' });
+      void queryClient.invalidateQueries({ queryKey: ['/api/groups', id, 'posts'] });
+    } else {
+      const data = await res.json().catch(() => null) as { error?: string } | null;
+      toast({ title: 'Could not remove post', description: data?.error ?? 'Please try again.', variant: 'destructive' });
+    }
   };
 
   const saveSettings = async () => {
@@ -260,7 +269,10 @@ function GroupsList() {
   };
 
   const { mutate: joinGroup } = useJoinGroup({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/groups'] }) }
+    mutation: {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/groups'] }),
+      onError: (error) => toast({ title: 'Could not update membership', description: error instanceof Error ? error.message : 'Please try again.', variant: 'destructive' }),
+    }
   });
 
   return (

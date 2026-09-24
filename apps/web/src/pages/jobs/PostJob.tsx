@@ -82,7 +82,7 @@ export default function PostJob() {
           title:        title.trim(),
           type,
           description:  fullDescription,
-          skills:       JSON.stringify(skills),
+          skills,
           compensation: compensationStr,
           budget:       minVal ?? undefined,
           companyName:  companyName.trim() || undefined,
@@ -94,9 +94,12 @@ export default function PostJob() {
           category:     type,
         }),
       });
-      const data: { error?: string; id?: number } = await res.json();
+      const data: { error?: string; id?: number; message?: string } = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to post');
-      toast({ title: 'Opportunity posted! 🎉', description: 'Creators will start applying soon.' });
+      toast({
+        title: data.message ? 'Opportunity submitted for review' : 'Opportunity posted! 🎉',
+        description: data.message ?? 'Creators can now discover your opportunity.',
+      });
       setLocation('/jobs');
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : 'Failed to post', variant: 'destructive' });

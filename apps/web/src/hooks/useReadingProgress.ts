@@ -8,26 +8,30 @@ export function useReadingProgress(postId: number | null, opts?: { enabled?: boo
   const lastSentAtRef = useRef(0);
   const startTime = useRef(Date.now());
   const activeMs = useRef(0);
+  const lastActiveRef = useRef(Date.now());
+
+  const sendProgress = (value: number) => {
+    if (!postId) return;
+    const currentlyActive = document.visibilityState === 'visible' ? Date.now() - lastActiveRef.current : 0;
+    const elapsed = activeMs.current + currentlyActive;
+    void apiRequest('PUT', `/api/reading-progress/${postId}`, { percent: value, readTimeMs: elapsed }).catch((error) => {
+      console.error('[reading-progress] save failed', error);
+    });
+  };
 
   useEffect(() => {
     if (!enabled || !postId) return;
 
     startTime.current = Date.now();
-    let lastActive = startTime.current;
+    lastActiveRef.current = startTime.current;
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
-        lastActive = Date.now();
+        lastActiveRef.current = Date.now();
       } else {
-        activeMs.current += Date.now() - lastActive;
+        activeMs.current += Date.now() - lastActiveRef.current;
       }
     };
     document.addEventListener('visibilitychange', onVisible);
-
-    const sendProgress = (percent: number) => {
-      const currentlyActive = document.visibilityState === 'visible' ? Date.now() - lastActive : 0;
-      const elapsed = activeMs.current + currentlyActive;
-      apiRequest('PUT', `/api/reading-progress/${postId}`, { percent, readTimeMs: elapsed }).catch(() => {});
-    };
     let cancelled = false;
     apiRequest('GET', `/api/reading-progress/${postId}`)
       .then((r) => r.json())
@@ -38,6 +42,7 @@ export function useReadingProgress(postId: number | null, opts?: { enabled?: boo
       .catch(() => {});
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [postId, enabled]);
 
@@ -72,8 +77,7 @@ export function useReadingProgress(postId: number | null, opts?: { enabled?: boo
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (raf) cancelAnimationFrame(raf);
-      if (document.visibilityState === 'visible') activeMs.current += Date.now() - lastActive;
-      document.removeEventListener('visibilitychange', onVisible);
+      if (document.visibilityState === 'visible') activeMs.current += Date.now() - lastActiveRef.current;
       sendProgress(lastSentRef.current);
     };
   }, [postId, enabled]);

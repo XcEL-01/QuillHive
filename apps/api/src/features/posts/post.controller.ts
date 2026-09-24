@@ -65,8 +65,8 @@ export const saveDraft = async (req: Request, res: Response) => {
     draftId?: number; title?: string; content: string; type?: string; tags?: string[]; imageUrl?: string;
   };
 
-  const VALID_TYPES = ["article", "story", "novel", "artwork", "spark", "blog", "note"];
-  const resolvedType = type && VALID_TYPES.includes(type) ? type : "blog";
+  const VALID_TYPES = ["post", "article", "story", "novel", "artwork", "spark"];
+  const resolvedType = type === "blog" || type === "note" ? "post" : type && VALID_TYPES.includes(type) ? type : "post";
 
   if (draftId) {
     const [existing] = await db

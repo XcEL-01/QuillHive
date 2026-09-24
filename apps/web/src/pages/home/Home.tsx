@@ -578,8 +578,8 @@ function AuthenticatedHome() {
         if (!res.ok) return;
         const data = await res.json() as { posts?: unknown };
         setNewPostsAvailable(Array.isArray(data.posts) ? data.posts.length : 0);
-      } catch {
-        // Polling is non-critical and should not interrupt the feed.
+      } catch (error) {
+        console.error('[home] new-post polling failed', error);
       }
     };
     const interval = window.setInterval(() => void pollForNewPosts(), 30_000);
